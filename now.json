@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "name": "opencollective-frontend",
+  "name": "opencollective-rest",
   "type": "docker",
   "env": {},
   "scale": {

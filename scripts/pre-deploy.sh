@@ -11,7 +11,7 @@
 #
 # Developing
 # ==========
-# 
+#
 # During development, the best way to test it is to call the script
 # directly with `./scripts/pre-deploy.sh staging|production`. You can also set
 # the `SLACK_CHANNEL` to your personnal channel so you don't flood the team.
@@ -31,9 +31,9 @@ fi
 # ---- Variables ----
 
 if [ "$1" == "staging" ]; then
-  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-staging-frontend.git"
+  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-staging-rest.git"
 elif [ "$1" == "production" ]; then
-  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-prod-frontend.git"
+  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-prod-rest.git"
 else
   echo "Unknwown remote $1"
   exit 1
@@ -49,7 +49,7 @@ LOCAL_BRANCH="master"
 PRE_DEPLOY_BRANCH="master"
 
 GIT_LOG_FORMAT_SHELL='short'
-GIT_LOG_FORMAT_SLACK='format:<https://github.com/opencollective/opencollective-frontend/commit/%H|[%ci]> *%an* %n_%<(80,trunc)%s_%n'
+GIT_LOG_FORMAT_SLACK='format:<https://github.com/opencollective/opencollective-rest/commit/%H|[%ci]> *%an* %n_%<(80,trunc)%s_%n'
 GIT_LOG_COMPARISON="$PRE_DEPLOY_ORIGIN/$PRE_DEPLOY_BRANCH..$LOCAL_ORIGIN/$LOCAL_BRANCH"
 
 # ---- Utils ----
@@ -121,7 +121,7 @@ fi
 read -d '' PAYLOAD << EOF
   {
     "channel": "${SLACK_CHANNEL}",
-    "text": ":rocket: Deploying *FRONTEND* to *${1}* ${CUSTOM_MESSAGE}",
+    "text": ":rocket: Deploying *REST* to *${1}* ${CUSTOM_MESSAGE}",
     "as_user": true,
     "attachments": [{
       "text": "

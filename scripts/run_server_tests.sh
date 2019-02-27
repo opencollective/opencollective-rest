@@ -6,9 +6,9 @@ if [ "$NODE_ENV" = "circleci" ]; then
   PG_DATABASE=opencollective_dvl npm start &
   API_PID=$!
   cd -
-  echo "> Starting frontend server"
+  echo "> Starting rest server"
   npm start &
-  FRONTEND_PID=$!
+  REST_PID=$!
 fi
 
 echo ""
@@ -23,7 +23,7 @@ fi
 if [ "$NODE_ENV" = "circleci" ]; then
   echo "Killing all node processes"
   kill $API_PID;
-  kill $FRONTEND_PID;
+  kill $REST_PID;
   echo "Exiting with code $RETURN_CODE"
   exit $RETURN_CODE
 fi

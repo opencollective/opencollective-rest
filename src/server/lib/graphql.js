@@ -1,6 +1,6 @@
 import { GraphQLClient } from 'graphql-request';
 
-import { getGraphqlUrl } from '../../lib/utils';
+import { getGraphqlUrl } from './utils';
 
 let client;
 

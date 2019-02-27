@@ -1,21 +1,15 @@
 {
   "presets": [
-    ["next/babel", {
-      "preset-env": {
-        "modules": "auto"
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "current"
+        }
       }
-    }]
+    ]
   ],
   "plugins": [
-    "lodash",
-    ["react-intl", {
-      "messagesDir": "./dist/messages/"
-    }],
-    "styled-components"
-  ],
-  "env": {
-    "development" : {
-      "compact": false
-    }
-  }
+    "lodash"
+  ]
 }

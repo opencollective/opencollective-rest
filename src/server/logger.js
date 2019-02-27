@@ -2,9 +2,13 @@ import winston from 'winston';
 import expressWinston from 'express-winston';
 
 function getLogLevel() {
-  if (process.env.DEBUG) {
-    return 'debug';
-  } else if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'circleci') {
+  if (process.env.LOG_LEVEL) {
+    return process.env.LOG_LEVEL;
+  } else if (
+    process.env.NODE_ENV === 'production' ||
+    process.env.NODE_ENV === 'test' ||
+    process.env.NODE_ENV === 'circleci'
+  ) {
     return 'warn';
   } else {
     return 'info';

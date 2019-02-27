@@ -1,15 +1,9 @@
-# Open Collective Frontend
+# Open Collective REST API
 
-[![Circle CI](https://circleci.com/gh/opencollective/opencollective-frontend/tree/master.svg?style=shield)](https://circleci.com/gh/opencollective/opencollective-frontend/tree/master)
+[![Circle CI](https://circleci.com/gh/opencollective/opencollective-rest/tree/master.svg?style=shield)](https://circleci.com/gh/opencollective/opencollective-rest/tree/master)
 [![Slack Status](https://slack.opencollective.org/badge.svg)](https://slack.opencollective.org)
-[![Dependency Status](https://david-dm.org/opencollective/opencollective-frontend/status.svg)](https://david-dm.org/opencollective/opencollective-frontend)
-[![Greenkeeper badge](https://badges.greenkeeper.io/opencollective/opencollective-frontend.svg)](https://greenkeeper.io/)
-
-<p align="center">
-  <a href="https://github.com/opencollective/opencollective-frontend">
-    <img width="525"src="http://res.cloudinary.com/opencollective/image/upload/c_scale,w_1050/v1536861775/opencollective-babel-2018-09-13_ue8yhg.png" alt="Babel - Open Collective">
-  </a>
-</p>
+[![Dependency Status](https://david-dm.org/opencollective/opencollective-rest/status.svg)](https://david-dm.org/opencollective/opencollective-rest)
+[![Greenkeeper badge](https://badges.greenkeeper.io/opencollective/opencollective-rest.svg)](https://greenkeeper.io/)
 
 ## Foreword
 
@@ -28,8 +22,8 @@ If you see a step below that could be improved (or is outdated), please update t
 We recommend cloning the repository in a folder dedicated to `opencollective` projects.
 
 ```
-git clone git@github.com:opencollective/opencollective-frontend.git opencollective/frontend
-cd opencollective/frontend
+git clone git@github.com:opencollective/opencollective-rest.git opencollective/rest
+cd opencollective/rest
 npm install
 ```
 
@@ -54,59 +48,15 @@ Code style? Commit convention? Please check our [Contributing guidelines](CONTRI
 
 TL;DR: we use [Prettier](https://prettier.io/) and [ESLint](https://eslint.org/), we do like great commit messages and clean Git history.
 
-## Styleguide
-
-We use [React-Styleguidist](https://react-styleguidist.js.org/) to develop and document our React components in isolation with [styled-components](https://www.styled-components.com/) and [styled-system](https://jxnblk.com/styled-system/).
-
-### Start
-
-```
-npm run styleguide:dev
-```
-
-### Create a new component:
-
-Only components with a matching example markdown file in the `styleguide/examples/` directory will appear in the styleguide. After creating a new component in the `src/components/` directory (i.e. `src/components/NewComponent.js`), make an example markdown file to go with it (i.e. `styleguide/examples/NewComponent.md`).
-
-If you are creating a styled-component, you will need to annotate the export statement for React-Styleguidist to recognize it:
-
-```es6
-/** @component */
-export default NewComponent;
-```
-
-Check out the [React-Styleguidist docs](https://react-styleguidist.js.org/docs/documenting.html) for more details about documenting components with [JSDoc](http://usejsdoc.org/) annotations and writing interactive code examples.
-
-### Deploy
-
-If you have access the Open Collective `now` team account:
-
-```
-npm run styleguide:deploy
-```
-
 ## Tests
 
 You can run the tests using `npm test` or more specifically:
 
-- `npm run test:jest` for pages and components
-- `npm run test:server` for api
-- `npm run test:e2e` for end-to-end tests using [Cypress](https://www.cypress.io/)
+- `npm run test:server`
 
 To update:
 
-- Jest snapshots: run `npm run test:update`
 - GraphQL schema for eslint: run `npm run graphql:get-schema:dev`
-
-## Localization
-
-To add a translation to a new language, copy paste the `en.json` from `src/lang` and rename the copy using the 2 or 4 letter code for your country/language (e.g. `fr-BE.json` or `fr.json`).
-
-You will also need to copy paste the last line in `scripts/translate.js`, and replace `ja` with your 2-4 letter locale code.
-
-```
-fs.writeFileSync(`${LANG_DIR}ja.json`, JSON.stringify(translatedMessages('ja'), null, 2));
-```
 
 ## Deployment
 
@@ -129,25 +79,25 @@ OC_SLACK_USER_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```bash
 # Before first deployment, configure staging remote
-git remote add staging https://git.heroku.com/oc-staging-frontend.git
+git remote add staging https://git.heroku.com/oc-staging-rest.git
 
 # Then deploy master with
 npm run deploy:staging
 ```
 
-URL: https://staging.opencollective.com/
+URL: https://rest-staging.opencollective.com/
 
 ### Production (heroku)
 
 ```bash
 # Before first deployment, configure production remote
-git remote add production https://git.heroku.com/oc-prod-frontend.git
+git remote add production https://git.heroku.com/oc-prod-rest.git
 
 # Then deploy master with
 npm run deploy:production
 ```
 
-URL: https://opencollective.com/
+URL: https://rest.opencollective.com/
 
 ## Discussion
 

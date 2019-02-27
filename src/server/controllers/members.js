@@ -1,10 +1,9 @@
 import { GraphQLClient } from 'graphql-request';
 import moment from 'moment';
 import { get } from 'lodash';
-import { days, getGraphqlUrl } from '../../lib/utils';
-import { json2csv } from '../../lib/export_file';
 
 import { logger } from '../logger';
+import { days, getGraphqlUrl, json2csv } from '../lib/utils';
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;

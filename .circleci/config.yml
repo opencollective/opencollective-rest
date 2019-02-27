@@ -21,7 +21,6 @@ jobs:
       - image: circleci/node:11.8.0
     environment:
       NODE_ENV: circleci
-      CYPRESS_INSTALL_BINARY: 0
 
     steps:
       - checkout
@@ -30,28 +29,13 @@ jobs:
       - <<: *persist_cache
 
       - run: npm run lint
-      - run: npm run prettier:check
-
-  jest:
-    docker:
-      - image: circleci/node:11.8.0
-    environment:
-      NODE_ENV: circleci
-      CYPRESS_INSTALL_BINARY: 0
-    steps:
-      - checkout
-      - <<: *restore_cache
-      - run: npm ci
-      - <<: *persist_cache
-
-      - run: npm run test:jest
 
   build:
     docker:
       - image: circleci/node:11.8.0
     environment:
       NODE_ENV: circleci
-      CYPRESS_INSTALL_BINARY: 0
+
     steps:
       - checkout
       - <<: *restore_cache
@@ -61,18 +45,15 @@ jobs:
       - run: npm run build:clean
       - run: npm run build:updates
       - run: npm run build:server
-      - run: npm run build:next
 
       - persist_to_workspace:
           root: ..
           paths:
-            - project/cypress
             - project/dist
             - project/scripts
             - project/src
             - project/test
             - project/.babelrc
-            - project/cypress.json
             - project/package.json
             - project/package-lock.json
 
@@ -124,46 +105,6 @@ jobs:
             - api/package.json
             - api/package-lock.json
 
-  test-e2e:
-    docker:
-      - image: circleci/node:11.8.0
-      - image: circleci/postgres:9.6.8-alpine-postgis-ram
-      - image: circleci/redis
-      - image: memcached
-    environment:
-      NODE_ENV: circleci
-      E2E_TEST: 1
-    steps:
-      - run: sudo apt -y update
-
-      # Used in setup_circleci_db.sh (dropdb, psql and pg_restore)
-      - run: sudo apt -y install postgresql-client
-
-      # Cypress dependencies
-      # See: https://github.com/cypress-io/cypress-docker-images/blob/master/base/ubuntu16/Dockerfile
-      - run: sudo apt -y install libgtk2.0-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 xvfb
-
-      - attach_workspace:
-          at: ..
-
-      - <<: *restore_cache
-      - run: CYPRESS_INSTALL_BINARY=0 npm ci
-
-      - restore_cache:
-          keys:
-            - cypress-cache-{{ checksum "node_modules/cypress/package.json" }}
-
-      - run: npx cypress install
-
-      - save_cache:
-          key: cypress-cache-{{ checksum "node_modules/cypress/package.json" }}
-          paths:
-            - ../.cache/Cypress
-
-      - run: ./scripts/setup_circleci_db.sh
-
-      - run: npm run test:e2e
-
   test-server:
     docker:
       - image: circleci/node:11.8.0
@@ -172,7 +113,6 @@ jobs:
       - image: memcached
     environment:
       NODE_ENV: circleci
-      CYPRESS_INSTALL_BINARY: 0
     steps:
       - run: sudo apt -y update
 
@@ -194,13 +134,8 @@ workflows:
   lint-build-test:
     jobs:
       - lint
-      - jest
       - build
       - build-api
-      - test-e2e:
-          requires:
-            - build
-            - build-api
       - test-server:
           requires:
             - build
