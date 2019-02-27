@@ -12,6 +12,11 @@ if [ "$NODE_ENV" = "circleci" ]; then
 fi
 
 echo ""
+echo "Waiting 5sec (give some time for servers to be up and running)"
+sleep 5
+echo ""
+
+echo ""
 echo "> Starting server jest tests"
 jest test/server/*
 RETURN_CODE=$?
