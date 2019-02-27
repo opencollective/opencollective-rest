@@ -1,12 +1,12 @@
 import fetch from 'node-fetch';
 
-const WEBSITE_URL = process.env.WEBSITE_URL || 'https://staging.opencollective.com';
+const REST_URL = process.env.REST_URL || 'https://rest.opencollective.com';
 
 const cacheBurst = `cacheBurst=${Math.round(Math.random() * 100000)}`;
 
 const fetchResponse = path => {
   const pathWithCacheBurst = [path, cacheBurst].join(path.indexOf('?') === -1 ? '?' : '&');
-  return fetch(`${WEBSITE_URL}${pathWithCacheBurst}`);
+  return fetch(`${REST_URL}${pathWithCacheBurst}`);
 };
 
 const fetchJson = path => fetchResponse(path).then(response => response.json());

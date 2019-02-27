@@ -7,7 +7,7 @@ import cloudflareIps from 'cloudflare-ip/ips.json';
 import { loadRoutes } from './routes';
 import { loggerMiddleware, logger } from './logger';
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3003;
 
 const app = express();
 
