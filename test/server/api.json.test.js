@@ -53,7 +53,7 @@ describe('api.json.test.js', () => {
     });
   });
 
-  describe('old api', () => {
+  describe.skip('old api', () => {
     describe('webpack', () => {
       test('return list of backers with proper website url', async () => {
         const backers = await fetchJson('/api/groups/railsgirlsatl/backers');
