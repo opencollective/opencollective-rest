@@ -4,9 +4,9 @@ import { getGraphqlUrl } from './utils';
 
 let client;
 
-function getClient() {
+export function getClient({ apiKey } = {}) {
   if (!client) {
-    client = new GraphQLClient(getGraphqlUrl(), { headers: {} });
+    client = new GraphQLClient(getGraphqlUrl({ apiKey }), { headers: {} });
   }
   return client;
 }
@@ -97,3 +97,100 @@ export async function fetchEvent(eventSlug) {
   const result = await getClient().request(query, { slug: eventSlug });
   return result.Collective;
 }
+
+export const allTransactionsQuery = `
+query allTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String, $includeVirtualCards: Boolean ) {
+  allTransactions(collectiveSlug: $collectiveSlug, limit: $limit, offset: $offset, type: $type, includeVirtualCards: $includeVirtualCards) {
+    id
+    uuid
+    type
+    amount
+    currency
+    hostCurrency
+    hostCurrencyFxRate
+    hostFeeInHostCurrency
+    platformFeeInHostCurrency
+    paymentProcessorFeeInHostCurrency
+    netAmountInCollectiveCurrency
+    createdAt
+    host {
+      id
+      slug
+    }
+    createdByUser {
+      id
+      email
+    }
+    fromCollective {
+      id
+      slug
+      name
+      image
+    }
+    collective {
+      id
+      slug
+      name
+      image
+    }
+    paymentMethod {
+      id
+      service
+      name
+    }
+  }
+}
+`;
+
+export const getTransactionQuery = `
+  query Transaction($id: Int, $uuid: String) {
+    Transaction(id: $id, uuid: $uuid) {
+      id
+      uuid
+      type
+      createdAt
+      description
+      amount
+      currency
+      hostCurrency
+      hostCurrencyFxRate
+      netAmountInCollectiveCurrency
+      hostFeeInHostCurrency
+      platformFeeInHostCurrency
+      paymentProcessorFeeInHostCurrency
+      paymentMethod {
+        id
+        service
+        name
+      }
+      fromCollective {
+        id
+        slug
+        name
+        image
+      }
+      collective {
+        id
+        slug
+        name
+        image
+      }
+      host {
+        id
+        slug
+        name
+        image
+      }
+      ... on Order {
+        order {
+          id
+          status
+          subscription {
+            id
+            interval
+          }
+        }
+      }
+    }
+  }
+`;

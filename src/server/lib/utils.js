@@ -1,39 +1,13 @@
-export const queryString = {
-  stringify: obj => {
-    let str = '';
-    for (const key in obj) {
-      if (str != '') {
-        str += '&';
-      }
-      str += `${key}=${encodeURIComponent(obj[key])}`;
-    }
-    return str;
-  },
-  parse: query => {
-    if (!query) return {};
-    const vars = query.split('&');
-    const res = {};
-    for (let i = 0; i < vars.length; i++) {
-      const pair = vars[i].split('=');
-      res[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-    }
-    return res;
-  },
+export const getBaseApiUrl = () => {
+  return process.env.API_URL;
 };
 
-export const getBaseApiUrl = ({ internal } = {}) => {
-  if (process.browser) {
-    return '/api';
-  } else if (internal && process.env.INTERNAL_API_URL) {
-    return process.env.INTERNAL_API_URL;
+export const getGraphqlUrl = ({ apiKey } = {}) => {
+  if (apiKey) {
+    return `${getBaseApiUrl()}/graphql?apiKey=${apiKey}`;
   } else {
-    return process.env.API_URL || 'https://api.opencollective.com';
+    return `${getBaseApiUrl()}/graphql?api_key=${process.env.API_KEY}`;
   }
-};
-
-export const getGraphqlUrl = () => {
-  const apiKey = !process.browser ? process.env.API_KEY : null;
-  return `${getBaseApiUrl()}/graphql${apiKey ? `?api_key=${apiKey}` : ''}`;
 };
 
 /**

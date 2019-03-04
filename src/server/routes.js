@@ -1,5 +1,13 @@
 import controllers from './controllers';
 
+const requireApiKey = (req, res, next) => {
+  req.apiKey = req.get('Api-Key') || req.query.apiKey || req.apiKey;
+  if (!req.apiKey) {
+    throw new Error('An API Key is required for this endpoint.');
+  }
+  next();
+};
+
 export const loadRoutes = app => {
   /**
    * Prevent indexation from search engines
@@ -25,5 +33,13 @@ export const loadRoutes = app => {
   app.get(
     '/:version(v1)?/:collectiveSlug/events/:eventSlug/:role(attendees|followers|organizers|all).:format(json|csv)',
     controllers.members.list,
+  );
+
+  // Get transactions of a collective given its slug.
+  app.get('/v1/collectives/:collectiveSlug/transactions', requireApiKey, controllers.transactions.allTransactions);
+  app.get(
+    '/v1/collectives/:collectiveSlug/transactions/:idOrUuid',
+    requireApiKey,
+    controllers.transactions.getTransaction,
   );
 };
