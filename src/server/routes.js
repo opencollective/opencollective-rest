@@ -9,6 +9,10 @@ const requireApiKey = (req, res, next) => {
 };
 
 export const loadRoutes = app => {
+  app.get('/', (req, res) => {
+    res.send('This is the Open Collective REST API.');
+  });
+
   /**
    * Prevent indexation from search engines
    */
