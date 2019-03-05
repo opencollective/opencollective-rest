@@ -31,9 +31,9 @@ fi
 # ---- Variables ----
 
 if [ "$1" == "staging" ]; then
-  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-staging-rest.git"
+  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-staging-rest-api.git"
 elif [ "$1" == "production" ]; then
-  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-prod-rest.git"
+  DEPLOY_ORIGIN_URL="https://git.heroku.com/oc-prod-rest-api.git"
 else
   echo "Unknwown remote $1"
   exit 1
