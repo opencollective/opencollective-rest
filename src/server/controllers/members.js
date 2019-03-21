@@ -55,6 +55,7 @@ export async function list(req, res, next) {
           image
           website
           twitterHandle
+          githubHandle
           connectedAccounts {
             id
             service
@@ -134,6 +135,9 @@ export async function list(req, res, next) {
       return r.member.twitterHandle ? `https://twitter.com/${r.member.twitterHandle}` : null;
     },
     github: r => {
+      if (r.member.githubHandle) {
+        return `https://github.com/${r.member.githubHandle}`;
+      }
       const githubAccount = r.member.connectedAccounts.find(c => c.service === 'github');
       return githubAccount ? `https://github.com/${githubAccount.username}` : null;
     },
