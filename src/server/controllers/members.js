@@ -82,9 +82,9 @@ export async function list(req, res, next) {
   if (role === 'organizers') vars.role = 'ADMIN';
   if (tierSlug) vars.tierSlug = tierSlug;
   if (backerType) vars.backerType = backerType;
-  if (req.query.TierId) vars.TierId = req.query.TierId;
-  if (req.query.limit) vars.limit = req.query.limit;
-  if (req.query.offset) vars.offset = req.query.offset;
+  if (req.query.TierId) vars.TierId = Number(req.query.TierId);
+  if (req.query.limit) vars.limit = Number(req.query.limit);
+  if (req.query.offset) vars.offset = Number(req.query.offset);
 
   // Only return max 50 at a time
   if (req.params.format === 'json') {
