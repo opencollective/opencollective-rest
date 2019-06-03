@@ -80,7 +80,7 @@ describe('api.json.test.js', () => {
         timezone: 'Europe/Brussels',
         location: {
           name: 'Brussels',
-          address: 'Brussels, Belgium',
+          address: 'Brussels',
           lat: 50.8503396,
           long: 4.351710300000036,
         },
