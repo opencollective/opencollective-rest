@@ -2,11 +2,11 @@ export const getBaseApiUrl = () => {
   return process.env.API_URL;
 };
 
-export const getGraphqlUrl = ({ apiKey } = {}) => {
+export const getGraphqlUrl = ({ apiKey, version } = {}) => {
   if (apiKey) {
-    return `${getBaseApiUrl()}/graphql?apiKey=${apiKey}`;
+    return `${getBaseApiUrl()}/graphql/${version || 'v1'}?apiKey=${apiKey}`;
   } else {
-    return `${getBaseApiUrl()}/graphql?api_key=${process.env.API_KEY}`;
+    return `${getBaseApiUrl()}/graphql/${version || 'v1'}?api_key=${process.env.API_KEY}`;
   }
 };
 

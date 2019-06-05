@@ -4,9 +4,9 @@ import { getGraphqlUrl } from './utils';
 
 let client;
 
-export function getClient({ apiKey } = {}) {
+export function getClient({ apiKey, version } = {}) {
   if (!client) {
-    client = new GraphQLClient(getGraphqlUrl({ apiKey }), { headers: {} });
+    client = new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers: {} });
   }
   return client;
 }
