@@ -1,3 +1,5 @@
+import cors from 'cors';
+
 import controllers from './controllers';
 
 const requireApiKey = (req, res, next) => {
@@ -46,4 +48,8 @@ export const loadRoutes = app => {
     requireApiKey,
     controllers.transactions.getTransaction,
   );
+
+  /* API v2 */
+
+  app.get('/v2/:slug/orders', cors(), controllers.collectiveOrders);
 };
