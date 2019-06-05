@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "node dist/server",
-    "dev": "babel-node src/server",
+    "dev": "nodemon --exec babel-node -- src/server",
     "build": "npm run build:clean && npm run build:updates && npm run build:server",
     "build:clean": "rm -rf dist",
     "build:updates": "npm --prefix node_modules/cloudflare-ip run update-list",
@@ -63,6 +63,7 @@
     "husky": "^2.3.0",
     "jest": "^24.8.0",
     "lint-staged": "^8.1.7",
+    "nodemon": "^1.19.1",
     "prettier": "^1.17.1"
   },
   "config": {
