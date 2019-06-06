@@ -51,5 +51,9 @@ export const loadRoutes = app => {
 
   /* API v2 */
 
-  app.get('/v2/:slug/orders', cors(), controllers.collectiveOrders);
+  app.get(
+    '/v2/:slug/orders/:filter(incoming|outgoing)/:status(active|paid|cancelled|error)?',
+    cors(),
+    controllers.accountOrders,
+  );
 };

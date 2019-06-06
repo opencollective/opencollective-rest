@@ -1,11 +1,11 @@
-import { pick, pickBy, intersection } from 'lodash';
+import { pick, intersection } from 'lodash';
 
 import { logger } from '../logger';
 import { getClient } from '../lib/graphql';
 
-const query = `query collective($slug: String!, $limit: Int, $offset: Int, $status: [OrderStatus]) {
-  collective(slug: $slug) {
-    orders(status: $status, limit: $limit, offset: $offset) {
+const query = `query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $limit: Int, $offset: Int) {
+  account(slug: $slug) {
+    orders(filter: $filter, status: $status, limit: $limit, offset: $offset) {
       limit
       offset
       totalCount
@@ -13,6 +13,7 @@ const query = `query collective($slug: String!, $limit: Int, $offset: Int, $stat
         fromAccount {
           name
           slug
+          type
           imageUrl
           website
         }
@@ -33,19 +34,25 @@ const query = `query collective($slug: String!, $limit: Int, $offset: Int, $stat
   }
 }`;
 
-const collectiveOrders = async (req, res) => {
-  const variables = pick({ ...req.query, ...req.params }, ['slug', 'status', 'limit', 'offset']);
-
+const accountOrders = async (req, res) => {
+  const variables = pick({ ...req.query, ...req.params }, ['slug', 'filter', 'status', 'limit', 'offset']);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.status) {
-    variables.status = intersection(variables.status.split(','), ['ACTIVE', 'PAID', 'ERROR', 'CANCELLED']);
+    variables.status = intersection(variables.status.toUpperCase().split(','), [
+      'ACTIVE',
+      'PAID',
+      'ERROR',
+      'CANCELLED',
+    ]);
   }
 
+  variables.filter = variables.filter.toUpperCase();
+
   try {
-    const result = await getClient({ version: 'v2' }).request(query, pickBy(variables));
-    res.send(result.collective.orders);
+    const result = await getClient({ version: 'v2' }).request(query, variables);
+    res.send(result.account.orders);
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');
@@ -55,4 +62,4 @@ const collectiveOrders = async (req, res) => {
   }
 };
 
-export default collectiveOrders;
+export default accountOrders;
