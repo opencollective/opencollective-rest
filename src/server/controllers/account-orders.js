@@ -57,8 +57,8 @@ const accountOrders = async (req, res) => {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');
     }
-    logger.error(err.message);
-    res.status(400).send(`Error while fetching collective orders: ${err.message}`);
+    logger.error(`Error while fetching collective orders: ${err.message}`);
+    res.status(400).send(`Error while fetching collective orders.`);
   }
 };
 
