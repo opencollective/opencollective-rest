@@ -1,3 +1,5 @@
+import cors from 'cors';
+
 import controllers from './controllers';
 
 const requireApiKey = (req, res, next) => {
@@ -45,5 +47,13 @@ export const loadRoutes = app => {
     '/v1/collectives/:collectiveSlug/transactions/:idOrUuid',
     requireApiKey,
     controllers.transactions.getTransaction,
+  );
+
+  /* API v2 */
+
+  app.get(
+    '/v2/:slug/orders/:filter(incoming|outgoing)/:status(active|paid|cancelled|error)?',
+    cors(),
+    controllers.accountOrders,
   );
 };
