@@ -3,9 +3,9 @@ import { pick, intersection } from 'lodash';
 import { logger } from '../logger';
 import { getClient } from '../lib/graphql';
 
-const query = `query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $limit: Int, $offset: Int) {
+const query = `query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $tierSlug: String, $limit: Int, $offset: Int) {
   account(slug: $slug) {
-    orders(filter: $filter, status: $status, limit: $limit, offset: $offset) {
+    orders(filter: $filter, status: $status, tierSlug: $tierSlug, limit: $limit, offset: $offset) {
       limit
       offset
       totalCount
@@ -35,7 +35,7 @@ const query = `query account($slug: String!, $filter: AccountOrdersFilter, $stat
 }`;
 
 const accountOrders = async (req, res) => {
-  const variables = pick({ ...req.query, ...req.params }, ['slug', 'filter', 'status', 'limit', 'offset']);
+  const variables = pick({ ...req.query, ...req.params }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;
 
