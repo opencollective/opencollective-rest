@@ -16,6 +16,7 @@ const query = `query account($slug: String!, $filter: AccountOrdersFilter, $stat
           type
           imageUrl
           website
+          twitterHandle
         }
         amount {
           value
