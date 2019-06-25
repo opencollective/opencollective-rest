@@ -35,20 +35,28 @@ const query = `query account($slug: String!, $filter: AccountOrdersFilter, $stat
 }`;
 
 const accountOrders = async (req, res) => {
-  const variables = pick({ ...req.query, ...req.params }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
+  const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.status) {
     variables.status = intersection(variables.status.toUpperCase().split(','), [
       'ACTIVE',
-      'PAID',
-      'ERROR',
       'CANCELLED',
+      'ERROR',
+      'PAID',
+      'PENDING',
+      'REJECTED',
     ]);
+  } else {
+    variables.status = ['ACTIVE', 'CANCELLED', 'PAID', 'REJECTED'];
   }
 
-  variables.filter = variables.filter.toUpperCase();
+  if (variables.tierSlug) {
+    variables.filter = 'INCOMING';
+  } else {
+    variables.filter = variables.filter.toUpperCase();
+  }
 
   try {
     const result = await getClient({ version: 'v2' }).request(query, variables);
