@@ -47,10 +47,9 @@ const accountOrders = async (req, res) => {
       'ERROR',
       'PAID',
       'PENDING',
-      'REJECTED',
     ]);
   } else {
-    variables.status = ['ACTIVE', 'CANCELLED', 'PAID', 'REJECTED'];
+    variables.status = ['ACTIVE', 'CANCELLED', 'PAID'];
   }
 
   if (variables.tierSlug) {
