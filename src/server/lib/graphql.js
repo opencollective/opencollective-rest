@@ -2,14 +2,9 @@ import { GraphQLClient } from 'graphql-request';
 
 import { getGraphqlUrl } from './utils';
 
-const clients = {};
-
 export function getClient({ apiKey, version } = {}) {
   version = version || 'v1';
-  if (!clients[version]) {
-    clients[version] = new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers: {} });
-  }
-  return clients[version];
+  return new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers: {} });
 }
 
 export async function fetchCollective(collectiveSlug) {
