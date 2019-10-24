@@ -2,11 +2,10 @@ import cors from 'cors';
 
 import controllers from './controllers';
 
+import { idOrUuid } from './lib/utils';
+
 const requireApiKey = (req, res, next) => {
-  req.apiKey = req.get('Api-Key') || req.query.apiKey || req.apiKey;
-  if (!req.apiKey) {
-    throw new Error('An API Key is required for this endpoint.');
-  }
+  req.apiKey = req.get('Api-Key') || req.query.apiKey;
   next();
 };
 
@@ -40,6 +39,8 @@ export const loadRoutes = app => {
     '/:version(v1)?/:collectiveSlug/events/:eventSlug/:role(attendees|followers|organizers|all).:format(json|csv)',
     controllers.members.list,
   );
+
+  app.param('idOrUuid', idOrUuid);
 
   // Get transactions of a collective given its slug.
   app.get('/v1/collectives/:collectiveSlug/transactions', requireApiKey, controllers.transactions.allTransactions);

@@ -7,8 +7,14 @@ import { getClient, allTransactionsQuery, getTransactionQuery } from '../lib/gra
  */
 export const allTransactions = async (req, res) => {
   try {
-    const args = pick(req.query, ['limit', 'offset', 'type', 'includeVirtualCards']);
+    const args = pick(req.query, ['limit', 'offset', 'type']);
     args.collectiveSlug = get(req, 'params.collectiveSlug');
+    if (args.limit) {
+      args.limit = Number(args.limit);
+    }
+    if (args.offset) {
+      args.offset = Number(args.offset);
+    }
     const response = await getClient({ apiKey: req.apiKey }).request(allTransactionsQuery, args);
     const result = get(response, 'allTransactions', []);
     res.send({ result });
@@ -42,6 +48,7 @@ export const getTransaction = async (req, res) => {
       res.send({ result });
     }
   } catch (error) {
+    console.log(error);
     res.status(400).send({ error: error.toString() });
   }
 };
