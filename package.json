@@ -25,25 +25,26 @@
     "winston": "^3.2.1"
   },
   "scripts": {
-    "start": "node dist/server",
-    "dev": "nodemon --exec babel-node -- src/server",
     "build": "npm run build:clean && npm run build:updates && npm run build:server",
     "build:clean": "rm -rf dist",
-    "build:updates": "npm --prefix node_modules/cloudflare-ip run update-list",
     "build:server": "babel --copy-files ./src --out-dir ./dist",
-    "test:server": "TZ=UTC ./scripts/run_server_tests.sh",
+    "build:updates": "npm --prefix node_modules/cloudflare-ip run update-list",
+    "commit": "git-cz",
     "deploy:production": "./scripts/pre-deploy.sh production && git push production master",
     "deploy:staging": "./scripts/pre-deploy.sh staging && git push -f staging master",
-    "git:clean": "./scripts/git_clean.sh",
-    "lint": "npm run eslint && npm run prettier:check",
+    "dev": "nodemon --exec babel-node -- src/server",
     "eslint": "eslint \"src/**/*.js\" \"test/**/*.js\"",
     "eslint:fix": "npm run eslint -- --fix",
     "eslint:quiet": "npm run eslint -- --quiet",
+    "git:clean": "./scripts/git_clean.sh",
+    "graphql:get-schema": "npm run graphql:update",
+    "graphql:update": "npx graphql-cli get-schema -p opencollective -e dev && prettier src/graphql/schema.graphql --write",
+    "lint": "npm run eslint && npm run prettier:check",
     "prettier": "prettier \"src/**/*.js\" \"test/**/*.js\"",
-    "prettier:write": "npm run prettier -- --write",
     "prettier:check": "npm run prettier -- --list-different",
-    "commit": "git-cz",
-    "graphql:get-schema": "npx graphql-cli get-schema -p opencollective -e dev && prettier src/graphql/schema.graphql --write"
+    "prettier:write": "npm run prettier -- --write",
+    "start": "node dist/server",
+    "test:server": "TZ=UTC ./scripts/run_server_tests.sh"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",
@@ -78,7 +79,7 @@
     }
   },
   "lint-staged": {
-    "*.js": [
+    "*.{js,json,md,graphql}": [
       "prettier --write",
       "git add"
     ]
