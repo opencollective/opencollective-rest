@@ -40,6 +40,8 @@ export const loadRoutes = app => {
     controllers.members.list,
   );
 
+  /* API v1 */
+
   app.param('idOrUuid', idOrUuid);
 
   // Get transactions of a collective given its slug.
@@ -49,6 +51,8 @@ export const loadRoutes = app => {
     requireApiKey,
     controllers.transactions.getTransaction,
   );
+
+  app.post('/v1/payment-methods', requireApiKey, controllers.paymentMethods.createPaymentMethod);
 
   /* API v2 */
 

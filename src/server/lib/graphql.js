@@ -190,3 +190,48 @@ export const getTransactionQuery = `
     }
   }
 `;
+
+export const createPaymentMethodQuery = `
+  mutation createPaymentMethod(
+    $amount: Int,
+    $monthlyLimitPerMember: Int,
+    $CollectiveId: Int!,
+    $PaymentMethodId: Int,
+    $description: String,
+    $expiryDate: String,
+    $type: String!,
+    $currency: String!,
+    $limitedToTags: [String],
+    $limitedToCollectiveIds: [Int],
+    $limitedToHostCollectiveIds: [Int]
+    ) {
+    createPaymentMethod(
+      amount: $amount,
+      monthlyLimitPerMember: $monthlyLimitPerMember,
+      CollectiveId: $CollectiveId,
+      PaymentMethodId: $PaymentMethodId,
+      description: $description,
+      expiryDate: $expiryDate,
+      type: $type,
+      currency: $currency,
+      limitedToTags: $limitedToTags,
+      limitedToCollectiveIds: $limitedToCollectiveIds,
+      limitedToHostCollectiveIds: $limitedToHostCollectiveIds
+      ) {
+      id
+      name
+      uuid
+      collective {
+        id
+      }
+      SourcePaymentMethodId
+      initialBalance
+      monthlyLimitPerMember
+      expiryDate
+      currency
+      limitedToTags
+      limitedToCollectiveIds
+      limitedToHostCollectiveIds
+    }
+  }
+`;
