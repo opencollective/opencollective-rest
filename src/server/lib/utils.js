@@ -1,17 +1,5 @@
 import { isNaN } from 'lodash';
 
-export const getBaseApiUrl = () => {
-  return process.env.API_URL;
-};
-
-export const getGraphqlUrl = ({ apiKey, version } = {}) => {
-  if (apiKey) {
-    return `${getBaseApiUrl()}/graphql/${version || 'v1'}?apiKey=${apiKey}`;
-  } else {
-    return `${getBaseApiUrl()}/graphql/${version || 'v1'}?api_key=${process.env.API_KEY}`;
-  }
-};
-
 /**
  * Gives the number of days between two dates
  */

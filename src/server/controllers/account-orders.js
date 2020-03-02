@@ -1,9 +1,13 @@
+import gql from 'graphql-tag';
+
 import { pick, intersection } from 'lodash';
 
 import { logger } from '../logger';
 import { getClient } from '../lib/graphql';
 
-const query = `query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $tierSlug: String, $limit: Int, $offset: Int) {
+const gqlV2 = gql;
+
+const query = gqlV2`query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $tierSlug: String, $limit: Int, $offset: Int) {
   account(slug: $slug) {
     orders(filter: $filter, status: $status, tierSlug: $tierSlug, limit: $limit, offset: $offset) {
       limit
@@ -59,8 +63,8 @@ const accountOrders = async (req, res) => {
   }
 
   try {
-    const result = await getClient({ version: 'v2' }).request(query, variables);
-    res.send(result.account.orders);
+    const result = await getClient({ version: 'v2' }).query({ query, variables });
+    res.send(result.data.account.orders);
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');

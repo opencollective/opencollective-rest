@@ -11,7 +11,7 @@ export async function createPaymentMethod(req, res) {
     throw new Error(`Creation of payment methods with type ${type} not allowed`);
   }
 
-  const args = pick(req.body, [
+  const variables = pick(req.body, [
     'description',
     'CollectiveId',
     'PaymentMethodId',
@@ -24,10 +24,10 @@ export async function createPaymentMethod(req, res) {
     'limitedToHostCollectiveIds',
   ]);
 
-  args.type = args.type || 'virtualcard';
+  variables.type = variables.type || 'virtualcard';
 
   try {
-    const response = await getClient({ apiKey: req.apiKey }).request(createPaymentMethodQuery, args);
+    const response = await getClient({ apiKey: req.apiKey }).query({ query: createPaymentMethodQuery, variables });
 
     const paymentMethod = get(response, 'data.createPaymentMethod');
     if (!paymentMethod) {

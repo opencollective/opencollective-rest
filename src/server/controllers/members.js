@@ -1,9 +1,10 @@
-import { GraphQLClient } from 'graphql-request';
 import moment from 'moment';
+import gql from 'graphql-tag';
 import { get } from 'lodash';
 
 import { logger } from '../logger';
-import { days, getGraphqlUrl, json2csv } from '../lib/utils';
+import { getClient } from '../lib/graphql';
+import { days, json2csv } from '../lib/utils';
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -27,73 +28,79 @@ export async function list(req, res, next) {
     headers.authorization = req.headers.authorization;
   }
 
-  const client = new GraphQLClient(getGraphqlUrl(), { headers });
-
-  const query = `
-  query Collective($collectiveSlug: String, $backerType: String, $tierSlug: String, $TierId: Int, $limit: Int, $offset: Int, $role: String) {
-    Collective(slug:$collectiveSlug) {
-      currency
-      members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
-        id
-        createdAt
-        role
-        stats {
-          totalDonations
-        }
-        transactions(limit: 1) {
+  const query = gql`
+    query Collective(
+      $collectiveSlug: String
+      $backerType: String
+      $tierSlug: String
+      $TierId: Int
+      $limit: Int
+      $offset: Int
+      $role: String
+    ) {
+      Collective(slug: $collectiveSlug) {
+        currency
+        members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
+          id
           createdAt
-          amount
-          currency
-        }
-        member {
-          type
-          slug
-          type
-          name
-          company
-          description
-          image
-          website
-          twitterHandle
-          githubHandle
-          connectedAccounts {
-            id
-            service
-            username
+          role
+          stats {
+            totalDonations
           }
-          ... on Organization {
-            email
+          transactions(limit: 1) {
+            createdAt
+            amount
+            currency
           }
-          ... on User {
-            email
+          member {
+            type
+            slug
+            type
+            name
+            company
+            description
+            image
+            website
+            twitterHandle
+            githubHandle
+            connectedAccounts {
+              id
+              service
+              username
+            }
+            ... on Organization {
+              email
+            }
+            ... on User {
+              email
+            }
           }
-        }
-        tier {
-          interval
-          name
+          tier {
+            interval
+            name
+          }
         }
       }
     }
-  }
   `;
-  const vars = { collectiveSlug: eventSlug || collectiveSlug };
-  if (role === 'attendees') vars.role = 'ATTENDEE';
-  if (role === 'followers') vars.role = 'FOLLOWER';
-  if (role === 'organizers') vars.role = 'ADMIN';
-  if (tierSlug) vars.tierSlug = tierSlug;
-  if (backerType) vars.backerType = backerType;
-  if (req.query.TierId) vars.TierId = Number(req.query.TierId);
-  if (req.query.limit) vars.limit = Number(req.query.limit);
-  if (req.query.offset) vars.offset = Number(req.query.offset);
+  const variables = { collectiveSlug: eventSlug || collectiveSlug };
+  if (role === 'attendees') variables.role = 'ATTENDEE';
+  if (role === 'followers') variables.role = 'FOLLOWER';
+  if (role === 'organizers') variables.role = 'ADMIN';
+  if (tierSlug) variables.tierSlug = tierSlug;
+  if (backerType) variables.backerType = backerType;
+  if (req.query.TierId) variables.TierId = Number(req.query.TierId);
+  if (req.query.limit) variables.limit = Number(req.query.limit);
+  if (req.query.offset) variables.offset = Number(req.query.offset);
 
   // Only return max 50 at a time
   if (req.params.format === 'json') {
-    vars.limit = Math.min(req.query.limit, 50);
+    variables.limit = Math.min(req.query.limit, 50);
   }
 
   let result;
   try {
-    result = await client.request(query, vars);
+    result = await getClient().query({ query, variables });
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');
@@ -102,7 +109,7 @@ export async function list(req, res, next) {
     return next(err);
   }
 
-  const members = result.Collective.members;
+  const members = result.data.Collective.members;
 
   const isActive = r => {
     if (!r.tier || !r.tier.interval) return true;
