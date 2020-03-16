@@ -1,7 +1,10 @@
+import debug from 'debug';
 import moment from 'moment';
 import { get, pick } from 'lodash';
 
 import { getClient, createPaymentMethodQuery } from '../lib/graphql';
+
+const debugPaymentMethods = debug('paymentMethods');
 
 export async function createPaymentMethod(req, res) {
   const type = get(req, 'body.type');
@@ -27,7 +30,11 @@ export async function createPaymentMethod(req, res) {
   args.type = args.type || 'virtualcard';
 
   try {
+    debugPaymentMethods({ args });
+
     const response = await getClient({ apiKey: req.apiKey }).request(createPaymentMethodQuery, args);
+
+    debugPaymentMethods({ response });
 
     const paymentMethod = get(response, 'data.createPaymentMethod');
     if (!paymentMethod) {
@@ -49,7 +56,8 @@ export async function createPaymentMethod(req, res) {
       redeemUrl: `${process.env.WEBSITE_URL}/redeem?code=${paymentMethod.uuid.substring(0, 8)}`,
     });
   } catch (error) {
-    console.log(error);
+    debugPaymentMethods({ error });
+
     if (error.response && error.response.errors) {
       const singleError = error.response.errors[0];
       res.status(400).send({ error: singleError.message });
