@@ -66,4 +66,6 @@ export const loadRoutes = app => {
     cors(),
     controllers.accountOrders,
   );
+
+  app.get('/v2/:slug/hosted.:format', cors(), controllers.collectives.hosted);
 };
