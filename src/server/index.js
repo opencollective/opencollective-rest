@@ -14,6 +14,7 @@ const app = express();
 app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'].concat(cloudflareIps));
 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
 
 app.use(loggerMiddleware.logger);
 app.use(loggerMiddleware.errorLogger);
