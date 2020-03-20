@@ -95,6 +95,7 @@ jobs:
           paths:
             - api/config
             - api/dist
+            - api/keys
             - api/migrations
             - api/node_modules
             - api/scripts
