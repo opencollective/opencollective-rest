@@ -36,7 +36,7 @@ export async function createPaymentMethod(req, res) {
 
     debugPaymentMethods({ response });
 
-    const paymentMethod = get(response, 'data.createPaymentMethod');
+    const paymentMethod = get(response, 'createPaymentMethod');
     if (!paymentMethod) {
       throw new Error('No paymentMethod returned.');
     }
