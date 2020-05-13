@@ -66,3 +66,13 @@ export function idOrUuid(req, res, next, idOrUuid) {
     })
     .catch(next);
 }
+
+/* Copied from https://github.com/jaydenseric/fake-tag */
+export function gql() {
+  const tagArgs = arguments;
+  return tagArgs[0].reduce((accumulator, string, index) => {
+    accumulator += string;
+    if (index + 1 in tagArgs) accumulator += tagArgs[index + 1];
+    return accumulator;
+  }, '');
+}

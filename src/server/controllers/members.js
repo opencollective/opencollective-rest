@@ -3,7 +3,7 @@ import moment from 'moment';
 import { get } from 'lodash';
 
 import { logger } from '../logger';
-import { days, getGraphqlUrl, json2csv } from '../lib/utils';
+import { days, getGraphqlUrl, json2csv, gql } from '../lib/utils';
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -29,52 +29,60 @@ export async function list(req, res, next) {
 
   const client = new GraphQLClient(getGraphqlUrl(), { headers });
 
-  const query = `
-  query Collective($collectiveSlug: String, $backerType: String, $tierSlug: String, $TierId: Int, $limit: Int, $offset: Int, $role: String) {
-    Collective(slug:$collectiveSlug) {
-      currency
-      members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
-        id
-        createdAt
-        role
-        stats {
-          totalDonations
-        }
-        transactions(limit: 1) {
+  const query = gql`
+    query Collective(
+      $collectiveSlug: String
+      $backerType: String
+      $tierSlug: String
+      $TierId: Int
+      $limit: Int
+      $offset: Int
+      $role: String
+    ) {
+      Collective(slug: $collectiveSlug) {
+        currency
+        members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
+          id
           createdAt
-          amount
-          currency
-        }
-        member {
-          type
-          slug
-          type
-          name
-          company
-          description
-          image
-          website
-          twitterHandle
-          githubHandle
-          connectedAccounts {
-            id
-            service
-            username
+          role
+          stats {
+            totalDonations
           }
-          ... on Organization {
-            email
+          transactions(limit: 1) {
+            createdAt
+            amount
+            currency
           }
-          ... on User {
-            email
+          member {
+            type
+            slug
+            type
+            name
+            company
+            description
+            image
+            website
+            twitterHandle
+            githubHandle
+            connectedAccounts {
+              id
+              service
+              username
+            }
+            ... on Organization {
+              email
+            }
+            ... on User {
+              email
+            }
           }
-        }
-        tier {
-          interval
-          name
+          tier {
+            interval
+            name
+          }
         }
       }
     }
-  }
   `;
   const vars = { collectiveSlug: eventSlug || collectiveSlug };
   if (role === 'attendees') vars.role = 'ATTENDEE';

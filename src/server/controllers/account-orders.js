@@ -2,38 +2,48 @@ import { pick, intersection } from 'lodash';
 
 import { logger } from '../logger';
 import { getClient } from '../lib/graphql';
+import { gql as gqlV2 } from '../lib/utils';
 
-const query = `query account($slug: String!, $filter: AccountOrdersFilter, $status: [OrderStatus], $tierSlug: String, $limit: Int, $offset: Int) {
-  account(slug: $slug) {
-    orders(filter: $filter, status: $status, tierSlug: $tierSlug, limit: $limit, offset: $offset) {
-      limit
-      offset
-      totalCount
-      nodes {
-        fromAccount {
-          name
-          slug
-          type
-          imageUrl
-          website
-          twitterHandle
+const query = gqlV2/* GraphQL */ `
+  query account(
+    $slug: String!
+    $filter: AccountOrdersFilter
+    $status: [OrderStatus]
+    $tierSlug: String
+    $limit: Int
+    $offset: Int
+  ) {
+    account(slug: $slug) {
+      orders(filter: $filter, status: $status, tierSlug: $tierSlug, limit: $limit, offset: $offset) {
+        limit
+        offset
+        totalCount
+        nodes {
+          fromAccount {
+            name
+            slug
+            type
+            imageUrl
+            website
+            twitterHandle
+          }
+          amount {
+            value
+          }
+          tier {
+            slug
+          }
+          frequency
+          status
+          totalDonations {
+            value
+          }
+          createdAt
         }
-        amount {
-          value
-        }
-        tier {
-          slug
-        }
-        frequency
-        status
-        totalDonations {
-          value
-        }
-        createdAt
       }
     }
   }
-}`;
+`;
 
 const accountOrders = async (req, res) => {
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);

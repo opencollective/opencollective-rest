@@ -1,0 +1,3853 @@
+# source: http://localhost:3060/graphql/v2
+# timestamp: Wed May 13 2020 23:11:18 GMT+0200 (Central European Summer Time)
+
+"""
+Account interface shared by all kind of accounts (Bot, Collective, Event, User, Organization)
+"""
+interface Account {
+  """
+  The public id identifying the account (ie: 5v08jk63-w4g9nbpz-j7qmyder-p7ozax5g)
+  """
+  id: String
+
+  """
+  The internal database identifier of the collective (ie: 580)
+  """
+  legacyId: Int @deprecated(reason: "2020-01-01: should only be used during the transition to GraphQL API v2.")
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+
+  """
+  The type of the account (BOT/COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
+  """
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+
+  """
+  The time of last update
+  """
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+  members(
+    limit: Int = 100
+    offset: Int = 0
+    role: [MemberRole]
+
+    """
+    Type of accounts (BOT/COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
+    """
+    accountType: [AccountType]
+  ): MemberCollection
+  memberOf(
+    limit: Int = 100
+    offset: Int = 0
+    role: [MemberRole]
+
+    """
+    Type of accounts (BOT/COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
+    """
+    accountType: [AccountType]
+  ): MemberOfCollection
+  transactions(
+    limit: Int = 100
+    offset: Int = 0
+
+    """
+    Type of transaction (DEBIT/CREDIT)
+    """
+    type: TransactionType
+    orderBy: ChronologicalOrderInput
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  The address associated to this account. This field is always public for collectives and events.
+  """
+  location: Location
+  stats: AccountStats
+}
+
+"""
+A collection of "Accounts"
+"""
+type AccountCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Account]
+}
+
+"""
+Account orders filter (INCOMING or OUTGOING)
+"""
+enum AccountOrdersFilter {
+  INCOMING
+  OUTGOING
+}
+
+input AccountReferenceInput {
+  """
+  The public id identifying the account (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+  """
+  id: String
+
+  """
+  The internal id of the account (ie: 580)
+  """
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel for https://opencollective.com/babel)
+  """
+  slug: String
+}
+
+"""
+Values that can be edited in Account's settings
+"""
+scalar AccountSettingsKey
+
+"""
+Stats for the Account
+"""
+type AccountStats {
+  id: Int
+
+  """
+  Amount of money in cents in the currency of the collective currently available to spend
+  """
+  balance: Amount
+
+  """
+  Average amount spent per month based on the last 90 days
+  """
+  monthlySpending: Amount
+
+  """
+  Total amount spent
+  """
+  totalAmountSpent: Amount
+
+  """
+  Net amount received
+  """
+  totalAmountReceived: Amount
+  yearlyBudget: Amount
+}
+
+"""
+All account types
+"""
+enum AccountType {
+  BOT
+  COLLECTIVE
+  EVENT
+  ORGANIZATION
+  INDIVIDUAL
+}
+
+"""
+An activity describing something that happened on the platform
+"""
+type Activity {
+  """
+  Unique identifier for this activity
+  """
+  id: String!
+
+  """
+  The type of the activity
+  """
+  type: ActivityType!
+
+  """
+  The date on which the ConnectedAccount was created
+  """
+  createdAt: DateTime!
+
+  """
+  The account concerned by this activity, if any
+  """
+  account: Account
+
+  """
+  The person who triggered the action, if any
+  """
+  individual: Individual
+}
+
+enum ActivityType {
+  ACTIVITY_ALL
+  CONNECTED_ACCOUNT_CREATED
+  COLLECTIVE_CREATED_GITHUB
+  COLLECTIVE_APPLY
+  COLLECTIVE_APPROVED
+  COLLECTIVE_REJECTED
+  COLLECTIVE_CREATED
+  COLLECTIVE_COMMENT_CREATED
+  COLLECTIVE_CONVERSATION_CREATED
+  COLLECTIVE_EXPENSE_CREATED
+  COLLECTIVE_EXPENSE_DELETED
+  COLLECTIVE_EXPENSE_UPDATED
+  COLLECTIVE_EXPENSE_REJECTED
+  COLLECTIVE_EXPENSE_APPROVED
+  COLLECTIVE_EXPENSE_UNAPPROVED
+  COLLECTIVE_EXPENSE_PAID
+  COLLECTIVE_EXPENSE_MARKED_AS_UNPAID
+  COLLECTIVE_EXPENSE_PROCESSING
+  COLLECTIVE_EXPENSE_ERROR
+  COLLECTIVE_MEMBER_CREATED
+  COLLECTIVE_TRANSACTION_CREATED
+  COLLECTIVE_UPDATE_CREATED
+  COLLECTIVE_UPDATE_PUBLISHED
+  COLLECTIVE_USER_ADDED
+  COLLECTIVE_CONTACT
+  ORGANIZATION_COLLECTIVE_CREATED
+  SUBSCRIPTION_CONFIRMED
+  SUBSCRIPTION_CANCELED
+  TICKET_CONFIRMED
+  USER_CREATED
+  WEBHOOK_STRIPE_RECEIVED
+  WEBHOOK_PAYPAL_RECEIVED
+  COLLECTIVE_MONTHLY
+  ORDERS_SUSPICIOUS
+  BACKYOURSTACK_DISPATCH_CONFIRMED
+  ADDED_FUND_TO_ORG
+  ACTIVATED_COLLECTIVE_AS_HOST
+  DEACTIVATED_COLLECTIVE_AS_HOST
+  COLLECTIVE_TRANSACTION_PAID
+}
+
+"""
+A financial amount.
+"""
+type Amount {
+  value: Float
+  currency: Currency
+}
+
+"""
+This represents a Bot account
+"""
+type Bot implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  The address associated to this account. This field is always public for collectives and events.
+  """
+  location: Location
+  stats: AccountStats
+}
+
+"""
+Input to order results chronologically
+"""
+input ChronologicalOrderInput {
+  """
+  Field to chronologically order by.
+  """
+  field: DateTimeField = CREATED_AT
+
+  """
+  Ordering direction.
+  """
+  direction: OrderDirection = DESC
+}
+
+"""
+Collection interface shared by all collection types
+"""
+interface Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+}
+
+"""
+This represents a Collective account
+"""
+type Collective implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  The address associated to this account. This field is always public for collectives and events.
+  """
+  location: Location
+  stats: AccountStats
+
+  """
+  Amount of money in cents in the currency of the collective currently available to spend
+  """
+  balance: Int @deprecated(reason: "2020/04/09 - Should not have been introduced. Use stats.balance.value")
+
+  """
+  Get the host collective that is receiving the money on behalf of this collective
+  """
+  host: Host
+
+  """
+  Return this collective approved date
+  """
+  approvedAt: DateTime
+
+  """
+  Returns whether this collective is approved
+  """
+  isApproved: Boolean
+
+  """
+  Number of unique financial contributors of the collective.
+  """
+  totalFinancialContributors(
+    """
+    Type of account (COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
+    """
+    accountType: AccountType
+  ): Int
+}
+
+input CollectiveCreateInput {
+  name: String!
+  slug: String!
+  description: String!
+  tags: [String]
+  githubHandle: String
+}
+
+"""
+This represents an Comment
+"""
+type Comment {
+  id: String
+  createdAt: DateTime
+  html: String
+  markdown: String
+  fromAccount: Account
+  account: Account
+  fromCollective: Account @deprecated(reason: "2020-02-25: Please use fromAccount")
+  collective: Account @deprecated(reason: "2020-02-25: Please use account")
+}
+
+"""
+A collection of "Comments"
+"""
+type CommentCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Comment]
+}
+
+input CommentCreateInput {
+  html: String
+
+  """
+  If your comment is linked to an expense, set it here
+  """
+  expense: ExpenseReferenceInput
+  ExpenseId: Int
+  ConversationId: String
+}
+
+input CommentUpdateInput {
+  id: String!
+  markdown: String
+  html: String
+}
+
+"""
+This represents a Connected Account
+"""
+type ConnectedAccount {
+  """
+  Unique identifier for this connected account
+  """
+  id: String!
+
+  """
+  The internal database identifier of the Connected Account (ie: 580)
+  """
+  legacyId: Int @deprecated(reason: "2020-05-01: should only be used during the transition to GraphQL API v2.")
+
+  """
+  The date on which the ConnectedAccount was created
+  """
+  createdAt: DateTime!
+
+  """
+  The date on which the ConnectedAccount was last updated
+  """
+  updatedAt: DateTime!
+  settings: JSON
+  service: ConnectedAccountService!
+}
+
+input ConnectedAccountCreateInput {
+  """
+  Optional Client ID for the token or secret
+  """
+  clientId: String
+
+  """
+  Private data related to the connected account
+  """
+  data: JSON
+
+  """
+  Refresh token for the connected account
+  """
+  refreshToken: String
+
+  """
+  Public data related to the connected account
+  """
+  settings: JSON
+
+  """
+  Secret token used to call service
+  """
+  token: String
+
+  """
+  Service which the connected account belongs to
+  """
+  service: ConnectedAccountService
+
+  """
+  Optional username for the connected account
+  """
+  username: String
+}
+
+input ConnectedAccountReferenceInput {
+  """
+  The public id identifying the connected account (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+  """
+  id: String
+
+  """
+  The internal id of the account (ie: 580)
+  """
+  legacyId: Int
+}
+
+"""
+All supported services a user can connect with
+"""
+enum ConnectedAccountService {
+  paypal
+  stripe
+  github
+  twitter
+  meetup
+  transferwise
+}
+
+"""
+A conversation thread
+"""
+type Conversation {
+  id: String!
+  slug: String!
+  title: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  tags: [String]
+  summary: String!
+  collective: Account
+  fromCollective: Account
+
+  """
+  The root comment / starter for this conversation
+  """
+  body: Comment
+
+  """
+  List the comments for this conversation. Not backed by a loader, don't use this in lists.
+  """
+  comments(limit: Int, offset: Int): CommentCollection
+  followers(limit: Int = 10, offset: Int = 0): AccountCollection
+  stats: ConversationStats
+}
+
+"""
+A collection of "Conversations"
+"""
+type ConversationCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Conversation]
+}
+
+type ConversationStats {
+  id: String!
+
+  """
+  Total number of comments for this conversation
+  """
+  commentsCount: Int
+}
+
+"""
+Two-letters country code following ISO3166_1
+"""
+enum CountryISO {
+  """
+  Afghanistan
+  """
+  AF
+
+  """
+  Åland Islands
+  """
+  AX
+
+  """
+  Albania
+  """
+  AL
+
+  """
+  Algeria
+  """
+  DZ
+
+  """
+  Andorra
+  """
+  AD
+
+  """
+  Angola
+  """
+  AO
+
+  """
+  Antigua and Barbuda
+  """
+  AG
+
+  """
+  Argentina
+  """
+  AR
+
+  """
+  Armenia
+  """
+  AM
+
+  """
+  Australia
+  """
+  AU
+
+  """
+  Austria
+  """
+  AT
+
+  """
+  Azerbaijan
+  """
+  AZ
+
+  """
+  The Bahamas
+  """
+  BS
+
+  """
+  Bahrain
+  """
+  BH
+
+  """
+  Bangladesh
+  """
+  BD
+
+  """
+  Barbados
+  """
+  BB
+
+  """
+  Belarus
+  """
+  BY
+
+  """
+  Belgium
+  """
+  BE
+
+  """
+  Belize
+  """
+  BZ
+
+  """
+  Benin
+  """
+  BJ
+
+  """
+  Bhutan
+  """
+  BT
+
+  """
+  Bolivia
+  """
+  BO
+
+  """
+  Bosnia and Herzegovina
+  """
+  BA
+
+  """
+  Botswana
+  """
+  BW
+
+  """
+  Brazil
+  """
+  BR
+
+  """
+  Brunei
+  """
+  BN
+
+  """
+  Bulgaria
+  """
+  BG
+
+  """
+  Burkina
+  """
+  BF
+
+  """
+  Burundi
+  """
+  BI
+
+  """
+  Cambodia
+  """
+  KH
+
+  """
+  Cameroon
+  """
+  CM
+
+  """
+  Canada
+  """
+  CA
+
+  """
+  Cape Verde
+  """
+  CV
+
+  """
+  The Central African Republic
+  """
+  CF
+
+  """
+  Chad
+  """
+  TD
+
+  """
+  Chile
+  """
+  CL
+
+  """
+  China
+  """
+  CN
+
+  """
+  Colombia
+  """
+  CO
+
+  """
+  The Comoros
+  """
+  KM
+
+  """
+  The Congo
+  """
+  CG
+
+  """
+  The Democratic Republic of the Congo
+  """
+  CD
+
+  """
+  Costa Rica
+  """
+  CR
+
+  """
+  Côte d'Ivoire
+  """
+  CI
+
+  """
+  Croatia
+  """
+  HR
+
+  """
+  Cuba
+  """
+  CU
+
+  """
+  Cyprus
+  """
+  CY
+
+  """
+  The Czech Republic
+  """
+  CZ
+
+  """
+  Denmark
+  """
+  DK
+
+  """
+  Djibouti
+  """
+  DJ
+
+  """
+  Dominica
+  """
+  DM
+
+  """
+  The Dominican Republic
+  """
+  DO
+
+  """
+  Timor-Leste
+  """
+  TL
+
+  """
+  Ecuador
+  """
+  EC
+
+  """
+  Egypt
+  """
+  EG
+
+  """
+  El Salvador
+  """
+  SV
+
+  """
+  Equatorial Guinea
+  """
+  GQ
+
+  """
+  Eritrea
+  """
+  ER
+
+  """
+  Estonia
+  """
+  EE
+
+  """
+  Ethiopia
+  """
+  ET
+
+  """
+  Fiji
+  """
+  FJ
+
+  """
+  Finland
+  """
+  FI
+
+  """
+  France
+  """
+  FR
+
+  """
+  Gabon
+  """
+  GA
+
+  """
+  The Gambia
+  """
+  GM
+
+  """
+  Georgia
+  """
+  GE
+
+  """
+  Germany
+  """
+  DE
+
+  """
+  Ghana
+  """
+  GH
+
+  """
+  Greece
+  """
+  GR
+
+  """
+  Grenada
+  """
+  GD
+
+  """
+  Guatemala
+  """
+  GT
+
+  """
+  Guernsey
+  """
+  GG
+
+  """
+  Guinea
+  """
+  GN
+
+  """
+  Guinea-Bissau
+  """
+  GW
+
+  """
+  Guyana
+  """
+  GY
+
+  """
+  Haiti
+  """
+  HT
+
+  """
+  The Holy See
+  """
+  VA
+
+  """
+  Honduras
+  """
+  HN
+
+  """
+  Hungary
+  """
+  HU
+
+  """
+  Iceland
+  """
+  IS
+
+  """
+  India
+  """
+  IN
+
+  """
+  Indonesia
+  """
+  ID
+
+  """
+  Iran
+  """
+  IR
+
+  """
+  Iraq
+  """
+  IQ
+
+  """
+  Ireland
+  """
+  IE
+
+  """
+  Isle of Man
+  """
+  IM
+
+  """
+  Israel
+  """
+  IL
+
+  """
+  Italy
+  """
+  IT
+
+  """
+  Jamaica
+  """
+  JM
+
+  """
+  Japan
+  """
+  JP
+
+  """
+  Jersey
+  """
+  JE
+
+  """
+  Jordan
+  """
+  JO
+
+  """
+  Kazakhstan
+  """
+  KZ
+
+  """
+  Kenya
+  """
+  KE
+
+  """
+  Kiribati
+  """
+  KI
+
+  """
+  The Democratic People's Republic of Korea
+  """
+  KP
+
+  """
+  The Republic of Korea
+  """
+  KR
+
+  """
+  Kuwait
+  """
+  KW
+
+  """
+  Kyrgyzstan
+  """
+  KG
+
+  """
+  Laos
+  """
+  LA
+
+  """
+  Latvia
+  """
+  LV
+
+  """
+  Lebanon
+  """
+  LB
+
+  """
+  Lesotho
+  """
+  LS
+
+  """
+  Liberia
+  """
+  LR
+
+  """
+  Libya
+  """
+  LY
+
+  """
+  Liechtenstein
+  """
+  LI
+
+  """
+  Lithuania
+  """
+  LT
+
+  """
+  Luxembourg
+  """
+  LU
+
+  """
+  Madagascar
+  """
+  MG
+
+  """
+  Malawi
+  """
+  MW
+
+  """
+  Malaysia
+  """
+  MY
+
+  """
+  Maldives
+  """
+  MV
+
+  """
+  Mali
+  """
+  ML
+
+  """
+  Malta
+  """
+  MT
+
+  """
+  The Marshall Islands
+  """
+  MH
+
+  """
+  Mauritania
+  """
+  MR
+
+  """
+  Mauritius
+  """
+  MU
+
+  """
+  Mexico
+  """
+  MX
+
+  """
+  Micronesia
+  """
+  FM
+
+  """
+  Moldova
+  """
+  MD
+
+  """
+  Monaco
+  """
+  MC
+
+  """
+  Mongolia
+  """
+  MN
+
+  """
+  Montenegro
+  """
+  ME
+
+  """
+  Morocco
+  """
+  MA
+
+  """
+  Mozambique
+  """
+  MZ
+
+  """
+  Myanmar
+  """
+  MM
+
+  """
+  Namibia
+  """
+  NA
+
+  """
+  Nauru
+  """
+  NR
+
+  """
+  Nepal
+  """
+  NP
+
+  """
+  The Netherlands
+  """
+  NL
+
+  """
+  New Zealand
+  """
+  NZ
+
+  """
+  Nicaragua
+  """
+  NI
+
+  """
+  The Niger
+  """
+  NE
+
+  """
+  Nigeria
+  """
+  NG
+
+  """
+  Norway
+  """
+  NO
+
+  """
+  Oman
+  """
+  OM
+
+  """
+  Pakistan
+  """
+  PK
+
+  """
+  Palau
+  """
+  PW
+
+  """
+  Panama
+  """
+  PA
+
+  """
+  Papua New Guinea
+  """
+  PG
+
+  """
+  Paraguay
+  """
+  PY
+
+  """
+  Peru
+  """
+  PE
+
+  """
+  The Philippines
+  """
+  PH
+
+  """
+  Poland
+  """
+  PL
+
+  """
+  Portugal
+  """
+  PT
+
+  """
+  Qatar
+  """
+  QA
+
+  """
+  Romania
+  """
+  RO
+
+  """
+  Russia
+  """
+  RU
+
+  """
+  Rwanda
+  """
+  RW
+
+  """
+  Saint Kitts and Nevis
+  """
+  KN
+
+  """
+  Saint Lucia
+  """
+  LC
+
+  """
+  Saint Vincent and The Grenadines
+  """
+  VC
+
+  """
+  Samoa
+  """
+  WS
+
+  """
+  San Marino
+  """
+  SM
+
+  """
+  Sao Tome and Principe
+  """
+  ST
+
+  """
+  Saudi Arabia
+  """
+  SA
+
+  """
+  Senegal
+  """
+  SN
+
+  """
+  Serbia
+  """
+  RS
+
+  """
+  Seychelles
+  """
+  SC
+
+  """
+  Sierra Leone
+  """
+  SL
+
+  """
+  Singapore
+  """
+  SG
+
+  """
+  Slovakia
+  """
+  SK
+
+  """
+  Slovenia
+  """
+  SI
+
+  """
+  Solomon Islands
+  """
+  SB
+
+  """
+  Somalia
+  """
+  SO
+
+  """
+  South Africa
+  """
+  ZA
+
+  """
+  Spain
+  """
+  ES
+
+  """
+  Sri Lanka
+  """
+  LK
+
+  """
+  The Sudan
+  """
+  SD
+
+  """
+  Suriname
+  """
+  SR
+
+  """
+  Swaziland
+  """
+  SZ
+
+  """
+  Sweden
+  """
+  SE
+
+  """
+  Switzerland
+  """
+  CH
+
+  """
+  Syria
+  """
+  SY
+
+  """
+  Tajikistan
+  """
+  TJ
+
+  """
+  Tanzania
+  """
+  TZ
+
+  """
+  Thailand
+  """
+  TH
+
+  """
+  Macedonia
+  """
+  MK
+
+  """
+  Togo
+  """
+  TG
+
+  """
+  Tonga
+  """
+  TO
+
+  """
+  Trinidad and Tobago
+  """
+  TT
+
+  """
+  Tunisia
+  """
+  TN
+
+  """
+  Turkey
+  """
+  TR
+
+  """
+  Turkmenistan
+  """
+  TM
+
+  """
+  Tuvalu
+  """
+  TV
+
+  """
+  Uganda
+  """
+  UG
+
+  """
+  Ukraine
+  """
+  UA
+
+  """
+  The United Arab Emirates
+  """
+  AE
+
+  """
+  The United Kingdom
+  """
+  GB
+
+  """
+  The United States
+  """
+  US
+
+  """
+  Uruguay
+  """
+  UY
+
+  """
+  Uzbekistan
+  """
+  UZ
+
+  """
+  Vanuatu
+  """
+  VU
+
+  """
+  Venezuela
+  """
+  VE
+
+  """
+  Viet Nam
+  """
+  VN
+
+  """
+  Yemen
+  """
+  YE
+
+  """
+  Zambia
+  """
+  ZM
+
+  """
+  Zimbabwe
+  """
+  ZW
+
+  """
+  American Samoa
+  """
+  AS
+
+  """
+  Anguilla
+  """
+  AI
+
+  """
+  Antarctica
+  """
+  AQ
+
+  """
+  Aruba
+  """
+  AW
+
+  """
+  Bermuda
+  """
+  BM
+
+  """
+  Bouvet Island
+  """
+  BV
+
+  """
+  The British Indian Ocean Territory
+  """
+  IO
+
+  """
+  Cayman Islands
+  """
+  KY
+
+  """
+  Christmas Island
+  """
+  CX
+
+  """
+  Cocos Islands
+  """
+  CC
+
+  """
+  Cook Islands
+  """
+  CK
+
+  """
+  Falkland Islands
+  """
+  FK
+
+  """
+  Faroe Islands
+  """
+  FO
+
+  """
+  French Guiana
+  """
+  GF
+
+  """
+  French Polynesia
+  """
+  PF
+
+  """
+  The French Southern Territories
+  """
+  TF
+
+  """
+  Gibraltar
+  """
+  GI
+
+  """
+  Greenland
+  """
+  GL
+
+  """
+  Guadeloupe
+  """
+  GP
+
+  """
+  Guam
+  """
+  GU
+
+  """
+  Heard Island and McDonald Islands
+  """
+  HM
+
+  """
+  Hong Kong
+  """
+  HK
+
+  """
+  Macao
+  """
+  MO
+
+  """
+  Martinique
+  """
+  MQ
+
+  """
+  Mayotte
+  """
+  YT
+
+  """
+  Montserrat
+  """
+  MS
+
+  """
+  Netherlands Antilles
+  """
+  AN
+
+  """
+  New Caledonia
+  """
+  NC
+
+  """
+  Niue
+  """
+  NU
+
+  """
+  Norfolk Island
+  """
+  NF
+
+  """
+  Northern Mariana Islands
+  """
+  MP
+
+  """
+  The Occupied Palestinian Territory
+  """
+  PS
+
+  """
+  Pitcairn
+  """
+  PN
+
+  """
+  Puerto Rico
+  """
+  PR
+
+  """
+  Réunion
+  """
+  RE
+
+  """
+  Saint Barthélemy
+  """
+  BL
+
+  """
+  Saint Helena
+  """
+  SH
+
+  """
+  Saint Martin
+  """
+  MF
+
+  """
+  Saint Pierre and Miquelon
+  """
+  PM
+
+  """
+  South Georgia and The South Sandwich Islands
+  """
+  GS
+
+  """
+  Svalbard and Jan Mayen
+  """
+  SJ
+
+  """
+  Taiwan
+  """
+  TW
+
+  """
+  Tokelau
+  """
+  TK
+
+  """
+  Turks and Caicos Islands
+  """
+  TC
+
+  """
+  United States Minor Outlying Islands
+  """
+  UM
+
+  """
+  British Virgin Islands
+  """
+  VG
+
+  """
+  US Virgin Islands
+  """
+  VI
+
+  """
+  Wallis and Futuna
+  """
+  WF
+
+  """
+  Western Sahara
+  """
+  EH
+}
+
+"""
+This represents a Credit transaction
+"""
+type Credit implements Transaction {
+  id: String
+  type: TransactionType
+  description: String
+  amount: Amount
+  netAmount: Amount
+  platformFee: Amount
+  hostFee: Amount
+  paymentProcessorFee: Amount
+  host: Account
+  createdAt: DateTime
+  updatedAt: DateTime
+  fromAccount: Account
+  toAccount: Account
+}
+
+"""
+All supported currencies
+"""
+enum Currency {
+  """
+  US Dollar
+  """
+  USD
+
+  """
+  Euro
+  """
+  EUR
+
+  """
+  Pound Sterling
+  """
+  GBP
+
+  """
+  Mexican Peso
+  """
+  MXN
+
+  """
+  Canadian Dollar
+  """
+  CAD
+
+  """
+  Swiss Franc
+  """
+  CHF
+
+  """
+  Peso Uruguayo
+  """
+  UYU
+
+  """
+  Australian Dollar
+  """
+  AUD
+
+  """
+  Indian Rupee
+  """
+  INR
+
+  """
+  Yen
+  """
+  JPY
+
+  """
+  New Zealand Dollar
+  """
+  NZD
+}
+
+scalar DateString
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the
+`date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO
+8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
+"""
+All possible DateTime fields for a resource
+"""
+enum DateTimeField {
+  """
+  The creation time of a resource
+  """
+  CREATED_AT
+}
+
+"""
+This represents a Debit transaction
+"""
+type Debit implements Transaction {
+  id: String
+  type: TransactionType
+  description: String
+  amount: Amount
+  netAmount: Amount
+  platformFee: Amount
+  hostFee: Amount
+  paymentProcessorFee: Amount
+  host: Account
+  createdAt: DateTime
+  updatedAt: DateTime
+  fromAccount: Account
+  toAccount: Account
+}
+
+"""
+This represents an Event account
+"""
+type Event implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  The address associated to this account. This field is always public for collectives and events.
+  """
+  location: Location
+  stats: AccountStats
+
+  """
+  Amount of money in cents in the currency of the collective currently available to spend
+  """
+  balance: Int @deprecated(reason: "2020/04/09 - Should not have been introduced. Use stats.balance.value")
+
+  """
+  Get the host collective that is receiving the money on behalf of this collective
+  """
+  host: Host
+
+  """
+  Returns whether this collective is approved
+  """
+  isApproved: Boolean
+
+  """
+  The collective hosting this event
+  """
+  parentCollective: Collective
+}
+
+"""
+This represents an Expense
+"""
+type Expense {
+  id: String!
+
+  """
+  Legacy ID as returned by API V1. Avoid relying on this field as it may be removed in the future.
+  """
+  legacyId: Int!
+
+  """
+  Title/main description for this expense
+  """
+  description: String!
+
+  """
+  Total amount of the expense (sum of the item's amounts).
+  """
+  amount: Int!
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime!
+
+  """
+  Currency that should be used for the payout
+  """
+  currency: Currency!
+
+  """
+  Whether this expense is a receipt or an invoice
+  """
+  type: ExpenseType!
+
+  """
+  The state of the expense (pending, approved, paid, rejected...etc)
+  """
+  status: ExpenseStatus!
+  comments(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: ASC }
+  ): CommentCollection!
+
+  """
+  The account where the expense was submitted
+  """
+  account: Account!
+
+  """
+  The account being paid by this expense
+  """
+  payee: Account!
+
+  """
+  The address of the payee
+  """
+  payeeLocation: Location
+
+  """
+  The account who created this expense
+  """
+  createdByAccount: Account
+
+  """
+  The payout method to use for this expense
+  """
+  payoutMethod: PayoutMethod
+
+  """
+  (Optional) files attached to the expense
+  """
+  attachedFiles: [ExpenseAttachedFile!]
+  attachments: [ExpenseItem] @deprecated(reason: "2020-04-08: Field has been renamed to \"items\"")
+  items: [ExpenseItem]
+
+  """
+  Additional information about the payment. Only visible to user and admins.
+  """
+  privateMessage: String
+
+  """
+  Information to display on the invoice. Only visible to user and admins.
+  """
+  invoiceInfo: String
+
+  """
+  The permissions given to current logged in user for this expense
+  """
+  permissions: ExpensePermissions!
+
+  """
+  The list of activities (ie. approved, edited, etc) for this expense ordered by date ascending
+  """
+  activities: [Activity!]!
+  tags: [String]!
+
+  """
+  Returns the list of legal documents required from the payee before the expense can be payed
+  """
+  requiredLegalDocuments: [LegalDocumentType]
+}
+
+"""
+Fields for an expense's attached file
+"""
+type ExpenseAttachedFile {
+  """
+  Unique identifier for this file
+  """
+  id: String!
+  url: URL
+}
+
+input ExpenseAttachedFileInput {
+  """
+  ID of the file
+  """
+  id: String
+
+  """
+  URL of the file
+  """
+  url: URL!
+}
+
+"""
+A collection of "Expenses"
+"""
+type ExpenseCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Expense]
+}
+
+input ExpenseCreateInput {
+  """
+  Main title of the expense
+  """
+  description: String!
+
+  """
+  Tags associated to the expense (ie. Food, Engineering...)
+  """
+  tags: [String]
+
+  """
+  The type of the expense
+  """
+  type: ExpenseType!
+
+  """
+  A private note that will be attached to your invoice
+  """
+  privateMessage: String
+
+  """
+  Tax ID, VAT number...etc This information will be printed on your invoice.
+  """
+  invoiceInfo: String
+
+  """
+  The payout method that will be used to reimburse the expense
+  """
+  payoutMethod: PayoutMethodInput!
+
+  """
+  @deprecated 2020-04-08: Please use the items field - The list of items for
+  this expense. Total amount will be computed from them.
+  """
+  attachments: [ExpenseItemCreateInput]
+
+  """
+  The list of items for this expense. Total amount will be computed from them.
+  """
+  items: [ExpenseItemCreateInput]
+
+  """
+  (Optional) A list of files that you want to attach to this expense
+  """
+  attachedFiles: [ExpenseAttachedFileInput!]
+
+  """
+  Account to reimburse
+  """
+  payee: AccountReferenceInput!
+
+  """
+  The address of the payee
+  """
+  payeeLocation: LocationInput
+}
+
+"""
+Fields for an expense item
+"""
+type ExpenseItem {
+  """
+  Unique identifier for this expense item
+  """
+  id: String!
+
+  """
+  Amount of this item
+  """
+  amount: Int!
+
+  """
+  The date on which the item was created
+  """
+  createdAt: DateTime!
+
+  """
+  The date on which the item was last updated
+  """
+  updatedAt: DateTime!
+
+  """
+  The date on which the expense took place
+  """
+  incurredAt: DateTime!
+
+  """
+  A description for this item. Enforced for new items, but old expenses may not have one.
+  """
+  description: String
+  url: URL
+}
+
+input ExpenseItemCreateInput {
+  """
+  Amount in cents
+  """
+  amount: Int!
+
+  """
+  What is this item about?
+  """
+  description: String!
+
+  """
+  URL of the file linked to this item. Must be provided if the expense type is RECEIPT.
+  """
+  url: URL
+
+  """
+  When was the money spent?
+  """
+  incurredAt: DateString
+}
+
+input ExpenseItemInput {
+  """
+  ID of the item
+  """
+  id: String
+
+  """
+  Amount in cents
+  """
+  amount: Int
+
+  """
+  What is this item about?
+  """
+  description: String
+
+  """
+  URL of the file linked to this item. Must be provided if the expense type is RECEIPT.
+  """
+  url: URL
+
+  """
+  When was the money spent?
+  """
+  incurredAt: DateString
+}
+
+"""
+Fields for the user permissions on an expense
+"""
+type ExpensePermissions {
+  """
+  Whether the current user can edit the expense
+  """
+  canEdit: Boolean!
+
+  """
+  Whether the current user can edit the expense
+  """
+  canDelete: Boolean!
+
+  """
+  Whether the current user can the the invoice info for this expense
+  """
+  canSeeInvoiceInfo: Boolean!
+
+  """
+  Whether the current user can trigger the payment for this expense
+  """
+  canPay: Boolean!
+
+  """
+  Whether the current user can approve this expense
+  """
+  canApprove: Boolean!
+
+  """
+  Whether the current user can unapprove this expense
+  """
+  canUnapprove: Boolean!
+
+  """
+  Whether the current user can reject this expense
+  """
+  canReject: Boolean!
+
+  """
+  Whether the current user can mark this expense as unpaid
+  """
+  canMarkAsUnpaid: Boolean!
+}
+
+"""
+All supported expense types
+"""
+enum ExpenseProcessAction {
+  """
+  To mark the expense as approved
+  """
+  APPROVE
+
+  """
+  To mark the expense as pending after it has been approved
+  """
+  UNAPPROVE
+
+  """
+  To mark the expense as rejected
+  """
+  REJECT
+
+  """
+  To mark the expense as rejected
+  """
+  MARK_AS_UNPAID
+
+  """
+  To trigger the payment
+  """
+  PAY
+}
+
+input ExpenseReferenceInput {
+  """
+  The public id identifying the expense (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+  """
+  id: String
+
+  """
+  The internal id of the expense (ie: 580)
+  """
+  legacyId: Int
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  ERROR
+  PAID
+}
+
+"""
+All supported expense types
+"""
+enum ExpenseType {
+  """
+  Invoice: Get paid back for a purchase already made.
+  """
+  INVOICE
+
+  """
+  Receipt: Charge for your time or get paid in advance
+  """
+  RECEIPT
+
+  """
+  Unclassified expense
+  """
+  UNCLASSIFIED
+}
+
+input ExpenseUpdateInput {
+  """
+  ID of the expense that you are trying to edit
+  """
+  id: String!
+
+  """
+  Main title of the expense
+  """
+  description: String
+
+  """
+  Tags associated to the expense (ie. Food, Engineering...)
+  """
+  tags: [String]
+
+  """
+  The type of the expense
+  """
+  type: ExpenseType
+
+  """
+  A private note that will be attached to your invoice
+  """
+  privateMessage: String
+
+  """
+  Tax ID, VAT number...etc This information will be printed on your invoice.
+  """
+  invoiceInfo: String
+
+  """
+  The payout method that will be used to reimburse the expense
+  """
+  payoutMethod: PayoutMethodInput
+
+  """
+  @deprecated 2020-04-08: Please use the items field - The list of items for
+  this expense. Total amount will be computed from them.
+  """
+  attachments: [ExpenseItemInput]
+
+  """
+  The list of items for this expense. Total amount will be computed from them.
+  """
+  items: [ExpenseItemInput]
+
+  """
+  (Optional) A list of files that you want to attach to this expense
+  """
+  attachedFiles: [ExpenseAttachedFileInput!]
+
+  """
+  Account to reimburse
+  """
+  payee: AccountReferenceInput
+
+  """
+  The address of the payee
+  """
+  payeeLocation: LocationInput
+}
+
+"""
+This represents an Host account
+"""
+type Host implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  The address associated to this account. This field is always public for collectives and events.
+  """
+  location: Location
+  stats: AccountStats
+  hostFeePercent: Int
+  totalHostedCollectives: Int
+  isOpenToApplications: Boolean
+  termsUrl: URL
+  plan: HostPlan!
+}
+
+"""
+A collection of "Hosts"
+"""
+type HostCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Host]
+}
+
+"""
+The name of the current plan and its characteristics.
+"""
+type HostPlan {
+  """
+  The name of the plan
+  """
+  name: String
+
+  """
+  Number of collectives hosted
+  """
+  hostedCollectives: Int
+
+  """
+  Max number of collectives than can be hosted
+  """
+  hostedCollectivesLimit: Int
+
+  """
+  Wether this plan allows to use the added funds feature
+  """
+  addedFunds: Int
+
+  """
+  Amount limit for the added funds feature under this plan
+  """
+  addedFundsLimit: Int
+
+  """
+  Wether this plan allows to use the host dashboard
+  """
+  hostDashboard: Boolean
+
+  """
+  Wether this plan allows to use the manual payments feature
+  """
+  manualPayments: Boolean
+
+  """
+  Wether this plan allows to use the bank transfers feature
+  """
+  bankTransfers: Int
+
+  """
+  Amount limit for the bank transfers feature under this plan
+  """
+  bankTransfersLimit: Int
+
+  """
+  Wether this plan allows to use the transferwise payouts feature
+  """
+  transferwisePayouts: Int
+
+  """
+  Amount limit for the transferwise payouts feature under this plan
+  """
+  transferwisePayoutsLimit: Int
+}
+
+enum ImageFormat {
+  txt
+  png
+  jpg
+  gif
+  svg
+}
+
+"""
+This represents an Individual account
+"""
+type Individual implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  Address. This field is public for hosts, otherwise:
+    - Users can see their own address
+    - Hosts can see the address of users submitting expenses to their collectives
+  """
+  location: Location
+  stats: AccountStats
+  firstName: String
+  lastName: String
+  email: String
+  isFollowingConversation(id: String!): Boolean!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+"""
+Type for a required legal document
+"""
+enum LegalDocumentType {
+  """
+  US tax form (W9)
+  """
+  US_TAX_FORM
+}
+
+"""
+Type for Geographic location
+"""
+type Location {
+  """
+  A short name for the location (eg. Open Collective Headquarters)
+  """
+  name: String
+
+  """
+  Postal address without country (eg. 12 opensource avenue, 7500 Paris)
+  """
+  address: String
+
+  """
+  Two letters country code (eg. FR, BE...etc)
+  """
+  country: String
+
+  """
+  Latitude
+  """
+  lat: Float
+
+  """
+  Longitude
+  """
+  long: Float
+}
+
+"""
+Input type for Geographic location
+"""
+input LocationInput {
+  """
+  A short name for the location (eg. Open Collective Headquarters)
+  """
+  name: String
+
+  """
+  Postal address without country (eg. 12 opensource avenue, 7500 Paris)
+  """
+  address: String
+
+  """
+  Two letters country code (eg. FR, BE...etc)
+  """
+  country: CountryISO
+
+  """
+  Latitude
+  """
+  lat: Float
+
+  """
+  Longitude
+  """
+  long: Float
+}
+
+"""
+This represents a Member relationship (ie: Organization backing a Collective)
+"""
+type Member {
+  id: String
+  role: MemberRole
+  tier: Tier
+  createdAt: DateTime
+  updatedAt: DateTime
+  since: DateTime
+
+  """
+  Total amount donated
+  """
+  totalDonations: Amount
+  account: Account
+}
+
+"""
+A collection of "Members" (ie: Organization backing a Collective)
+"""
+type MemberCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Member]
+}
+
+"""
+This represents a MemberOf relationship (ie: Collective backed by an Organization)
+"""
+type MemberOf {
+  id: String
+  role: MemberRole
+  tier: Tier
+  createdAt: DateTime
+  updatedAt: DateTime
+  since: DateTime
+
+  """
+  Total amount donated
+  """
+  totalDonations: Amount
+  account: Account
+}
+
+"""
+A collection of "MemberOf" (ie: Collective backed by an Organization)
+"""
+type MemberOfCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [MemberOf]
+}
+
+"""
+All member roles
+"""
+enum MemberRole {
+  BACKER
+  ADMIN
+  CONTRIBUTOR
+  HOST
+  ATTENDEE
+  MEMBER
+  FUNDRAISER
+  FOLLOWER
+}
+
+"""
+This is the root mutation
+"""
+type Mutation {
+  editComment(comment: CommentUpdateInput!): Comment
+  deleteComment(id: String!): Comment
+  createComment(comment: CommentCreateInput!): Comment
+
+  """
+  Connect external account to Open Collective Account
+  """
+  createConnectedAccount(
+    """
+    Connected Account data
+    """
+    connectedAccount: ConnectedAccountCreateInput!
+
+    """
+    Account where the external account will be connected
+    """
+    account: AccountReferenceInput!
+  ): ConnectedAccount
+
+  """
+  Delete ConnectedAccount
+  """
+  deleteConnectedAccount(
+    """
+    ConnectedAccount reference containing either id or legacyId
+    """
+    connectedAccount: ConnectedAccountReferenceInput!
+  ): ConnectedAccount
+
+  """
+  Create a conversation
+  """
+  createConversation(
+    """
+    Conversation's title
+    """
+    title: String!
+
+    """
+    The body of the conversation initial comment
+    """
+    html: String!
+
+    """
+    ID of the Collective where the conversation will be created
+    """
+    CollectiveId: String!
+
+    """
+    A list of tags for this conversation
+    """
+    tags: [String]
+  ): Conversation
+  editConversation(
+    """
+    Conversation's id
+    """
+    id: String!
+
+    """
+    Conversation's title
+    """
+    title: String!
+
+    """
+    A list of tags for this conversation
+    """
+    tags: [String]
+  ): Conversation
+
+  """
+  Returns true if user is following, false otherwise. Must be authenticated.
+  """
+  followConversation(
+    """
+    Conversation's id
+    """
+    id: String!
+
+    """
+    Set this to false to unfollow the conversation
+    """
+    isActive: Boolean = true
+  ): Boolean
+  createCollective(
+    """
+    Information about the collective to create (name, slug, description, tags, ...)
+    """
+    collective: CollectiveCreateInput!
+
+    """
+    Reference to the host to apply on creation.
+    """
+    host: AccountReferenceInput
+
+    """
+    Wether to trigger the automated approval for Open Source collectives with GitHub.
+    """
+    automateApprovalWithGithub: Boolean = false
+  ): Collective
+
+  """
+  Submit an expense to a collective
+  """
+  createExpense(
+    """
+    Expense data
+    """
+    expense: ExpenseCreateInput!
+
+    """
+    Account where the expense will be created
+    """
+    account: AccountReferenceInput!
+  ): Expense!
+
+  """
+  To update an existing expense
+  """
+  editExpense(
+    """
+    Expense data
+    """
+    expense: ExpenseUpdateInput!
+  ): Expense!
+
+  """
+  Delete an expense. Only work if the expense is rejected - please check permissions.canDelete.
+  """
+  deleteExpense(
+    """
+    Reference of the expense to delete
+    """
+    expense: ExpenseReferenceInput!
+  ): Expense!
+
+  """
+  Process the expense with the given action
+  """
+  processExpense(
+    """
+    Reference of the expense to process
+    """
+    expense: ExpenseReferenceInput!
+
+    """
+    The action to trigger
+    """
+    action: ExpenseProcessAction!
+
+    """
+    If action is related to a payment, this object used for the payment parameters
+    """
+    paymentParams: ProcessExpensePaymentParams
+  ): Expense!
+
+  """
+  Edit the settings for the given account
+  """
+  editAccountSetting(
+    """
+    Account where the settings will be updated
+    """
+    account: AccountReferenceInput!
+
+    """
+    The key that you want to edit in settings
+    """
+    key: AccountSettingsKey!
+
+    """
+    The value to set for this key
+    """
+    value: JSON!
+  ): Account!
+
+  """
+  Apply to an host with a collective
+  """
+  applyToHost(
+    """
+    Account applying to the host.
+    """
+    collective: AccountReferenceInput!
+
+    """
+    Host to apply to.
+    """
+    host: AccountReferenceInput!
+  ): Collective!
+
+  """
+  Create a new Payout Method to get paid through the platform
+  """
+  createPayoutMethod(
+    """
+    Payout Method data
+    """
+    payoutMethod: PayoutMethodInput!
+
+    """
+    Account where the payout method will be associated
+    """
+    account: AccountReferenceInput!
+  ): PayoutMethod
+}
+
+"""
+Order model
+"""
+type Order {
+  id: String
+  description: String
+  amount: Amount
+  status: OrderStatus
+  frequency: OrderFrequency
+  tier: Tier
+  fromAccount: Account
+  toAccount: Account
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  UNSUPPORTED: Total amount donated between collectives
+  """
+  totalDonations: Amount
+}
+
+"""
+A collection of "Orders"
+"""
+type OrderCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Order]
+}
+
+"""
+Possible directions in which to order a list of items
+"""
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+enum OrderFrequency {
+  MONTHLY
+  YEARLY
+  ONETIME
+}
+
+"""
+All order statuses
+"""
+enum OrderStatus {
+  ACTIVE
+  CANCELLED
+  PENDING
+  PAID
+  ERROR
+  EXPIRED
+}
+
+"""
+This represents an Organization account
+"""
+type Organization implements Account {
+  id: String
+  legacyId: Int
+
+  """
+  The slug identifying the account (ie: babel)
+  """
+  slug: String
+  type: AccountType
+  name: String
+  description: String
+  longDescription: String
+  tags: [String]
+  website: String
+  twitterHandle: String
+  githubHandle: String
+  currency: String
+  expensePolicy: String
+  imageUrl(height: Int, format: ImageFormat): String
+
+  """
+  The time of creation
+  """
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  Returns whether this account is archived
+  """
+  isArchived: Boolean
+
+  """
+  Get all members (admins, members, backers, followers)
+  """
+  members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
+  memberOf(
+    limit: Int
+    offset: Int
+    role: [MemberRole]
+    accountType: [AccountType]
+
+    """
+    Filter on whether the account is a host or not
+    """
+    isHostAccount: Boolean
+
+    """
+    Wether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
+    """
+    includeIncognito: Boolean = true
+  ): MemberOfCollection
+  transactions(
+    type: TransactionType
+    limit: Int = 100
+    offset: Int = 0
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): TransactionCollection
+  orders(
+    limit: Int = 100
+    offset: Int = 0
+    filter: AccountOrdersFilter
+    status: [OrderStatus]
+    tierSlug: String
+    orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
+  ): OrderCollection
+  settings: JSON
+  conversations(
+    limit: Int
+    offset: Int
+
+    """
+    Only return conversations matching this tag
+    """
+    tag: String
+  ): ConversationCollection
+
+  """
+  Returns conversation's tags for collective sorted by popularity
+  """
+  conversationsTags(limit: Int = 30): [TagStat]
+
+  """
+  Returns expense tags for collective sorted by popularity
+  """
+  expensesTags(limit: Int = 30): [TagStat]
+  transferwise: TransferWise
+
+  """
+  The list of payout methods that this collective can use to get paid
+  """
+  payoutMethods: [PayoutMethod]
+
+  """
+  The list of connected accounts (Stripe, Twitter, etc ...)
+  """
+  connectedAccounts: [ConnectedAccount]
+
+  """
+  Address. This field is public for hosts, otherwise:
+    - Users can see the addresses of the collectives they're admin of
+    - Hosts can see the address of organizations submitting expenses to their collectives
+  """
+  location: Location
+  stats: AccountStats
+  email: String
+}
+
+"""
+A payout method
+"""
+type PayoutMethod {
+  """
+  Unique identifier for this payout method
+  """
+  id: String!
+
+  """
+  The type of this payout method (usually the payment provider)
+  """
+  type: PayoutMethodType
+
+  """
+  A friendly name for users to easily find their payout methods
+  """
+  name: String
+
+  """
+  Whether this payout method has been saved to be used for future payouts
+  """
+  isSaved: Boolean
+
+  """
+  The actual data for this payout method. Content depends on the type.
+  """
+  data: JSON
+}
+
+input PayoutMethodInput {
+  id: String
+  data: JSON
+  name: String
+  isSaved: Boolean
+  type: PayoutMethodType
+}
+
+enum PayoutMethodType {
+  OTHER
+  PAYPAL
+  BANK_ACCOUNT
+}
+
+"""
+Parameters for paying an expense
+"""
+input ProcessExpensePaymentParams {
+  """
+  The fee charged by payment processor in collective currency, or the fee refunded when used with MARK_AS_UNPAID
+  """
+  paymentProcessorFee: Int
+
+  """
+  Bypass automatic integrations (ie. PayPal, Transferwise) to process the expense manually
+  """
+  forceManual: Boolean
+}
+
+"""
+This is the root query
+"""
+type Query {
+  account(
+    """
+    The public id identifying the Account (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+    """
+    id: String
+
+    """
+    The slug identifying the Account (ie: babel for https://opencollective.com/babel)
+    """
+    slug: String
+
+    """
+    The githubHandle attached to the Account (ie: babel for https://opencollective.com/babel)
+    """
+    githubHandle: String
+
+    """
+    If false, will return null instead of an error if the Account is not found
+    """
+    throwIfMissing: Boolean = true
+  ): Account
+  collective(
+    """
+    The public id identifying the Collective (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+    """
+    id: String
+
+    """
+    The slug identifying the Collective (ie: babel for https://opencollective.com/babel)
+    """
+    slug: String
+
+    """
+    The githubHandle attached to the Collective (ie: babel for https://opencollective.com/babel)
+    """
+    githubHandle: String
+
+    """
+    If false, will return null instead of an error if the Collective is not found
+    """
+    throwIfMissing: Boolean = true
+  ): Collective
+  host(
+    """
+    The public id identifying the Host (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+    """
+    id: String
+
+    """
+    The slug identifying the Host (ie: babel for https://opencollective.com/babel)
+    """
+    slug: String
+
+    """
+    The githubHandle attached to the Host (ie: babel for https://opencollective.com/babel)
+    """
+    githubHandle: String
+
+    """
+    If false, will return null instead of an error if the Host is not found
+    """
+    throwIfMissing: Boolean = true
+  ): Host
+  individual(
+    """
+    The public id identifying the Individual (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
+    """
+    id: String
+
+    """
+    The slug identifying the Individual (ie: babel for https://opencollective.com/babel)
+    """
+    slug: String
+
+    """
+    The githubHandle attached to the Individual (ie: babel for https://opencollective.com/babel)
+    """
+    githubHandle: String
+
+    """
+    If false, will return null instead of an error if the Individual is not found
+    """
+    throwIfMissing: Boolean = true
+  ): Individual
+  conversation(
+    """
+    The id identifying the conversation
+    """
+    id: String!
+  ): Conversation
+  expenses(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int = 0
+
+    """
+    Reference of the account that submitted this expense
+    """
+    fromAccount: AccountReferenceInput
+
+    """
+    Reference of the account where this expense was submitted
+    """
+    account: AccountReferenceInput
+
+    """
+    Use this field to filter expenses on their statuses
+    """
+    status: ExpenseStatus
+
+    """
+    Use this field to filter expenses on their type (RECEIPT/INVOICE)
+    """
+    type: ExpenseType
+
+    """
+    Only expenses that match these tags
+    """
+    tags: [String]
+
+    """
+    The order of results
+    """
+    orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+  ): ExpenseCollection
+  expense(
+    """
+    Public expense identifier
+    """
+    id: String
+
+    """
+    Identifiers to retrieve the expense.
+    """
+    expense: ExpenseReferenceInput
+  ): Expense
+  hosts(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int = 0
+
+    """
+    Filter hosts by tags (multiple = OR)
+    """
+    tags: [String]
+  ): HostCollection
+  loggedInAccount: Account
+}
+
+"""
+Statistics for a given tag
+"""
+type TagStat {
+  """
+  An unique identified for this tag
+  """
+  id: String!
+
+  """
+  Name/Label of the tag
+  """
+  tag: String!
+
+  """
+  Number of entries for this tag
+  """
+  count: Int!
+}
+
+"""
+Tier model
+"""
+type Tier {
+  id: String
+  slug: String
+  name: String
+  description: String
+
+  """
+  Get all orders
+  """
+  orders(limit: Int = 100, offset: Int = 0, status: [OrderStatus]): OrderCollection
+}
+
+"""
+Transaction interface shared by all kind of transactions (Debit, Credit)
+"""
+interface Transaction {
+  id: String
+  type: TransactionType
+  description: String
+  amount: Amount
+  netAmount: Amount
+  platformFee: Amount
+  hostFee: Amount
+  paymentProcessorFee: Amount
+  host: Account
+  fromAccount: Account
+  toAccount: Account
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+A collection of Transactions (Debit or Credit)
+"""
+type TransactionCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Transaction]
+}
+
+"""
+All transaction types
+"""
+enum TransactionType {
+  DEBIT
+  CREDIT
+}
+
+"""
+TransferWise related properties for bank transfer.
+"""
+type TransferWise {
+  requiredFields(
+    """
+    The 3 letter code identifying the currency you want to receive (ie: USD, EUR, BRL, GBP)
+    """
+    currency: String!
+  ): [TransferWiseRequiredField]
+  availableCurrencies: [String]
+}
+
+type TransferWiseField {
+  name: String
+  group: [TransferWiseFieldGroup]
+}
+
+type TransferWiseFieldGroup {
+  key: String
+  name: String
+  type: String
+  required: Boolean
+  displayFormat: String
+  example: String
+  minLength: Int
+  maxLength: Int
+  validationRegexp: String
+  validationAsync: String
+  valuesAllowed: [TransferWiseFieldVatvkluesAllowed]
+}
+
+type TransferWiseFieldVatvkluesAllowed {
+  key: String
+  name: String
+}
+
+type TransferWiseRequiredField {
+  type: String
+  title: String
+  fields: [TransferWiseField]
+}
+
+"""
+A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+"""
+scalar URL
