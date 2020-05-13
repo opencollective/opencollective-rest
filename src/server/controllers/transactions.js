@@ -1,6 +1,6 @@
 import { get, pick } from 'lodash';
 
-import { getClient, allTransactionsQuery, getTransactionQuery } from '../lib/graphql';
+import { allTransactionsQuery, getClient, getTransactionQuery } from '../lib/graphql';
 
 /**
  * Get array of all transactions of a collective given its slug

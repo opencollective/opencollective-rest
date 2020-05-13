@@ -1,11 +1,12 @@
 import '../env';
 
 import http from 'http';
-import express from 'express';
-import cloudflareIps from 'cloudflare-ip/ips.json';
 
+import cloudflareIps from 'cloudflare-ip/ips.json';
+import express from 'express';
+
+import { logger, loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
-import { loggerMiddleware, logger } from './logger';
 
 const port = process.env.PORT || 3003;
 

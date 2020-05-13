@@ -1,8 +1,7 @@
 import cors from 'cors';
 
-import controllers from './controllers';
-
 import { idOrUuid } from './lib/utils';
+import controllers from './controllers';
 
 const requireApiKey = (req, res, next) => {
   req.apiKey = req.get('Api-Key') || req.query.apiKey;

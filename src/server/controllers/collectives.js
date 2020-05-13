@@ -1,7 +1,7 @@
 import { get, pick } from 'lodash';
 
-import { logger } from '../logger';
 import { fetchCollective } from '../lib/graphql';
+import { logger } from '../logger';
 
 export async function info(req, res, next) {
   // Keeping the resulting image for 1h in the CDN cache (we purge that cache on deploy)

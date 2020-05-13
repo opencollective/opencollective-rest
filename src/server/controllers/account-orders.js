@@ -1,8 +1,8 @@
-import { pick, intersection } from 'lodash';
+import { intersection, pick } from 'lodash';
 
-import { logger } from '../logger';
 import { getClient } from '../lib/graphql';
 import { gql as gqlV2 } from '../lib/utils';
+import { logger } from '../logger';
 
 const query = gqlV2/* GraphQL */ `
   query account(

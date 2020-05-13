@@ -1,5 +1,5 @@
-import { logger } from '../logger';
 import { fetchEvent, fetchEvents } from '../lib/graphql';
+import { logger } from '../logger';
 
 export async function list(req, res, next) {
   // Keeping the resulting info for 10m in the CDN cache

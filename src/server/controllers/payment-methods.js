@@ -1,8 +1,8 @@
 import debug from 'debug';
-import moment from 'moment';
 import { get, pick } from 'lodash';
+import moment from 'moment';
 
-import { getClient, createPaymentMethodQuery } from '../lib/graphql';
+import { createPaymentMethodQuery, getClient } from '../lib/graphql';
 
 const debugPaymentMethods = debug('paymentMethods');
 
