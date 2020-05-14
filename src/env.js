@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 import debug from 'debug';
 import dotenv from 'dotenv';
 
@@ -11,6 +13,9 @@ const defaults = {
   API_KEY: '09u624Pc9F47zoGLlkg1TBSbOl2ydSAq',
   API_URL: 'https://api-staging.opencollective.com',
   WEBSITE_URL: 'https://staging.opencollective.com',
+  OC_APPLICATION: 'rest',
+  OC_ENV: process.env.NODE_ENV || 'development',
+  OC_SECRET: crypto.randomBytes(16).toString('hex'),
 };
 
 for (const key in defaults) {

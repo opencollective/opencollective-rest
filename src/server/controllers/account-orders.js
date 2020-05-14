@@ -1,7 +1,7 @@
+import gqlV2 from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
-import { getClient } from '../lib/graphql';
-import { gql as gqlV2 } from '../lib/utils';
+import { graphqlRequest } from '../lib/graphql';
 import { logger } from '../logger';
 
 const query = gqlV2/* GraphQL */ `
@@ -69,7 +69,7 @@ const accountOrders = async (req, res) => {
   }
 
   try {
-    const result = await getClient({ version: 'v2' }).request(query, variables);
+    const result = await graphqlRequest(query, variables, { version: 'v2' });
     res.send(result.account.orders);
   } catch (err) {
     if (err.message.match(/No collective found/)) {

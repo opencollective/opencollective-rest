@@ -1,15 +1,25 @@
-import { GraphQLClient } from 'graphql-request';
+import ApolloClient from 'apollo-boost';
+import gql from 'graphql-tag';
+import fetch from 'node-fetch';
 
-import { getGraphqlUrl, gql } from './utils';
+import { getGraphqlUrl } from './utils';
 
-export function getClient({ apiKey, version } = {}) {
-  version = version || 'v1';
-  return new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers: {} });
+export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
+  headers['oc-env'] = process.env.OC_ENV;
+  headers['oc-secret'] = process.env.OC_SECRET;
+  headers['oc-application'] = process.env.OC_APPLICATION;
+  return new ApolloClient({ fetch, headers, uri: getGraphqlUrl({ version, apiKey }) });
+}
+
+export function graphqlRequest(query, variables, clientParameters) {
+  return getClient(clientParameters)
+    .query({ query, variables })
+    .then(result => result.data);
 }
 
 export async function fetchCollective(collectiveSlug) {
   const query = gql`
-    query Collective($collectiveSlug: String) {
+    query fetchCollective($collectiveSlug: String) {
       Collective(slug: $collectiveSlug) {
         id
         slug
@@ -27,13 +37,13 @@ export async function fetchCollective(collectiveSlug) {
     }
   `;
 
-  const result = await getClient().request(query, { collectiveSlug });
+  const result = await graphqlRequest(query, { collectiveSlug });
   return result.Collective;
 }
 
 export async function fetchEvents(parentCollectiveSlug, options = { limit: 10 }) {
   const query = gql`
-    query allEvents($slug: String!, $limit: Int) {
+    query fetchEvents($slug: String!, $limit: Int) {
       allEvents(slug: $slug, limit: $limit) {
         id
         name
@@ -53,7 +63,7 @@ export async function fetchEvents(parentCollectiveSlug, options = { limit: 10 })
     }
   `;
 
-  const result = await getClient().request(query, {
+  const result = await graphqlRequest(query, {
     slug: parentCollectiveSlug,
     limit: options.limit || 10,
   });
@@ -90,7 +100,7 @@ export async function fetchEvent(eventSlug) {
     }
   `;
 
-  const result = await getClient().request(query, { slug: eventSlug });
+  const result = await graphqlRequest(query, { slug: eventSlug });
   return result.Collective;
 }
 

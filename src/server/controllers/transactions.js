@@ -1,6 +1,6 @@
 import { get, pick } from 'lodash';
 
-import { allTransactionsQuery, getClient, getTransactionQuery } from '../lib/graphql';
+import { allTransactionsQuery, getTransactionQuery, graphqlRequest } from '../lib/graphql';
 
 /**
  * Get array of all transactions of a collective given its slug
@@ -15,7 +15,9 @@ export const allTransactions = async (req, res) => {
     if (args.offset) {
       args.offset = Number(args.offset);
     }
-    const response = await getClient({ apiKey: req.apiKey }).request(allTransactionsQuery, args);
+    const response = await graphqlRequest(allTransactionsQuery, args, {
+      apiKey: req.apiKey,
+    });
     const result = get(response, 'allTransactions', []);
     res.send({ result });
   } catch (error) {
@@ -37,7 +39,9 @@ export const allTransactions = async (req, res) => {
 export const getTransaction = async (req, res) => {
   try {
     const args = pick(req.params, ['id', 'uuid']);
-    const response = await getClient({ apiKey: req.apiKey }).request(getTransactionQuery, args);
+    const response = await graphqlRequest(getTransactionQuery, args, {
+      apiKey: req.apiKey,
+    });
     if (response.errors) {
       throw new Error(response.errors[0]);
     }

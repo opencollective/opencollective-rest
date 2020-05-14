@@ -1,8 +1,9 @@
-import { GraphQLClient } from 'graphql-request';
+import gql from 'graphql-tag';
 import { get } from 'lodash';
 import moment from 'moment';
 
-import { days, getGraphqlUrl, gql, json2csv } from '../lib/utils';
+import { graphqlRequest } from '../lib/graphql';
+import { days, json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
 export async function list(req, res, next) {
@@ -26,8 +27,6 @@ export async function list(req, res, next) {
     res.setHeader('cache-control', 'no-cache'); // don't cache at CDN level as the result contains private information
     headers.authorization = req.headers.authorization;
   }
-
-  const client = new GraphQLClient(getGraphqlUrl(), { headers });
 
   const query = gql`
     query Collective(
@@ -101,7 +100,7 @@ export async function list(req, res, next) {
 
   let result;
   try {
-    result = await client.request(query, vars);
+    result = await graphqlRequest(query, vars, { headers });
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');

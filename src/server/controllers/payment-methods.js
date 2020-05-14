@@ -2,7 +2,7 @@ import debug from 'debug';
 import { get, pick } from 'lodash';
 import moment from 'moment';
 
-import { createPaymentMethodQuery, getClient } from '../lib/graphql';
+import { createPaymentMethodQuery, graphqlRequest } from '../lib/graphql';
 
 const debugPaymentMethods = debug('paymentMethods');
 
@@ -32,7 +32,7 @@ export async function createPaymentMethod(req, res) {
   try {
     debugPaymentMethods({ args });
 
-    const response = await getClient({ apiKey: req.apiKey }).request(createPaymentMethodQuery, args);
+    const response = await graphqlRequest(createPaymentMethodQuery, args, { apiKey: req.apiKey });
 
     debugPaymentMethods({ response });
 
