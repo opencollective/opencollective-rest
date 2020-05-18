@@ -1,4 +1,5 @@
 import ApolloClient from 'apollo-boost';
+import { GraphQLClient } from 'graphql-request';
 import gql from 'graphql-tag';
 import fetch from 'node-fetch';
 
@@ -15,6 +16,14 @@ export function graphqlRequest(query, variables, clientParameters) {
   return getClient(clientParameters)
     .query({ query, variables })
     .then(result => result.data);
+}
+
+export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey, headers = {} } = {}) {
+  headers['oc-env'] = process.env.OC_ENV;
+  headers['oc-secret'] = process.env.OC_SECRET;
+  headers['oc-application'] = process.env.OC_APPLICATION;
+  const client = new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers });
+  return client.request(query, variables);
 }
 
 export async function fetchCollective(collectiveSlug) {

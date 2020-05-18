@@ -1,10 +1,15 @@
-import gql from 'graphql-tag';
 import { get } from 'lodash';
 import moment from 'moment';
 
-import { graphqlRequest } from '../lib/graphql';
+import { simpleGraphqlRequest } from '../lib/graphql';
 import { days, json2csv } from '../lib/utils';
 import { logger } from '../logger';
+
+// Emulate gql from graphql-tag
+const gql = string =>
+  String(string)
+    .replace(`\n`, ` `)
+    .trim();
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -29,7 +34,7 @@ export async function list(req, res, next) {
   }
 
   const query = gql`
-    query Collective(
+    query collectiveMembers(
       $collectiveSlug: String
       $backerType: String
       $tierSlug: String
@@ -100,7 +105,7 @@ export async function list(req, res, next) {
 
   let result;
   try {
-    result = await graphqlRequest(query, vars, { headers });
+    result = await simpleGraphqlRequest(query, vars, { headers });
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');
