@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gqlV2 from 'graphql-tag';
 import { get, isEmpty, pick } from 'lodash';
 
 import { fetchCollective, graphqlRequest } from '../lib/graphql';
@@ -40,7 +40,7 @@ export async function hosted(req, res) {
     headers.authorization = req.headers.authorization;
   }
 
-  const query = gql`
+  const query = gqlV2/* GraphQL */ `
     query fetchHostedCollectives($slug: String, $limit: Int) {
       host(slug: $slug) {
         memberOf(role: HOST, limit: $limit, accountType: COLLECTIVE) {

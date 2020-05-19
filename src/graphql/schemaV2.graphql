@@ -451,6 +451,11 @@ type Collective implements Account {
   isArchived: Boolean
 
   """
+  Return whether this account is active
+  """
+  isActive: Boolean
+
+  """
   Get all members (admins, members, backers, followers)
   """
   members(limit: Int = 100, offset: Int = 0, role: [MemberRole], accountType: [AccountType]): MemberCollection
