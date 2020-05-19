@@ -1,6 +1,7 @@
-import { get, isEmpty,pick } from 'lodash';
+import gql from 'graphql-tag';
+import { get, isEmpty, pick } from 'lodash';
 
-import { fetchCollective, getClient } from '../lib/graphql';
+import { fetchCollective, graphqlRequest } from '../lib/graphql';
 import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
@@ -30,52 +31,64 @@ export async function info(req, res, next) {
   res.send(response);
 }
 
-const query = `
-query($slug: String){
-  account(slug: $slug) {
-    memberOf(role: HOST){
-      nodes{
-        account {
-          ... on Collective {
-            name
-            slug
-            description
-            currency
-            isArchived
-            updatedAt
-            approvedAt
-            totalFinancialContributors
-            stats {
-              balance {
-                value
+export async function hosted(req, res) {
+  const { slug } = req.params;
+
+  const headers = {};
+  if (req.headers.authorization) {
+    res.setHeader('cache-control', 'no-cache'); // don't cache at CDN level as the result contains private information
+    headers.authorization = req.headers.authorization;
+  }
+
+  const query = gql`
+    query fetchHostedCollectives($slug: String, $limit: Int) {
+      host(slug: $slug) {
+        memberOf(role: HOST, limit: $limit, accountType: COLLECTIVE) {
+          nodes {
+            account {
+              ... on Collective {
+                name
+                slug
+                description
+                currency
+                isArchived
+                updatedAt
+                approvedAt
+                totalFinancialContributors
+                isActive
+                stats {
+                  balance {
+                    value
+                  }
+                  yearlyBudget {
+                    value
+                  }
+                }
               }
-              yearlyBudget {
-                value
-              }
-            }
-            members(role: ADMIN) {
-              nodes {
-                account{
-                  ... on Individual {
-                    name
-                    email
+              members(role: ADMIN) {
+                nodes {
+                  role
+                  account {
+                    ... on Individual {
+                      email
+                      name
+                    }
                   }
                 }
               }
             }
-          } 
+          }
         }
       }
     }
-  }
-}
-`;
+  `;
 
-export async function hosted(req, res) {
+  const vars = { slug: slug };
+  if (req.params.limit) vars.limit = req.params.limit;
+
   try {
-    const response = await getClient({ version: 'v2' }).request(query, { slug: req.params.slug });
-    const hostedCollectives = get(response, 'account.memberOf.nodes');
-
+    const response = await graphqlRequest(query, vars, { version: 'v2', headers });
+    const hostedCollectives = get(response, 'host.memberOf.nodes');
     if (isEmpty(hostedCollectives)) {
       res.json([]);
       return;
@@ -84,18 +97,13 @@ export async function hosted(req, res) {
     const data = hostedCollectives.map(collective => {
       const { account } = collective;
       const result = {
-        ...pick(account, [
-          'name',
-          'currency',
-          'description',
-          'updatedAt',
-          'isArchived',
-          'approvedAt',
-          'totalFinancialContributors',
-        ]),
+        ...pick(account, ['name', 'currency', 'description', 'updatedAt', 'approvedAt', 'totalFinancialContributors']),
+        isActive: String(get(account, 'isActive')),
+        isArchived: String(get(account, 'isArchived')),
         balance: get(account, 'stats.balance.value'),
         yearlyBudget: get(account, 'stats.yearlyBudget.value'),
-        admins: [],
+        adminNames: [],
+        adminEmails: [],
       };
 
       const slug = get(account, 'slug');
@@ -106,8 +114,14 @@ export async function hosted(req, res) {
         return result;
       }
 
-      result.admins = members.map(member => member.account);
+      for (const member of members) {
+        const {
+          account: { name, email },
+        } = member;
 
+        result.adminNames.push(name);
+        result.adminEmails.push(email);
+      }
       return result;
     });
 
