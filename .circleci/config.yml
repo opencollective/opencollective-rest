@@ -64,6 +64,8 @@ jobs:
     environment:
       NODE_ENV: circleci
       E2E_TEST: 1
+      PGHOST: localhost
+      PGUSER: postgres
     steps:
       - run: sudo apt -y update
 
