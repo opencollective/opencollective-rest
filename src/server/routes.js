@@ -13,6 +13,8 @@ export const loadRoutes = app => {
     res.send('This is the Open Collective REST API.');
   });
 
+  app.use(cors({ origin: process.env.WEBSITE_URL }));
+
   /**
    * Prevent indexation from search engines
    */
