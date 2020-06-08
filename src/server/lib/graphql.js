@@ -9,6 +9,7 @@ export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
   headers['oc-env'] = process.env.OC_ENV;
   headers['oc-secret'] = process.env.OC_SECRET;
   headers['oc-application'] = process.env.OC_APPLICATION;
+  headers['user-agent'] = 'opencollective-rest/1.0';
   return new ApolloClient({ fetch, headers, uri: getGraphqlUrl({ version, apiKey }) });
 }
 
@@ -22,6 +23,7 @@ export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey,
   headers['oc-env'] = process.env.OC_ENV;
   headers['oc-secret'] = process.env.OC_SECRET;
   headers['oc-application'] = process.env.OC_APPLICATION;
+  headers['user-agent'] = 'opencollective-rest/1.0';
   const client = new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers });
   return client.request(query, variables);
 }

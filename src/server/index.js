@@ -1,10 +1,9 @@
 import '../env';
 
-import http from 'http';
-
 import cloudflareIps from 'cloudflare-ip/ips.json';
 import express from 'express';
 
+import * as hyperwatch from './lib/hyperwatch';
 import { logger, loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
@@ -17,17 +16,13 @@ app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'].concat(cloudflar
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json({ limit: '50mb' }));
 
+hyperwatch.setupMiddleware(app);
+
 app.use(loggerMiddleware.logger);
 app.use(loggerMiddleware.errorLogger);
 
 loadRoutes(app);
 
-const httpServer = http.createServer(app);
-
-httpServer.on('error', err => {
-  logger.error(`Can't start server on http://localhost:${port}. %s`, err);
-});
-
-httpServer.listen(port, () => {
+app.listen(port, () => {
   logger.info(`Ready on http://localhost:${port}`);
 });
