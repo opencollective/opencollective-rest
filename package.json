@@ -11,13 +11,16 @@
     "npm": "6.12.0"
   },
   "dependencies": {
+    "@hyperwatch/hyperwatch": "^3.3.0",
     "apollo-boost": "^0.4.8",
     "cloudflare-ip": "^0.0.7",
     "cors": "^2.8.5",
     "debug": "^4.1.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-basic-auth": "^1.2.0",
     "express-winston": "^4.0.3",
+    "express-ws": "^4.0.0",
     "graphql": "^14.6.0",
     "graphql-request": "^1.8.2",
     "graphql-tag": "^2.10.3",
