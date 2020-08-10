@@ -1,8 +1,6 @@
 # Open Collective REST API
 
-[![Circle CI](https://circleci.com/gh/opencollective/opencollective-rest/tree/master.svg?style=shield)](https://circleci.com/gh/opencollective/opencollective-rest/tree/master)
 [![Dependency Status](https://david-dm.org/opencollective/opencollective-rest/status.svg)](https://david-dm.org/opencollective/opencollective-rest)
-[![Greenkeeper badge](https://badges.greenkeeper.io/opencollective/opencollective-rest.svg)](https://greenkeeper.io/)
 
 ## Foreword
 
@@ -101,5 +99,5 @@ URL: https://rest.opencollective.com/
 ## Discussion
 
 If you have any questions, ping us on Slack
-(https://slack.opencollective.org) or on Twitter
+(https://slack.opencollective.com) or on Twitter
 ([@opencollect](https://twitter.com/opencollect)).
