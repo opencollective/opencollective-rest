@@ -1,7 +1,6 @@
 # Open Collective REST API
 
 [![Circle CI](https://circleci.com/gh/opencollective/opencollective-rest/tree/master.svg?style=shield)](https://circleci.com/gh/opencollective/opencollective-rest/tree/master)
-[![Slack Status](https://slack.opencollective.org/badge.svg)](https://slack.opencollective.org)
 [![Dependency Status](https://david-dm.org/opencollective/opencollective-rest/status.svg)](https://david-dm.org/opencollective/opencollective-rest)
 [![Greenkeeper badge](https://badges.greenkeeper.io/opencollective/opencollective-rest.svg)](https://greenkeeper.io/)
 
