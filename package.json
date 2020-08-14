@@ -24,7 +24,7 @@
     "graphql": "^14.6.0",
     "graphql-request": "^1.8.2",
     "graphql-tag": "^2.10.3",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "winston": "^3.2.1"
