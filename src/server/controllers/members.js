@@ -119,7 +119,7 @@ export async function list(req, res, next) {
   const isActive = r => {
     if (!r.tier || !r.tier.interval) return true;
     if (!r.transactions[0] || !r.transactions[0].createdAt) return false;
-    if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 31) return true;
+    if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 60) return true;
     if (r.tier.interval === 'year' && days(new Date(r.transactions[0].createdAt)) <= 365) return true;
     return false;
   };
