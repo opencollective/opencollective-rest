@@ -116,20 +116,8 @@ export async function fetchEvent(eventSlug) {
 }
 
 export const allTransactionsQuery = gql`
-  query allTransactions(
-    $collectiveSlug: String!
-    $limit: Int
-    $offset: Int
-    $type: String
-    $includeVirtualCards: Boolean
-  ) {
-    allTransactions(
-      collectiveSlug: $collectiveSlug
-      limit: $limit
-      offset: $offset
-      type: $type
-      includeVirtualCards: $includeVirtualCards
-    ) {
+  query allTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String) {
+    allTransactions(collectiveSlug: $collectiveSlug, limit: $limit, offset: $offset, type: $type) {
       id
       uuid
       type
@@ -220,51 +208,6 @@ export const getTransactionQuery = gql`
           }
         }
       }
-    }
-  }
-`;
-
-export const createPaymentMethodQuery = gql`
-  mutation createPaymentMethod(
-    $amount: Int
-    $monthlyLimitPerMember: Int
-    $CollectiveId: Int!
-    $PaymentMethodId: Int
-    $description: String
-    $expiryDate: String
-    $type: String!
-    $currency: String!
-    $limitedToTags: [String]
-    $limitedToCollectiveIds: [Int]
-    $limitedToHostCollectiveIds: [Int]
-  ) {
-    createPaymentMethod(
-      amount: $amount
-      monthlyLimitPerMember: $monthlyLimitPerMember
-      CollectiveId: $CollectiveId
-      PaymentMethodId: $PaymentMethodId
-      description: $description
-      expiryDate: $expiryDate
-      type: $type
-      currency: $currency
-      limitedToTags: $limitedToTags
-      limitedToCollectiveIds: $limitedToCollectiveIds
-      limitedToHostCollectiveIds: $limitedToHostCollectiveIds
-    ) {
-      id
-      name
-      uuid
-      collective {
-        id
-      }
-      SourcePaymentMethodId
-      initialBalance
-      monthlyLimitPerMember
-      expiryDate
-      currency
-      limitedToTags
-      limitedToCollectiveIds
-      limitedToHostCollectiveIds
     }
   }
 `;
