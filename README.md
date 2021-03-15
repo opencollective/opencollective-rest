@@ -78,7 +78,7 @@ OC_SLACK_USER_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # Before first deployment, configure staging remote
 git remote add staging https://git.heroku.com/oc-staging-rest-api.git
 
-# Then deploy master with
+# Then deploy main with
 npm run deploy:staging
 ```
 
@@ -90,7 +90,7 @@ URL: https://rest-staging.opencollective.com/
 # Before first deployment, configure production remote
 git remote add production https://git.heroku.com/oc-prod-rest-api.git
 
-# Then deploy master with
+# Then deploy main with
 npm run deploy:production
 ```
 
