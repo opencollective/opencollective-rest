@@ -46,7 +46,7 @@ LOCAL_ORIGIN="origin"
 PRE_DEPLOY_ORIGIN="predeploy-${1}"
 
 LOCAL_BRANCH="main"
-PRE_DEPLOY_BRANCH="main"
+PRE_DEPLOY_BRANCH="master"
 
 GIT_LOG_FORMAT_SHELL='short'
 GIT_LOG_FORMAT_SLACK='format:<https://github.com/opencollective/opencollective-rest/commit/%H|[%ci]> *%an* %n_%<(80,trunc)%s_%n'
