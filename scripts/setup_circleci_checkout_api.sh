@@ -9,7 +9,7 @@ if curl -s --head  --request GET "${API_TARBALL_URL}${CIRCLE_BRANCH}" | grep "20
 then
   BRANCH=$CIRCLE_BRANCH;
 else
-  BRANCH="master";
+  BRANCH="main";
 fi
 
 # If we already have an archive of the branch locally (in ~/cache)

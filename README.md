@@ -1,9 +1,6 @@
 # Open Collective REST API
 
-[![Circle CI](https://circleci.com/gh/opencollective/opencollective-rest/tree/master.svg?style=shield)](https://circleci.com/gh/opencollective/opencollective-rest/tree/master)
-[![Slack Status](https://slack.opencollective.org/badge.svg)](https://slack.opencollective.org)
 [![Dependency Status](https://david-dm.org/opencollective/opencollective-rest/status.svg)](https://david-dm.org/opencollective/opencollective-rest)
-[![Greenkeeper badge](https://badges.greenkeeper.io/opencollective/opencollective-rest.svg)](https://greenkeeper.io/)
 
 ## Foreword
 
@@ -81,7 +78,7 @@ OC_SLACK_USER_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # Before first deployment, configure staging remote
 git remote add staging https://git.heroku.com/oc-staging-rest-api.git
 
-# Then deploy master with
+# Then deploy main with
 npm run deploy:staging
 ```
 
@@ -93,7 +90,7 @@ URL: https://rest-staging.opencollective.com/
 # Before first deployment, configure production remote
 git remote add production https://git.heroku.com/oc-prod-rest-api.git
 
-# Then deploy master with
+# Then deploy main with
 npm run deploy:production
 ```
 
@@ -102,5 +99,5 @@ URL: https://rest.opencollective.com/
 ## Discussion
 
 If you have any questions, ping us on Slack
-(https://slack.opencollective.org) or on Twitter
+(https://slack.opencollective.com) or on Twitter
 ([@opencollect](https://twitter.com/opencollect)).

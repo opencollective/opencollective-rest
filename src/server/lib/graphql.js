@@ -9,6 +9,7 @@ export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
   headers['oc-env'] = process.env.OC_ENV;
   headers['oc-secret'] = process.env.OC_SECRET;
   headers['oc-application'] = process.env.OC_APPLICATION;
+  headers['user-agent'] = 'opencollective-rest/1.0';
   return new ApolloClient({ fetch, headers, uri: getGraphqlUrl({ version, apiKey }) });
 }
 
@@ -22,6 +23,7 @@ export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey,
   headers['oc-env'] = process.env.OC_ENV;
   headers['oc-secret'] = process.env.OC_SECRET;
   headers['oc-application'] = process.env.OC_APPLICATION;
+  headers['user-agent'] = 'opencollective-rest/1.0';
   const client = new GraphQLClient(getGraphqlUrl({ apiKey, version }), { headers });
   return client.request(query, variables);
 }
@@ -114,20 +116,8 @@ export async function fetchEvent(eventSlug) {
 }
 
 export const allTransactionsQuery = gql`
-  query allTransactions(
-    $collectiveSlug: String!
-    $limit: Int
-    $offset: Int
-    $type: String
-    $includeVirtualCards: Boolean
-  ) {
-    allTransactions(
-      collectiveSlug: $collectiveSlug
-      limit: $limit
-      offset: $offset
-      type: $type
-      includeVirtualCards: $includeVirtualCards
-    ) {
+  query allTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String) {
+    allTransactions(collectiveSlug: $collectiveSlug, limit: $limit, offset: $offset, type: $type) {
       id
       uuid
       type
@@ -218,51 +208,6 @@ export const getTransactionQuery = gql`
           }
         }
       }
-    }
-  }
-`;
-
-export const createPaymentMethodQuery = gql`
-  mutation createPaymentMethod(
-    $amount: Int
-    $monthlyLimitPerMember: Int
-    $CollectiveId: Int!
-    $PaymentMethodId: Int
-    $description: String
-    $expiryDate: String
-    $type: String!
-    $currency: String!
-    $limitedToTags: [String]
-    $limitedToCollectiveIds: [Int]
-    $limitedToHostCollectiveIds: [Int]
-  ) {
-    createPaymentMethod(
-      amount: $amount
-      monthlyLimitPerMember: $monthlyLimitPerMember
-      CollectiveId: $CollectiveId
-      PaymentMethodId: $PaymentMethodId
-      description: $description
-      expiryDate: $expiryDate
-      type: $type
-      currency: $currency
-      limitedToTags: $limitedToTags
-      limitedToCollectiveIds: $limitedToCollectiveIds
-      limitedToHostCollectiveIds: $limitedToHostCollectiveIds
-    ) {
-      id
-      name
-      uuid
-      collective {
-        id
-      }
-      SourcePaymentMethodId
-      initialBalance
-      monthlyLimitPerMember
-      expiryDate
-      currency
-      limitedToTags
-      limitedToCollectiveIds
-      limitedToHostCollectiveIds
     }
   }
 `;

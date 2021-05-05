@@ -53,8 +53,6 @@ export const loadRoutes = app => {
     controllers.transactions.getTransaction,
   );
 
-  app.post('/v1/payment-methods', requireApiKey, controllers.paymentMethods.createPaymentMethod);
-
   /* API v2 */
 
   app.get(
