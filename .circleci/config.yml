@@ -18,7 +18,7 @@ aliases:
 jobs:
   lint:
     docker:
-      - image: circleci/node:12.13.0
+      - image: cimg/node:14.16.1
     environment:
       NODE_ENV: circleci
 
@@ -32,7 +32,7 @@ jobs:
 
   build:
     docker:
-      - image: circleci/node:12.13.0
+      - image: cimg/node:14.16.1
     environment:
       NODE_ENV: circleci
 
@@ -59,10 +59,10 @@ jobs:
 
   build-api:
     docker:
-      - image: circleci/node:12.13.0
+      - image: cimg/node:14.16.1
       - image: circleci/postgres:9.6.8-alpine-postgis-ram
     environment:
-      NODE_ENV: circleci
+      OC_ENV: ci
       E2E_TEST: 1
     steps:
       - run: sudo apt -y update
@@ -73,7 +73,6 @@ jobs:
       - checkout
 
       - run: ./scripts/setup_circleci_checkout_api.sh
-
       - restore_cache:
           keys:
             - npm-api-cache-{{ checksum "package.json" }}
@@ -108,7 +107,7 @@ jobs:
 
   test-server:
     docker:
-      - image: circleci/node:12.13.0
+      - image: cimg/node:14.16.1
       - image: circleci/postgres:9.6.8-alpine-postgis-ram
       - image: circleci/redis
       - image: memcached
