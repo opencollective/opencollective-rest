@@ -4,7 +4,7 @@
 
 cd ~
 
-API_TARBALL_URL="https://codeload.github.com/opencollective/opencollective-api/tar.gz/";
+API_TARBALL_URL="https://codeload.github.com/opencollective/opencollective-api/legacy.tar.gz/refs/heads/";
 if curl -s --head  --request GET "${API_TARBALL_URL}${CIRCLE_BRANCH}" | grep "200" > /dev/null
 then
   BRANCH=$CIRCLE_BRANCH;
@@ -36,8 +36,9 @@ if [ ! -e $ARCHIVE ];
 then
   echo "> Downloading tarball ${API_TARBALL_URL}${BRANCH}"
   curl  "${API_TARBALL_URL}${BRANCH}" -o $ARCHIVE
+  mkdir "opencollective-api-${BRANCH//\//-}"
   echo "> Extracting $ARCHIVE"
-  tar -xzf $ARCHIVE
+  tar -xzf $ARCHIVE -C "opencollective-api-${BRANCH//\//-}" --strip-components=1
   if [ -d "api" ]; then
     rm -rf api
   fi
