@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@hyperwatch/hyperwatch": "3.3.0",
-    "apollo-boost": "0.4.8",
+    "apollo-boost": "0.4.9",
     "cloudflare-ip": "0.0.7",
     "cors": "2.8.5",
     "debug": "4.1.1",
@@ -23,7 +23,7 @@
     "express-ws": "4.0.0",
     "graphql": "14.6.0",
     "graphql-request": "1.8.2",
-    "graphql-tag": "2.10.3",
+    "graphql-tag": "2.12.4",
     "lodash": "4.17.21",
     "moment": "2.24.0",
     "node-fetch": "2.6.1",
