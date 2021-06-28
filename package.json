@@ -23,7 +23,7 @@
     "express-ws": "4.0.0",
     "graphql": "14.6.0",
     "graphql-request": "1.8.2",
-    "graphql-tag": "2.12.4",
+    "graphql-tag": "2.12.5",
     "lodash": "4.17.21",
     "moment": "2.24.0",
     "node-fetch": "2.6.1",
