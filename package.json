@@ -21,7 +21,7 @@
     "express-basic-auth": "1.2.0",
     "express-winston": "4.1.0",
     "express-ws": "4.0.0",
-    "graphql": "14.6.0",
+    "graphql": "15.5.1",
     "graphql-request": "1.8.2",
     "graphql-tag": "2.12.5",
     "lodash": "4.17.21",
