@@ -70,6 +70,7 @@ describe('api.json.test.js', () => {
       const events = await fetchJson('/veganizerbxl/events.json');
       expect(events).toHaveLength(6);
       expect(events[0]).toEqual({
+        __typename: 'Event',
         id: 8722,
         __typename: 'Event',
         name: 'Vegan Dining Week',
@@ -94,6 +95,7 @@ describe('api.json.test.js', () => {
     test('return /:collectiveSlug/events/:eventSlug.json', async () => {
       const event = await fetchJson('/veganizerbxl/events/superfilles.json');
       expect(event).toEqual({
+        __typename: 'Event',
         id: 8716,
         __typename: 'Event',
         name: 'Les Super Filles du Tram: Officially Veganized',
@@ -117,6 +119,7 @@ describe('api.json.test.js', () => {
         currency: 'EUR',
         tiers: [
           {
+            __typename: 'Tier',
             id: 13,
             __typename: 'Tier',
             name: 'free ticket',
@@ -125,6 +128,7 @@ describe('api.json.test.js', () => {
             amount: 0,
           },
           {
+            __typename: 'Tier',
             id: 19,
             __typename: 'Tier',
             name: 'supporter ticket',

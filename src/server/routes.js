@@ -13,6 +13,8 @@ export const loadRoutes = app => {
     res.send('This is the Open Collective REST API.');
   });
 
+  app.use(cors({ origin: process.env.WEBSITE_URL }));
+
   /**
    * Prevent indexation from search engines
    */
@@ -64,4 +66,6 @@ export const loadRoutes = app => {
     cors(),
     controllers.accountOrders,
   );
+
+  app.get('/v2/:slug/hosted.:format', cors(), controllers.collectives.hosted);
 };
