@@ -18,7 +18,7 @@ aliases:
 jobs:
   lint:
     docker:
-      - image: cimg/node:14.17.1
+      - image: cimg/node:16.6.0
     environment:
       NODE_ENV: circleci
 
@@ -32,7 +32,7 @@ jobs:
 
   build:
     docker:
-      - image: cimg/node:14.17.1
+      - image: cimg/node:16.6.0
     environment:
       NODE_ENV: circleci
 
@@ -59,7 +59,7 @@ jobs:
 
   build-api:
     docker:
-      - image: cimg/node:14.17.1
+      - image: cimg/node:16.6.0
       - image: circleci/postgres:9.6.15-alpine-postgis-ram
     environment:
       OC_ENV: ci
@@ -107,7 +107,7 @@ jobs:
 
   test-server:
     docker:
-      - image: cimg/node:14.17.1
+      - image: cimg/node:16.6.0
       - image: circleci/postgres:9.6.15-alpine-postgis-ram
       - image: circleci/redis
       - image: memcached
