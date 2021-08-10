@@ -22,10 +22,10 @@ export const days = (d1, d2 = new Date()) => {
 
 export function json2csv(json) {
   const lines = [`"${Object.keys(json[0]).join('","')}"`];
-  json.forEach(row => {
+  json.forEach((row) => {
     lines.push(
       `"${Object.values(row)
-        .map(td => {
+        .map((td) => {
           if (typeof td === 'string') return td.replace(/"/g, '""').replace(/\n/g, '  ');
           else return `${td || ''}`;
         })
@@ -67,24 +67,18 @@ export function idOrUuid(req, res, next, idOrUuid) {
     .catch(next);
 }
 
-export const parseToBooleanDefaultFalse = value => {
+export const parseToBooleanDefaultFalse = (value) => {
   if (value === null || value === undefined || value === '') {
     return false;
   }
-  const string = value
-    .toString()
-    .trim()
-    .toLowerCase();
+  const string = value.toString().trim().toLowerCase();
   return ['on', 'enabled', '1', 'true', 'yes', 1].includes(string);
 };
 
-export const parseToBooleanDefaultTrue = value => {
+export const parseToBooleanDefaultTrue = (value) => {
   if (value === null || value === undefined || value === '') {
     return true;
   }
-  const string = value
-    .toString()
-    .trim()
-    .toLowerCase();
+  const string = value.toString().trim().toLowerCase();
   return !['off', 'disabled', '0', 'false', 'no', 0].includes(string);
 };

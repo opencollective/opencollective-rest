@@ -15,7 +15,7 @@ const {
   HYPERWATCH_SECRET: secret,
 } = process.env;
 
-export const setupMiddleware = app => {
+export const setupMiddleware = (app) => {
   // Mount Hyperwatch API and Websocket
   if (parseToBooleanDefaultFalse(enabled) && secret) {
     // We need to setup express-ws here to make Hyperwatch's websocket works

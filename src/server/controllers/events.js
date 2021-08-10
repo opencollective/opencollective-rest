@@ -8,7 +8,7 @@ export async function list(req, res, next) {
   try {
     logger.debug('>>> events.list fetching: %s', req.params.collectiveSlug);
     allEvents = await fetchEvents(req.params.collectiveSlug);
-    allEvents = allEvents.map(e => {
+    allEvents = allEvents.map((e) => {
       e.url = `https://opencollective.com/${req.params.collectiveSlug}/events/${e.slug}`;
       e.info = `https://opencollective.com/${req.params.collectiveSlug}/events/${e.slug}.json`;
       return e;

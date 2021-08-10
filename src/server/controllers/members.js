@@ -6,10 +6,7 @@ import { days, json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
 // Emulate gql from graphql-tag
-const gql = string =>
-  String(string)
-    .replace(`\n`, ` `)
-    .trim();
+const gql = (string) => String(string).replace(`\n`, ` `).trim();
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -116,7 +113,7 @@ export async function list(req, res, next) {
 
   const members = result.Collective.members;
 
-  const isActive = r => {
+  const isActive = (r) => {
     if (!r.tier || !r.tier.interval) return true;
     if (!r.transactions[0] || !r.transactions[0].createdAt) return false;
     if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 60) return true;
@@ -126,31 +123,31 @@ export async function list(req, res, next) {
 
   const mapping = {
     MemberId: 'id',
-    createdAt: r => moment(new Date(r.createdAt)).format('YYYY-MM-DD HH:mm'),
+    createdAt: (r) => moment(new Date(r.createdAt)).format('YYYY-MM-DD HH:mm'),
     type: 'member.type',
     role: 'role',
     tier: 'tier.name',
     isActive: isActive,
-    totalAmountDonated: r => (get(r, 'stats.totalDonations') || 0) / 100,
+    totalAmountDonated: (r) => (get(r, 'stats.totalDonations') || 0) / 100,
     currency: 'transactions[0].currency',
-    lastTransactionAt: r => {
+    lastTransactionAt: (r) => {
       return moment(r.transactions[0] && new Date(r.transactions[0].createdAt)).format('YYYY-MM-DD HH:mm');
     },
-    lastTransactionAmount: r => (get(r, 'transactions[0].amount') || 0) / 100,
-    profile: r => `${process.env.WEBSITE_URL}/${r.member.slug}`,
+    lastTransactionAmount: (r) => (get(r, 'transactions[0].amount') || 0) / 100,
+    profile: (r) => `${process.env.WEBSITE_URL}/${r.member.slug}`,
     name: 'member.name',
     company: 'member.company',
     description: 'member.description',
     image: 'member.image',
     email: 'member.email',
-    twitter: r => {
+    twitter: (r) => {
       return r.member.twitterHandle ? `https://twitter.com/${r.member.twitterHandle}` : null;
     },
-    github: r => {
+    github: (r) => {
       if (r.member.githubHandle) {
         return `https://github.com/${r.member.githubHandle}`;
       }
-      const githubAccount = r.member.connectedAccounts.find(c => c.service === 'github');
+      const githubAccount = r.member.connectedAccounts.find((c) => c.service === 'github');
       return githubAccount ? `https://github.com/${githubAccount.username}` : null;
     },
     website: 'member.website',
@@ -158,9 +155,9 @@ export async function list(req, res, next) {
 
   const fields = Object.keys(mapping);
 
-  const applyMapping = row => {
+  const applyMapping = (row) => {
     const res = {};
-    fields.map(key => {
+    fields.map((key) => {
       const val = mapping[key];
       if (typeof val === 'function') {
         return (res[key] = val(row));

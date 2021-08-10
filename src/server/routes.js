@@ -8,7 +8,7 @@ const requireApiKey = (req, res, next) => {
   next();
 };
 
-export const loadRoutes = app => {
+export const loadRoutes = (app) => {
   app.get('/', (req, res) => {
     res.send('This is the Open Collective REST API.');
   });

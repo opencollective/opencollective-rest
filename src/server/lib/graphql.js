@@ -16,7 +16,7 @@ export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
 export function graphqlRequest(query, variables, clientParameters) {
   return getClient(clientParameters)
     .query({ query, variables })
-    .then(result => result.data);
+    .then((result) => result.data);
 }
 
 export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey, headers = {} } = {}) {

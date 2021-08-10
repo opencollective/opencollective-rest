@@ -4,14 +4,14 @@ const REST_URL = process.env.REST_URL || 'https://rest.opencollective.com';
 
 const cacheBurst = `cacheBurst=${Math.round(Math.random() * 100000)}`;
 
-const fetchResponse = path => {
+const fetchResponse = (path) => {
   const pathWithCacheBurst = [path, cacheBurst].join(path.indexOf('?') === -1 ? '?' : '&');
   return fetch(`${REST_URL}${pathWithCacheBurst}`);
 };
 
-const fetchJson = path => fetchResponse(path).then(response => response.json());
+const fetchJson = (path) => fetchResponse(path).then((response) => response.json());
 
-const validateMember = member => {
+const validateMember = (member) => {
   expect(member).toHaveProperty('email', null);
   expect(member).toHaveProperty('MemberId');
   expect(member).toHaveProperty('name');
@@ -57,7 +57,7 @@ describe('api.json.test.js', () => {
     describe('webpack', () => {
       test('return list of backers with proper website url', async () => {
         const backers = await fetchJson('/api/groups/railsgirlsatl/backers');
-        backers.forEach(backer => {
+        backers.forEach((backer) => {
           if (!backer.website) return;
           expect(backer.website).toMatch(/^https?:\/\//);
         });
