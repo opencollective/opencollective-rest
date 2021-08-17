@@ -27,7 +27,8 @@ export function json2csv(json) {
       `"${Object.values(row)
         .map((td) => {
           if (typeof td === 'string') return td.replace(/"/g, '""').replace(/\n/g, '  ');
-          else return `${td || ''}`;
+          else if (td !== undefined && td !== null) return td;
+          else return '';
         })
         .join('","')}"`,
     );
