@@ -27,8 +27,7 @@
         "name": "BeCentral",
         "address": "Cantersteen 12, 1000 Brussels",
         "lat": 50.845568,
-        "long": 4.357482,
-        "__typename": "LocationType"
+        "long": 4.357482
       },
       "tiers": [
         {
@@ -39,8 +38,7 @@
           "description": "For students and low income people only.",
           "amount": null,
           "currency": "EUR",
-          "maxQuantity": null,
-          "__typename": "Tier"
+          "maxQuantity": null
         },
         {
           "id": 22,
@@ -50,8 +48,7 @@
           "description": "Get your ticket for a great evening of inspiration and meeting great people. Includes a free drink and a free high five!",
           "amount": 1000,
           "currency": "EUR",
-          "maxQuantity": null,
-          "__typename": "Tier"
+          "maxQuantity": null
         },
         {
           "id": 20,
@@ -61,8 +58,7 @@
           "description": "Sponsor the drinks. Pretty sure everyone will love you.",
           "amount": 15000,
           "currency": "EUR",
-          "maxQuantity": null,
-          "__typename": "Tier"
+          "maxQuantity": null
         }
       ],
       "parentCollective": {
@@ -86,8 +82,7 @@
           },
           "HostId": 1635,
           "superCollectiveTag": "#brusselstogether"
-        },
-        "__typename": "Collective"
+        }
       },
       "members": [],
       "orders": [
@@ -103,15 +98,12 @@
             "image": null,
             "username": "obronicoco",
             "twitterHandle": "obronicoco",
-            "description": null,
-            "__typename": "User"
+            "description": null
           },
           "tier": {
             "id": 24,
-            "name": "free ticket",
-            "__typename": "Tier"
-          },
-          "__typename": "OrderType"
+            "name": "free ticket"
+          }
         },
         {
           "id": 2616,
@@ -125,11 +117,9 @@
             "image": null,
             "username": "vbockstal",
             "twitterHandle": "vbockstal",
-            "description": "CEO BeCentral ",
-            "__typename": "User"
+            "description": "CEO BeCentral "
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         },
         {
           "id": 2614,
@@ -143,11 +133,9 @@
             "image": null,
             "username": "tinahendriks",
             "twitterHandle": null,
-            "description": null,
-            "__typename": "User"
+            "description": null
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         },
         {
           "id": 2613,
@@ -161,11 +149,9 @@
             "image": null,
             "username": "alexandrasaveljeva",
             "twitterHandle": null,
-            "description": "Artist,Filmmaker, Chairperson of NGO\"Bioetika\" in Latvia. Doing internship in WYA,organising European Arts Forum 2017",
-            "__typename": "User"
+            "description": "Artist,Filmmaker, Chairperson of NGO\"Bioetika\" in Latvia. Doing internship in WYA,organising European Arts Forum 2017"
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         },
         {
           "id": 2549,
@@ -179,11 +165,9 @@
             "image": "https://d1ts43dypk8bqh.cloudfront.net/v1/avatars/6c38469a-e7a5-4d72-ab3a-9220758a93e8",
             "username": "carolinesedda",
             "twitterHandle": null,
-            "description": null,
-            "__typename": "User"
+            "description": null
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         },
         {
           "id": 2548,
@@ -197,11 +181,9 @@
             "image": "https://d1ts43dypk8bqh.cloudfront.net/v1/avatars/6c38469a-e7a5-4d72-ab3a-9220758a93e8",
             "username": "carolinesedda",
             "twitterHandle": null,
-            "description": null,
-            "__typename": "User"
+            "description": null
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         },
         {
           "id": 2496,
@@ -215,15 +197,12 @@
             "image": "https://scontent-lga3-1.xx.fbcdn.net/v/t1.0-9/14067500_501520080041378_2203538491740676884_n.png?oh=5da2ebdcc9db0a3c7c58a8c08a111427&oe=5987FC2D",
             "username": "ticto",
             "twitterHandle": "tictonews",
-            "description": "Been in and around startups for a while. CEO at Ticto!",
-            "__typename": "User"
+            "description": "Been in and around startups for a while. CEO at Ticto!"
           },
           "tier": {
             "id": 20,
-            "name": "sponsor",
-            "__typename": "Tier"
-          },
-          "__typename": "OrderType"
+            "name": "sponsor"
+          }
         },
         {
           "id": 2422,
@@ -237,14 +216,11 @@
             "image": "https://d1ts43dypk8bqh.cloudfront.net/v1/avatars/6e52448c-416d-435d-b68b-e7a0bdd47a34",
             "username": "axeladdington",
             "twitterHandle": null,
-            "description": "Trends profiler &amp; values designer",
-            "__typename": "User"
+            "description": "Trends profiler &amp; values designer"
           },
-          "tier": null,
-          "__typename": "OrderType"
+          "tier": null
         }
-      ],
-      "__typename": "Collective"
+      ]
     }
   }
 }

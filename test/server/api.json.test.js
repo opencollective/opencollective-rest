@@ -71,7 +71,6 @@ describe('api.json.test.js', () => {
       expect(events).toHaveLength(6);
       expect(events[0]).toEqual({
         id: 8722,
-        __typename: 'Event',
         name: 'Vegan Dining Week',
         description: null,
         slug: 'vegandiningweek-407ev',
@@ -80,7 +79,6 @@ describe('api.json.test.js', () => {
         endsAt: 'Sat Nov 18 2017 22:00:00 GMT+0000 (Coordinated Universal Time)',
         timezone: 'Europe/Brussels',
         location: {
-          __typename: 'LocationType',
           name: 'Brussels',
           address: 'Brussels',
           lat: 50.8503396,
@@ -95,7 +93,6 @@ describe('api.json.test.js', () => {
       const event = await fetchJson('/veganizerbxl/events/superfilles.json');
       expect(event).toEqual({
         id: 8716,
-        __typename: 'Event',
         name: 'Les Super Filles du Tram: Officially Veganized',
         description: null,
         longDescription:
@@ -108,7 +105,6 @@ describe('api.json.test.js', () => {
         endsAt: 'Mon Apr 24 2017 19:00:00 GMT+0000 (Coordinated Universal Time)',
         timezone: 'Europe/Brussels',
         location: {
-          __typename: 'LocationType',
           name: 'Les Super Filles du Tram',
           address: 'Rue Lesbroussart 22, 1050 Bruxelles',
           lat: 50.827697,
@@ -118,7 +114,6 @@ describe('api.json.test.js', () => {
         tiers: [
           {
             id: 13,
-            __typename: 'Tier',
             name: 'free ticket',
             description:
               'note: this is not an official reservation! First come, first serve. It is however a great way for us to get an idea of how many people will be attending. Plus, we will send you a little reminder before the event!',
@@ -126,7 +121,6 @@ describe('api.json.test.js', () => {
           },
           {
             id: 19,
-            __typename: 'Tier',
             name: 'supporter ticket',
             description: 'Support the VeganizerBXL collective. Your donations matter.',
             amount: 500,
