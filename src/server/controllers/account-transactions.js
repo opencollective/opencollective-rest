@@ -156,6 +156,8 @@ const defaultFields = [
   'paymentProcessorFee',
   'netAmount',
   'currency',
+  'accountSlug',
+  'oppositeAccountSlug',
 ];
 
 const applyMapping = (mapping, row) => {
@@ -180,6 +182,8 @@ const accountTransactions = async (req, res) => {
     'kind',
     'dateFrom',
     'dateTo',
+    'minAmount',
+    'maxAmount',
   ]);
   variables.limit = Number(variables.limit) || 1000;
   variables.offset = Number(variables.offset) || 0;

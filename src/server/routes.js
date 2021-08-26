@@ -55,6 +55,8 @@ export const loadRoutes = (app) => {
 
   /* API v2 */
 
+  app.use('/v2/', cors());
+
   app.get(
     '/v2/:slug/tier/:tierSlug/orders/:filter(incoming)?/:status(active|cancelled|error|paid|pending)?',
     controllers.accountOrders,
@@ -67,7 +69,6 @@ export const loadRoutes = (app) => {
 
   app.get(
     '/v2/:slug/transactions/:type(credit|debit)?/:kind(contribution|expense|added_funds|host_fee|host_fee_share|host_fee_share_debt|platform_tip|platform_tip_debt)?.:format(json|csv|txt)',
-    cors(),
     controllers.accountTransactions,
   );
 };
