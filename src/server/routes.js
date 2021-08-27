@@ -55,8 +55,6 @@ export const loadRoutes = (app) => {
 
   /* API v2 */
 
-  app.use('/v2/', cors());
-
   app.get(
     '/v2/:slug/tier/:tierSlug/orders/:filter(incoming)?/:status(active|cancelled|error|paid|pending)?',
     controllers.accountOrders,

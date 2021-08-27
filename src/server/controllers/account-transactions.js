@@ -226,7 +226,17 @@ const accountTransactions = async (req, res) => {
   }
 
   try {
-    const result = await graphqlRequest(query, variables, { version: 'v2' });
+    // Forward Api Key or Authorization header
+    const headers = {};
+    const apiKey = req.get('Api-Key') || req.query.apiKey;
+    const authorization = req.get('Authorization');
+    if (authorization) {
+      headers['Authorization'] = authorization;
+    } else if (apiKey) {
+      headers['Api-Key'] = apiKey;
+    }
+
+    const result = await graphqlRequest(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
       case 'txt':
