@@ -1,4 +1,4 @@
-import ApolloClient from 'apollo-boost';
+import ApolloClient, { InMemoryCache } from 'apollo-boost';
 import { GraphQLClient } from 'graphql-request';
 import gql from 'graphql-tag';
 import fetch from 'node-fetch';
@@ -10,7 +10,13 @@ export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
   headers['oc-secret'] = process.env.OC_SECRET;
   headers['oc-application'] = process.env.OC_APPLICATION;
   headers['user-agent'] = 'opencollective-rest/1.0';
-  return new ApolloClient({ fetch, headers, uri: getGraphqlUrl({ version, apiKey }) });
+
+  return new ApolloClient({
+    fetch,
+    headers,
+    uri: getGraphqlUrl({ version, apiKey }),
+    cache: new InMemoryCache({ addTypename: false }),
+  });
 }
 
 export function graphqlRequest(query, variables, clientParameters) {

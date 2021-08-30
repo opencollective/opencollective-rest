@@ -11,200 +11,171 @@
           "id": 7,
           "slug": "tipbox",
           "name": "tipbox",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 10,
           "slug": "wwcodedf",
           "name": "WWCode Mexico City",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 43,
           "slug": "apex",
           "name": "APEX",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 13,
           "slug": "wwcodedc",
           "name": "WWCode Washington DC",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 32,
           "slug": "chsf",
           "name": "Consciousness Hacking SF",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 6,
           "slug": "laprimaire",
           "name": "LaPrimaire.org",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 19,
           "slug": "test",
           "name": "TEST",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 1,
           "slug": "opencollective",
           "name": "OpenCollective",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 58,
           "slug": "mochajs",
           "name": "MochaJS",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 50,
           "slug": "vcr",
           "name": "VCR",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 66,
           "slug": "foundation",
           "name": "Open Collective Foundation",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 104,
           "slug": "replaylastgoal",
           "name": "ReplayLastGoal",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 160,
           "slug": "startupyoganyc",
           "name": "Startup Yoga NYC",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 193,
           "slug": "freeridetovote",
           "name": "FreeRideToVote",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 207,
           "slug": "brusselstogether",
           "name": "BrusselsTogether",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 208,
           "slug": "testcollective1",
           "name": "test collective",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 310,
           "slug": "xdamman-test",
           "name": "xdamman-test",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 316,
           "slug": "xdamman-test2",
           "name": "xdamman test2",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 320,
           "slug": "balanced",
           "name": "Balanced",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 302,
           "slug": "webpack",
           "name": "webpack",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 381,
           "slug": "civicinnovationnetwork",
           "name": "CIN",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 458,
           "slug": "nomuslimban",
           "name": "#NoMuslimBan",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 530,
           "slug": "co-labs",
           "name": "Co-Labs",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 442,
           "slug": "sustainoss",
           "name": "SustainOSS",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 334,
           "slug": "refugeesgottalent",
           "name": "Refugees Got Talent",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 649,
           "slug": "mastodonbrussels",
           "name": "Mastodon.brussels",
-          "role": "BACKER",
-          "__typename": "Collective"
+          "role": "BACKER"
         },
         {
           "id": 652,
           "slug": "selection-sharer",
           "name": "selection-sharer",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         },
         {
           "id": 734,
           "slug": "webrussels",
           "name": "WeBrussels",
-          "role": "ADMIN",
-          "__typename": "Collective"
+          "role": "ADMIN"
         }
-      ],
-      "__typename": "User"
+      ]
     }
   }
 }

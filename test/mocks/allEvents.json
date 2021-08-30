@@ -13,23 +13,20 @@
           "name": "W-est end izakaya - Ex Bravo",
           "address": "Aalststraat 7, 1000 Brussels",
           "lat": 50.852439,
-          "long": 4.342169,
-          "__typename": "LocationType"
+          "long": 4.342169
         },
         "tiers": [
           {
             "id": 4,
             "name": "free",
             "description": "Free ticket",
-            "amount": 0,
-            "__typename": "Tier"
+            "amount": 0
           },
           {
             "id": 2,
             "name": "donate",
             "description": "Contribute €10 and get a high five at the event! ✋",
-            "amount": 1000,
-            "__typename": "Tier"
+            "amount": 1000
           }
         ],
         "collective": {
@@ -38,10 +35,8 @@
           "name": "BrusselsTogether",
           "mission": "We are on a mission to make Brussels a great city to live and work",
           "backgroundImage": "https://cl.ly/3s3h0W0S1R3A/brusselstogether-backgroundImage.jpg",
-          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png",
-          "__typename": "Collective"
-        },
-        "__typename": "Event"
+          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png"
+        }
       },
       {
         "id": 4,
@@ -55,23 +50,20 @@
           "name": "Brass'Art Digitaal Cafe",
           "address": "Place communale de Molenbeek 28",
           "lat": 50.8540523,
-          "long": 4.338612199999943,
-          "__typename": "LocationType"
+          "long": 4.338612199999943
         },
         "tiers": [
           {
             "id": 12,
             "name": "free ticket",
             "description": "Free ticket",
-            "amount": 0,
-            "__typename": "Tier"
+            "amount": 0
           },
           {
             "id": 11,
             "name": "sponsor",
             "description": "Sponsor the drinks. Pretty sure everyone will love you.",
-            "amount": 15000,
-            "__typename": "Tier"
+            "amount": 15000
           }
         ],
         "collective": {
@@ -80,10 +72,8 @@
           "name": "BrusselsTogether",
           "mission": "We are on a mission to make Brussels a great city to live and work",
           "backgroundImage": "https://cl.ly/3s3h0W0S1R3A/brusselstogether-backgroundImage.jpg",
-          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png",
-          "__typename": "Collective"
-        },
-        "__typename": "Event"
+          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png"
+        }
       },
       {
         "id": 12,
@@ -97,30 +87,26 @@
           "name": "DigitYser",
           "address": " Boulevard d'Anvers 40, 1000 Brussels",
           "lat": 50.857351,
-          "long": 4.350038,
-          "__typename": "LocationType"
+          "long": 4.350038
         },
         "tiers": [
           {
             "id": 35,
             "name": "free ticket",
             "description": "Please register so that we can print a nametag for you.",
-            "amount": 0,
-            "__typename": "Tier"
+            "amount": 0
           },
           {
             "id": 36,
             "name": "supporter ticket",
             "description": "Support the BrusselsTogether collective. Your donations matter. We'll print a nametag for you for the event :)",
-            "amount": 500,
-            "__typename": "Tier"
+            "amount": 500
           },
           {
             "id": 34,
             "name": "sponsor",
             "description": "Sponsor the drinks. Pretty sure everyone will love you.",
-            "amount": 15000,
-            "__typename": "Tier"
+            "amount": 15000
           }
         ],
         "collective": {
@@ -129,10 +115,8 @@
           "name": "BrusselsTogether",
           "mission": "We are on a mission to make Brussels a great city to live and work",
           "backgroundImage": "https://cl.ly/3s3h0W0S1R3A/brusselstogether-backgroundImage.jpg",
-          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png",
-          "__typename": "Collective"
-        },
-        "__typename": "Event"
+          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png"
+        }
       },
       {
         "id": 8,
@@ -146,30 +130,26 @@
           "name": "BeCentral",
           "address": "Cantersteen 12, 1000 Brussels",
           "lat": 50.845568,
-          "long": 4.357482,
-          "__typename": "LocationType"
+          "long": 4.357482
         },
         "tiers": [
           {
             "id": 22,
             "name": "regular ticket",
             "description": "Get your ticket for a great evening of inspiration and meeting great people. Includes a free drink and a free high five!",
-            "amount": 1000,
-            "__typename": "Tier"
+            "amount": 1000
           },
           {
             "id": 20,
             "name": "sponsor",
             "description": "Sponsor the drinks. Pretty sure everyone will love you.",
-            "amount": 15000,
-            "__typename": "Tier"
+            "amount": 15000
           },
           {
             "id": 24,
             "name": "free ticket",
             "description": "For students and low income people only.",
-            "amount": null,
-            "__typename": "Tier"
+            "amount": null
           }
         ],
         "collective": {
@@ -178,10 +158,8 @@
           "name": "BrusselsTogether",
           "mission": "We are on a mission to make Brussels a great city to live and work",
           "backgroundImage": "https://cl.ly/3s3h0W0S1R3A/brusselstogether-backgroundImage.jpg",
-          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png",
-          "__typename": "Collective"
-        },
-        "__typename": "Event"
+          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png"
+        }
       },
       {
         "id": 11,
@@ -195,37 +173,32 @@
           "name": "Elzenhof Elsene",
           "address": "Kroonlaan 12, 1050 Elsene",
           "lat": 50.8325036,
-          "long": 4.3758299,
-          "__typename": "LocationType"
+          "long": 4.3758299
         },
         "tiers": [
           {
             "id": 29,
             "name": "early bird ticket",
             "description": "Get those while you can. RSVP before June 1st and get the ticket at €5",
-            "amount": 500,
-            "__typename": "Tier"
+            "amount": 500
           },
           {
             "id": 30,
             "name": "regular ticket",
             "description": "Get your ticket for a great evening of inspiration and meeting great people. Includes a free drink and a free high five!",
-            "amount": 1000,
-            "__typename": "Tier"
+            "amount": 1000
           },
           {
             "id": 31,
             "name": "sponsor",
             "description": "Sponsor the drinks. Pretty sure everyone will love you.",
-            "amount": 15000,
-            "__typename": "Tier"
+            "amount": 15000
           },
           {
             "id": 32,
             "name": "free ticket",
             "description": "For students and low income people only.",
-            "amount": null,
-            "__typename": "Tier"
+            "amount": null
           }
         ],
         "collective": {
@@ -234,10 +207,8 @@
           "name": "BrusselsTogether",
           "mission": "We are on a mission to make Brussels a great city to live and work",
           "backgroundImage": "https://cl.ly/3s3h0W0S1R3A/brusselstogether-backgroundImage.jpg",
-          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png",
-          "__typename": "Collective"
-        },
-        "__typename": "Event"
+          "logo": "https://cl.ly/0Q3N193Z1e3u/BrusselsTogetherLogo.png"
+        }
       }
     ]
   }
