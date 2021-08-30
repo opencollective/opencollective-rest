@@ -196,7 +196,14 @@ const accountTransactions = async (req, res) => {
     variables.dateFrom = moment.utc(variables.dateFrom).toISOString();
   }
   if (variables.dateTo) {
-    variables.dateTo = moment.utc(variables.dateTo).toISOString();
+    // Detect short form (e.g: 2021-08-30)
+    const shortDate = variables.dateTo.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
+    variables.dateTo = moment.utc(variables.dateTo);
+    // Extend to end of the day, 1 sec before midnight
+    if (shortDate) {
+      variables.dateTo.set('hour', 23).set('minute', 59).set('second', 59);
+    }
+    variables.dateTo = variables.dateTo.toISOString();
   }
 
   if (variables.minAmount) {
