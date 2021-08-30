@@ -15,6 +15,8 @@ const query = gqlV2/* GraphQL */ `
     $kind: [TransactionKind]
     $dateFrom: DateTime
     $dateTo: DateTime
+    $minAmount: Int
+    $maxAmount: Int
   ) {
     transactions(
       includeDebts: true
@@ -25,6 +27,8 @@ const query = gqlV2/* GraphQL */ `
       kind: $kind
       dateFrom: $dateFrom
       dateTo: $dateTo
+      minAmount: $minAmount
+      maxAmount: $maxAmount
     ) {
       limit
       offset
@@ -193,6 +197,13 @@ const accountTransactions = async (req, res) => {
   }
   if (variables.dateTo) {
     variables.dateTo = moment.utc(variables.dateTo).toISOString();
+  }
+
+  if (variables.minAmount) {
+    variables.minAmount = Number(variables.minAmount);
+  }
+  if (variables.maxAmount) {
+    variables.maxAmount = Number(variables.maxAmount);
   }
 
   if (variables.type) {
