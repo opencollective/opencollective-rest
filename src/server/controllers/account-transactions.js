@@ -116,8 +116,8 @@ const csvMapping = {
   id: 'id',
   legacyId: 'legacyId',
   shortId: (t) => t.id.substr(0, 8),
-  group: (t) => t.group.substr(0, 8),
-  longGroup: 'group',
+  shortGroup: (t) => t.group.substr(0, 8),
+  group: 'group',
   description: 'description',
   type: 'type',
   kind: 'kind',
@@ -152,9 +152,11 @@ const allFields = Object.keys(csvMapping);
 
 const defaultFields = [
   'datetime',
-  'group',
+  'shortGroup',
   'type',
   'kind',
+  'isRefund',
+  'isRefunded',
   'displayAmount',
   'amount',
   'paymentProcessorFee',
