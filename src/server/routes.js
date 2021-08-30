@@ -9,6 +9,8 @@ const requireApiKey = (req, res, next) => {
 };
 
 export const loadRoutes = (app) => {
+  app.use(cors());
+
   app.get('/', (req, res) => {
     res.send('This is the Open Collective REST API.');
   });
@@ -55,13 +57,11 @@ export const loadRoutes = (app) => {
 
   app.get(
     '/v2/:slug/tier/:tierSlug/orders/:filter(incoming)?/:status(active|cancelled|error|paid|pending)?',
-    cors(),
     controllers.accountOrders,
   );
 
   app.get(
     '/v2/:slug/orders/:filter(incoming|outgoing)?/:status(active|cancelled|error|paid|pending)?',
-    cors(),
     controllers.accountOrders,
   );
 };
