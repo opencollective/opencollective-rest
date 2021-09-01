@@ -3,7 +3,7 @@ import { difference, get, head, intersection, pick, toUpper, trim } from 'lodash
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { json2csv } from '../lib/utils';
+import { json2csv, parseToBooleanDefaultFalse } from '../lib/utils';
 import { logger } from '../logger';
 
 const query = gqlV2/* GraphQL */ `
@@ -17,6 +17,7 @@ const query = gqlV2/* GraphQL */ `
     $dateTo: DateTime
     $minAmount: Int
     $maxAmount: Int
+    $fetchHostFee: Boolean
   ) {
     transactions(
       includeDebts: true
@@ -53,7 +54,11 @@ const query = gqlV2/* GraphQL */ `
           value
           currency
         }
-        netAmountInHostCurrency {
+        hostFee(fetchHostFee: $fetchHostFee) {
+          value
+          currency
+        }
+        netAmountInHostCurrency(fetchHostFee: $fetchHostFee) {
           value
           currency
         }
@@ -126,6 +131,7 @@ const csvMapping = {
   displayAmount: (t) => formatAmountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   paymentProcessorFee: (t) => get(t, 'paymentProcessorFee.value', 0),
+  hostFee: (t) => get(t, 'hostFee.value', 0),
   netAmount: (t) => get(t, 'netAmountInHostCurrency.value', 0),
   currency: (t) => get(t, 'amountInHostCurrency.currency'),
   accountSlug: (t) => get(t, 'account.slug'),
@@ -148,7 +154,22 @@ const csvMapping = {
   payoutMethodType: (t) => get(t, 'order.payoutMethod.type'),
 };
 
-const allFields = Object.keys(csvMapping);
+const allKinds = [
+  'ADDED_FUNDS',
+  'CONTRIBUTION',
+  'EXPENSE',
+  'HOST_FEE',
+  'HOST_FEE_SHARE',
+  'PAYMENT_PROCESSOR_FEE',
+  'PLATFORM_FEE',
+  'PLATFORM_TIP',
+  'PREPAID_PAYMENT_METHOD',
+  'HOST_FEE_SHARE_DEBT',
+  'PLATFORM_TIP_DEBT',
+  'BALANCE_TRANSFER',
+];
+
+let allFields = Object.keys(csvMapping);
 
 const defaultFields = [
   'datetime',
@@ -160,6 +181,7 @@ const defaultFields = [
   'displayAmount',
   'amount',
   'paymentProcessorFee',
+  'hostFee',
   'netAmount',
   'currency',
   'accountSlug',
@@ -190,6 +212,7 @@ const accountTransactions = async (req, res) => {
     'dateTo',
     'minAmount',
     'maxAmount',
+    'flattenHostFee',
   ]);
   variables.limit = Number(variables.limit) || 1000;
   variables.offset = Number(variables.offset) || 0;
@@ -224,6 +247,15 @@ const accountTransactions = async (req, res) => {
 
   if (variables.kind) {
     variables.kind = variables.kind.split(',').map(toUpper).map(trim);
+  }
+
+  if (variables.flattenHostFee) {
+    variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
+    if (variables.fetchHostFee) {
+      variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
+    } else {
+      allFields = difference(allFields, ['hostFee']);
+    }
   }
 
   let fields = get(req.query, 'fields', '')
