@@ -252,11 +252,7 @@ const accountTransactions = async (req, res) => {
   if (variables.flattenHostFee) {
     variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
     if (variables.fetchHostFee) {
-      if (variables.kind) {
-        variables.kind = difference(variables.kind, ['HOST_FEE']);
-      } else {
-        variables.kind = difference(allKinds, ['HOST_FEE']);
-      }
+      variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
     } else {
       allFields = difference(allFields, ['hostFee']);
     }
