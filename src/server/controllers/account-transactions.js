@@ -6,7 +6,88 @@ import { graphqlRequest } from '../lib/graphql';
 import { json2csv, parseToBooleanDefaultFalse } from '../lib/utils';
 import { logger } from '../logger';
 
-const query = gqlV2/* GraphQL */ `
+export const transactionsFragment = gqlV2/* GraphQL */ `
+  fragment TransactionsFragment on TransactionCollection {
+    __typename
+    limit
+    offset
+    totalCount
+    nodes {
+      id
+      legacyId
+      group
+      type
+      kind
+      description
+      createdAt
+      amount {
+        value
+        currency
+      }
+      amountInHostCurrency {
+        value
+        currency
+      }
+      paymentProcessorFee {
+        value
+        currency
+      }
+      hostFee(fetchHostFee: $fetchHostFee) {
+        value
+        currency
+      }
+      netAmountInHostCurrency(fetchHostFee: $fetchHostFee) {
+        value
+        currency
+      }
+      account {
+        id
+        slug
+        name
+        type
+      }
+      oppositeAccount {
+        id
+        slug
+        name
+        type
+      }
+      host {
+        id
+        slug
+        name
+        type
+      }
+      order {
+        id
+        legacyId
+        status
+        createdAt
+        frequency
+      }
+      paymentMethod {
+        service
+        type
+      }
+      expense {
+        id
+        legacyId
+        type
+        createdAt
+        payoutMethod {
+          type
+        }
+      }
+      isRefund
+      isRefunded
+    }
+  }
+`;
+
+/* $fetchHostFee seems not used but it is in fragment */
+/* eslint-disable graphql/template-strings */
+
+const transactionsQuery = gqlV2/* GraphQL */ `
   query AccountTransactions(
     $slug: String
     $limit: Int
@@ -31,81 +112,44 @@ const query = gqlV2/* GraphQL */ `
       minAmount: $minAmount
       maxAmount: $maxAmount
     ) {
-      limit
-      offset
-      totalCount
-      nodes {
-        id
-        legacyId
-        group
-        type
-        kind
-        description
-        createdAt
-        amount {
-          value
-          currency
-        }
-        amountInHostCurrency {
-          value
-          currency
-        }
-        paymentProcessorFee {
-          value
-          currency
-        }
-        hostFee(fetchHostFee: $fetchHostFee) {
-          value
-          currency
-        }
-        netAmountInHostCurrency(fetchHostFee: $fetchHostFee) {
-          value
-          currency
-        }
-        account {
-          id
-          slug
-          name
-          type
-        }
-        oppositeAccount {
-          id
-          slug
-          name
-          type
-        }
-        host {
-          id
-          slug
-          name
-          type
-        }
-        order {
-          id
-          legacyId
-          status
-          createdAt
-          frequency
-          paymentMethod {
-            service
-            type
-          }
-        }
-        expense {
-          id
-          legacyId
-          type
-          createdAt
-          payoutMethod {
-            type
-          }
-        }
-        isRefund
-        isRefunded
-      }
+      ...TransactionsFragment
     }
   }
+  ${transactionsFragment}
 `;
+
+const hostTransactionsQuery = gqlV2/* GraphQL */ `
+  query HostTransactions(
+    $slug: String
+    $limit: Int
+    $offset: Int
+    $type: TransactionType
+    $kind: [TransactionKind]
+    $dateFrom: DateTime
+    $dateTo: DateTime
+    $minAmount: Int
+    $maxAmount: Int
+    $fetchHostFee: Boolean
+  ) {
+    transactions(
+      includeDebts: true
+      host: { slug: $slug }
+      limit: $limit
+      offset: $offset
+      type: $type
+      kind: $kind
+      dateFrom: $dateFrom
+      dateTo: $dateTo
+      minAmount: $minAmount
+      maxAmount: $maxAmount
+    ) {
+      ...TransactionsFragment
+    }
+  }
+  ${transactionsFragment}
+`;
+
+/* eslint-enable graphql/template-strings */
 
 const formatAmountAsString = (amount) => {
   const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
@@ -117,7 +161,7 @@ const formatAmountAsString = (amount) => {
 
 const csvMapping = {
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
-  datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm'),
+  datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
   id: 'id',
   legacyId: 'legacyId',
   shortId: (t) => t.id.substr(0, 8),
@@ -146,12 +190,12 @@ const csvMapping = {
   orderId: (t) => get(t, 'order.id'),
   orderLegacyId: (t) => get(t, 'order.legacyId'),
   orderFrequency: (t) => get(t, 'order.frequency'),
-  paymentMethodService: (t) => get(t, 'order.paymentMethod.service'),
-  paymentMethodType: (t) => get(t, 'order.paymentMethod.type'),
+  paymentMethodService: (t) => get(t, 'paymentMethod.service'),
+  paymentMethodType: (t) => get(t, 'paymentMethod.type'),
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
   expenseType: (t) => get(t, 'expense.type'),
-  payoutMethodType: (t) => get(t, 'order.payoutMethod.type'),
+  payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
 };
 
 const allKinds = [
@@ -249,13 +293,11 @@ const accountTransactions = async (req, res) => {
     variables.kind = variables.kind.split(',').map(toUpper).map(trim);
   }
 
-  if (variables.flattenHostFee) {
-    variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
-    if (variables.fetchHostFee) {
-      variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
-    } else {
-      allFields = difference(allFields, ['hostFee']);
-    }
+  variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
+  if (variables.fetchHostFee) {
+    variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
+  } else {
+    allFields = difference(allFields, ['hostFee']);
   }
 
   let fields = get(req.query, 'fields', '')
@@ -288,6 +330,8 @@ const accountTransactions = async (req, res) => {
       headers['Api-Key'] = apiKey;
     }
 
+    const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
+
     const result = await graphqlRequest(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
@@ -300,7 +344,7 @@ const accountTransactions = async (req, res) => {
         }
 
         if (result.transactions.totalCount === 0) {
-          res.send('Warning: no result');
+          res.status(404).send('No transaction found.');
           break;
         }
 
@@ -324,7 +368,7 @@ const accountTransactions = async (req, res) => {
     }
   } catch (err) {
     if (err.message.match(/No account found/)) {
-      return res.status(404).send('Not found');
+      return res.status(404).send('Not account found.');
     }
     logger.error(`Error while fetching collective transactions: ${err.message}`);
     res.status(400).send(`Error while fetching account transactions.`);
