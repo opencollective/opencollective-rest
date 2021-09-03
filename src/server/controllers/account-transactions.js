@@ -213,7 +213,7 @@ const allKinds = [
   'BALANCE_TRANSFER',
 ];
 
-let allFields = Object.keys(csvMapping);
+const allFields = Object.keys(csvMapping);
 
 const defaultFields = [
   'datetime',
@@ -296,8 +296,6 @@ const accountTransactions = async (req, res) => {
   variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
   if (variables.fetchHostFee) {
     variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
-  } else {
-    allFields = difference(allFields, ['hostFee']);
   }
 
   let fields = get(req.query, 'fields', '')
@@ -316,7 +314,9 @@ const accountTransactions = async (req, res) => {
       .map(trim)
       .filter((v) => !!v);
 
-    fields = difference(intersection(allFields, [...defaultFields, ...add]), remove);
+    const baseFields = variables.fetchHostFee ? allFields : difference(allFields, ['hostFee']);
+
+    fields = difference(intersection(baseFields, [...defaultFields, ...add]), remove);
   }
 
   try {
