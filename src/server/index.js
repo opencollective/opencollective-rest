@@ -3,7 +3,7 @@ import '../env';
 import cloudflareIps from 'cloudflare-ip/ips.json';
 import express from 'express';
 
-import * as hyperwatch from './lib/hyperwatch';
+import hyperwatch from './lib/hyperwatch';
 import { logger, loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
@@ -16,7 +16,7 @@ app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'].concat(cloudflar
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json({ limit: '50mb' }));
 
-hyperwatch.setupMiddleware(app);
+hyperwatch(app);
 
 app.use(loggerMiddleware.logger);
 app.use(loggerMiddleware.errorLogger);
