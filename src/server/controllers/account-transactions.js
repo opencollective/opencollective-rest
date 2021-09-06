@@ -204,6 +204,7 @@ const allKinds = [
   'EXPENSE',
   'HOST_FEE',
   'HOST_FEE_SHARE',
+  'PAYMENT_PROCESSOR_COVER',
   'PAYMENT_PROCESSOR_FEE',
   'PLATFORM_FEE',
   'PLATFORM_TIP',
@@ -256,9 +257,8 @@ const accountTransactions = async (req, res) => {
     'dateTo',
     'minAmount',
     'maxAmount',
-    'flattenHostFee',
   ]);
-  variables.limit = Number(variables.limit) || 1000;
+  variables.limit = variables.limit ? Number(variables.limit) : 10000;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.dateFrom) {
@@ -293,7 +293,7 @@ const accountTransactions = async (req, res) => {
     variables.kind = variables.kind.split(',').map(toUpper).map(trim);
   }
 
-  variables.fetchHostFee = parseToBooleanDefaultFalse(variables.flattenHostFee);
+  variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);
   if (variables.fetchHostFee) {
     variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
   }
@@ -319,6 +319,8 @@ const accountTransactions = async (req, res) => {
     fields = difference(intersection(baseFields, [...defaultFields, ...add]), remove);
   }
 
+  const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll);
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};
@@ -332,7 +334,7 @@ const accountTransactions = async (req, res) => {
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 
-    const result = await graphqlRequest(query, variables, { version: 'v2', headers });
+    let result = await graphqlRequest(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
       case 'txt':
@@ -351,14 +353,29 @@ const accountTransactions = async (req, res) => {
         const mapping = pick(csvMapping, fields);
 
         const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
-
-        let csv = json2csv(mappedTransactions);
+        res.write(json2csv(mappedTransactions));
+        res.write(`\n`);
 
         if (result.transactions.totalCount > result.transactions.limit) {
-          csv += `\nWarning: totalCount is ${result.transactions.totalCount} and limit was ${result.transactions.limit}`;
+          if (fetchAll) {
+            do {
+              variables.offset += result.transactions.limit;
+
+              result = await graphqlRequest(query, variables, { version: 'v2', headers });
+
+              const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
+              res.write(json2csv(mappedTransactions, { header: false }));
+              res.write(`\n`);
+            } while (result.transactions.totalCount > result.transactions.limit + result.transactions.offset);
+          } else {
+            res.write(
+              `Warning: totalCount is ${result.transactions.totalCount} and limit was ${result.transactions.limit}`,
+            );
+          }
         }
 
-        res.send(csv);
+        res.end();
+
         break;
       }
 
