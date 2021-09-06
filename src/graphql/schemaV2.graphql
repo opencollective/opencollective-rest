@@ -87,19 +87,6 @@ interface Account {
   """
   isAdmin: Boolean!
   parentAccount: Account
-
-  """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
   members(
     limit: Int = 100
     offset: Int = 0
@@ -212,9 +199,9 @@ interface Account {
   """
   paymentMethods(
     """
-    Filter on given types (creditcard, giftcard...)
+    Filter on given types (CREDITCARD, GIFTCARD...)
     """
-    type: [String]
+    type: [PaymentMethodType]
 
     """
     Filter on given types (CREDITCARD, GIFTCARD...)
@@ -671,19 +658,6 @@ type Bot implements Account {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -810,7 +784,7 @@ type Bot implements Account {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -984,19 +958,6 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -1123,7 +1084,7 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -3323,19 +3284,6 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -3462,7 +3410,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -3599,6 +3547,16 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   The Collective hosting this Event
   """
   parentCollective: Collective @deprecated(reason: "2020/07/01 - Use parent instead.")
+
+  """
+  The Event start date and time
+  """
+  startsAt: DateTime
+
+  """
+  The Event end date and time
+  """
+  endsAt: DateTime
 }
 
 """
@@ -4309,19 +4267,6 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -4448,7 +4393,7 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -4681,19 +4626,6 @@ type Host implements Account & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -4820,7 +4752,7 @@ type Host implements Account & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -5273,19 +5205,6 @@ type Individual implements Account {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -5412,7 +5331,7 @@ type Individual implements Account {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -6381,6 +6300,28 @@ type Mutation {
   ): Member!
 
   """
+  [Root only] Create a member entry directly. For non-root users, use `inviteMember`
+  """
+  createMember(
+    """
+    Reference to an account for the member
+    """
+    memberAccount: AccountReferenceInput!
+
+    """
+    memberAccount will become a member of this account
+    """
+    account: AccountReferenceInput!
+
+    """
+    Role of the member
+    """
+    role: MemberRole!
+    description: String
+    since: DateTime
+  ): Member!
+
+  """
   Edit an existing member of the Collective
   """
   editMember(
@@ -6651,6 +6592,7 @@ type Order {
   Platform Tip attached to the Order.
   """
   platformTipAmount: Amount
+  tags: [String]!
   taxes: [OrderTax]!
 
   """
@@ -6769,6 +6711,11 @@ input OrderCreateInput {
   Whether this is transferring the remaining balance from a project/event/collective
   """
   isBalanceTransfer: Boolean
+
+  """
+  Tags associated to the order
+  """
+  tags: [String]
 }
 
 """
@@ -6940,19 +6887,6 @@ type Organization implements Account & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -7079,7 +7013,7 @@ type Organization implements Account & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -7193,6 +7127,7 @@ type Organization implements Account & AccountWithContributions {
 
 input OrganizationCreateInput {
   name: String!
+  legalName: String
   slug: String!
   description: String!
   website: String
@@ -7240,15 +7175,19 @@ input PaymentMethodInput {
   id: String
 
   """
+  Service of this payment method
+  """
+  service: PaymentMethodService
+
+  """
   Type of this payment method
   """
-  type: PaymentMethodLegacyType
+  type: PaymentMethodType
 
   """
   Type of this payment method
   """
   legacyType: PaymentMethodLegacyType
-  service: PaymentMethodService
   newType: PaymentMethodType
 
   """
@@ -7523,19 +7462,6 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -7662,7 +7588,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
@@ -7910,12 +7836,12 @@ type Query {
     offset: Int = 0
 
     """
-    Reference of the account that submitted this expense
+    Reference of an account that is the payee of an expense
     """
     fromAccount: AccountReferenceInput
 
     """
-    Reference of the account where this expense was submitted
+    Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
 
@@ -7978,6 +7904,11 @@ type Query {
     The term to search
     """
     searchTerm: String
+
+    """
+    Whether to include expenses from children of the account (Events and Projects)
+    """
+    includeChildrenExpenses: Boolean! = false
   ): ExpenseCollection
   expense(
     """
@@ -8192,6 +8123,11 @@ type Query {
     incognito profile will be included too (admins only)
     """
     includeIncognitoTransactions: Boolean! = false
+
+    """
+    Whether to include transactions from children of the account (Events and Projects)
+    """
+    includeChildrenTransactions: Boolean! = false
 
     """
     Whether to include debt transactions
@@ -8437,6 +8373,7 @@ type TransactionCollection implements Collection {
   limit: Int
   totalCount: Int
   nodes: [Transaction]
+  kinds: [TransactionKind]
 }
 
 enum TransactionKind {
@@ -8765,19 +8702,6 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   parentAccount: Account
 
   """
-  Get all the members of this account (admins, members, accountants etc.)
-  """
-  accountMembers(
-    limit: Int
-    offset: Int
-    accountType: [AccountType]
-    role: MemberRole
-    roles: [MemberRole]
-    TierId: Int
-    tierSlug: String
-  ): [Member] @deprecated(reason: "2021-08-25: This should not have been introduced, use \"members\"")
-
-  """
   Get all members (admins, members, backers, followers)
   """
   members(
@@ -8904,7 +8828,7 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   The list of payment methods that this collective can use to pay for Orders
   """
   paymentMethods(
-    type: [String]
+    type: [PaymentMethodType]
     enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
