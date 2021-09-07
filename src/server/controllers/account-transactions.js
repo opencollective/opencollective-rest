@@ -270,7 +270,7 @@ const accountTransactions = async (req, res) => {
     'includeIncognitoTransactions',
     'includeChildrenTransactions',
   ]);
-  variables.limit = variables.limit ? Number(variables.limit) : 10000;
+  variables.limit = variables.limit ? Number(variables.limit) : 1000;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.dateFrom) {
