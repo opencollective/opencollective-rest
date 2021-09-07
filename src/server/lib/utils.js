@@ -1,4 +1,3 @@
-import { Parser } from 'json2csv';
 import { isNaN } from 'lodash';
 
 export const getBaseApiUrl = () => {
@@ -21,9 +20,24 @@ export const days = (d1, d2 = new Date()) => {
   return Math.round(Math.abs((new Date(d1).getTime() - new Date(d2).getTime()) / oneDay));
 };
 
-export function json2csv(data, opts) {
-  const parser = new Parser(opts);
-  return parser.parse(data);
+export function json2csv(json) {
+  const lines = [`"${Object.keys(json[0]).join('","')}"`];
+  json.forEach((row) => {
+    lines.push(
+      `"${Object.values(row)
+        .map((td) => {
+          if (typeof td === 'string') {
+            return td.replace(/"/g, '""').replace(/\n/g, '  ');
+          } else if (td !== undefined && td !== null) {
+            return td;
+          } else {
+            return '';
+          }
+        })
+        .join('","')}"`,
+    );
+  });
+  return lines.join('\n');
 }
 
 function isUUID(str) {

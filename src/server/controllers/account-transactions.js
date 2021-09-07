@@ -1,10 +1,16 @@
 import gqlV2 from 'graphql-tag';
+import { Parser } from 'json2csv';
 import { difference, get, head, intersection, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { json2csv, parseToBooleanDefaultFalse } from '../lib/utils';
+import { parseToBooleanDefaultFalse } from '../lib/utils';
 import { logger } from '../logger';
+
+function json2csv(data, opts) {
+  const parser = new Parser(opts);
+  return parser.parse(data);
+}
 
 export const transactionsFragment = gqlV2/* GraphQL */ `
   fragment TransactionsFragment on TransactionCollection {
