@@ -106,6 +106,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $maxAmount: Int
     $includeIncognitoTransactions: Boolean
     $includeChildrenTransactions: Boolean
+    $includeGiftCardTransactions: Boolean
     $fetchHostFee: Boolean
   ) {
     transactions(
@@ -121,6 +122,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       maxAmount: $maxAmount
       includeIncognitoTransactions: $includeIncognitoTransactions
       includeChildrenTransactions: $includeChildrenTransactions
+      includeGiftCardTransactions: $includeGiftCardTransactions
     ) {
       ...TransactionsFragment
     }
@@ -269,6 +271,7 @@ const accountTransactions = async (req, res) => {
     'maxAmount',
     'includeIncognitoTransactions',
     'includeChildrenTransactions',
+    'includeGiftCardTransactions',
   ]);
   variables.limit = variables.limit ? Number(variables.limit) : 1000;
   variables.offset = Number(variables.offset) || 0;
@@ -311,6 +314,10 @@ const accountTransactions = async (req, res) => {
 
   if (variables.includeChildrenTransactions) {
     variables.includeChildrenTransactions = parseToBooleanDefaultFalse(variables.includeChildrenTransactions);
+  }
+
+  if (variables.includeGiftCardTransactions) {
+    variables.includeGiftCardTransactions = parseToBooleanDefaultFalse(variables.includeGiftCardTransactions);
   }
 
   variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);
