@@ -4,7 +4,7 @@ import { difference, get, head, intersection, pick, toUpper, trim } from 'lodash
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { parseToBooleanDefaultFalse } from '../lib/utils';
+import { parseToBooleanDefaultFalse, parseToBooleanDefaultTrue } from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -107,6 +107,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $includeIncognitoTransactions: Boolean
     $includeChildrenTransactions: Boolean
     $includeGiftCardTransactions: Boolean
+    $includeRegularTransactions: Boolean
     $fetchHostFee: Boolean
   ) {
     transactions(
@@ -123,6 +124,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       includeIncognitoTransactions: $includeIncognitoTransactions
       includeChildrenTransactions: $includeChildrenTransactions
       includeGiftCardTransactions: $includeGiftCardTransactions
+      includeRegularTransactions: $includeRegularTransactions
     ) {
       ...TransactionsFragment
     }
@@ -318,6 +320,10 @@ const accountTransactions = async (req, res) => {
 
   if (variables.includeGiftCardTransactions) {
     variables.includeGiftCardTransactions = parseToBooleanDefaultFalse(variables.includeGiftCardTransactions);
+  }
+
+  if (variables.includeRegularTransactions) {
+    variables.includeRegularTransactions = parseToBooleanDefaultTrue(variables.includeRegularTransactions);
   }
 
   variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);

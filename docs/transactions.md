@@ -29,6 +29,7 @@ E.g. https://rest.opencollective.com/v2/opensource/hostTransactions.csv
 - `includeIncognitoTransactions`: include incognito transactions made by the account (only for authenticated user)
 - `includeChildrenTransactions`: include transactions by children of the account (Projects and Events)
 - `includeGiftCardTransactions`: include transactions with Gift Cards issued by the account
+- `includeRegularTransactions`: include regular transactions of the account (default to true, use to exclude)
 
 ### Authentication
 
