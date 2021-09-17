@@ -1,28 +1,60 @@
-import ApolloClient, { InMemoryCache } from 'apollo-boost';
+import http from 'http';
+import https from 'https';
+
+import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 import { GraphQLClient } from 'graphql-request';
 import gql from 'graphql-tag';
-import fetch from 'node-fetch';
+import nodeFetch from 'node-fetch';
+import omitDeep from 'omit-deep-lodash';
 
-import { getGraphqlUrl } from './utils';
+import { getGraphqlUrl, parseToBooleanDefaultTrue } from './utils';
 
-export function getClient({ version = 'v1', apiKey, headers = {} } = {}) {
-  headers['oc-env'] = process.env.OC_ENV;
-  headers['oc-secret'] = process.env.OC_SECRET;
-  headers['oc-application'] = process.env.OC_APPLICATION;
-  headers['user-agent'] = 'opencollective-rest/1.0';
+let customAgent;
 
+async function fetch(url, options = {}) {
+  options.agent = getCustomAgent();
+
+  // Add headers to help the API identify origin of requests
+  options.headers = options.headers || {};
+  options.headers['oc-env'] = process.env.OC_ENV;
+  options.headers['oc-secret'] = process.env.OC_SECRET;
+  options.headers['oc-application'] = process.env.OC_APPLICATION;
+  options.headers['user-agent'] = 'opencollective-rest/1.0 node-fetch/1.0';
+
+  const result = await nodeFetch(url, options);
+
+  return result;
+}
+
+function getCustomAgent() {
+  if (!customAgent) {
+    const { FETCH_AGENT_KEEP_ALIVE, FETCH_AGENT_KEEP_ALIVE_MSECS } = process.env;
+    const keepAlive = FETCH_AGENT_KEEP_ALIVE !== undefined ? parseToBooleanDefaultTrue(FETCH_AGENT_KEEP_ALIVE) : true;
+    const keepAliveMsecs = FETCH_AGENT_KEEP_ALIVE_MSECS ? Number(FETCH_AGENT_KEEP_ALIVE_MSECS) : 10000;
+    const httpAgent = new http.Agent({ keepAlive, keepAliveMsecs });
+    const httpsAgent = new https.Agent({ keepAlive, keepAliveMsecs });
+    customAgent = (_parsedURL) => (_parsedURL.protocol === 'http:' ? httpAgent : httpsAgent);
+  }
+  return customAgent;
+}
+
+function getClient({ version = 'v1', apiKey } = {}) {
   return new ApolloClient({
-    fetch,
-    headers,
-    uri: getGraphqlUrl({ version, apiKey }),
-    cache: new InMemoryCache({ addTypename: false }),
+    link: new HttpLink({ uri: getGraphqlUrl({ version, apiKey }), fetch }),
+    cache: new InMemoryCache(),
   });
 }
 
 export function graphqlRequest(query, variables, clientParameters) {
   return getClient(clientParameters)
-    .query({ query, variables })
-    .then((result) => result.data);
+    .query({
+      query,
+      variables,
+      context: {
+        headers: clientParameters?.headers,
+      },
+    })
+    .then((result) => omitDeep(result.data, ['__typename']));
 }
 
 export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey, headers = {} } = {}) {
