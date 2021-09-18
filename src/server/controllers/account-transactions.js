@@ -104,6 +104,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $dateTo: DateTime
     $minAmount: Int
     $maxAmount: Int
+    $searchTerm: String
     $includeIncognitoTransactions: Boolean
     $includeChildrenTransactions: Boolean
     $includeGiftCardTransactions: Boolean
@@ -121,6 +122,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       dateTo: $dateTo
       minAmount: $minAmount
       maxAmount: $maxAmount
+      searchTerm: $searchTerm
       includeIncognitoTransactions: $includeIncognitoTransactions
       includeChildrenTransactions: $includeChildrenTransactions
       includeGiftCardTransactions: $includeGiftCardTransactions
@@ -271,6 +273,7 @@ const accountTransactions = async (req, res) => {
     'dateTo',
     'minAmount',
     'maxAmount',
+    'searchTerm',
     'includeIncognitoTransactions',
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
