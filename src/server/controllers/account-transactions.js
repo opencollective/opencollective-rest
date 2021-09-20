@@ -51,12 +51,18 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         slug
         name
         type
+        ... on Individual {
+          email
+        }
       }
       oppositeAccount {
         id
         slug
         name
         type
+        ... on Individual {
+          email
+        }
       }
       host {
         id
@@ -195,9 +201,11 @@ const csvMapping = {
   accountSlug: (t) => get(t, 'account.slug'),
   accountName: (t) => get(t, 'account.name'),
   accountType: (t) => get(t, 'account.type'),
+  accountEmail: (t) => get(t, 'account.email'),
   oppositeAccountSlug: (t) => get(t, 'oppositeAccount.slug'),
   oppositeAccountName: (t) => get(t, 'oppositeAccount.name'),
   oppositeAccountType: (t) => get(t, 'oppositeAccount.type'),
+  oppositeAccountEmail: (t) => get(t, 'oppositeAccount.email'),
   hostSlug: (t) => get(t, 'host.slug'),
   hostName: (t) => get(t, 'host.name'),
   hostType: (t) => get(t, 'host.type'),
