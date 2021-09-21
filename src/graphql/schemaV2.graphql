@@ -88,8 +88,8 @@ interface Account {
   isAdmin: Boolean!
   parentAccount: Account
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
 
     """
@@ -101,10 +101,10 @@ interface Account {
     Type of accounts (BOT/COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
     """
     accountType: [AccountType]
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
 
     """
@@ -134,8 +134,8 @@ interface Account {
     orderByRoles: Boolean
   ): MemberOfCollection
   transactions(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
 
     """
     Type of transaction (DEBIT/CREDIT)
@@ -148,10 +148,10 @@ interface Account {
     incognito profile will be included too (admins only)
     """
     includeIncognitoTransactions: Boolean! = false
-  ): TransactionCollection
+  ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -169,24 +169,24 @@ interface Account {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -238,12 +238,12 @@ interface Account {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -255,8 +255,8 @@ interface Account {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -270,7 +270,7 @@ interface Account {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 }
 
@@ -389,7 +389,17 @@ interface AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -398,12 +408,12 @@ interface AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -661,8 +671,8 @@ type Bot implements Account {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -675,10 +685,10 @@ type Bot implements Account {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -722,11 +732,11 @@ type Bot implements Account {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -736,8 +746,8 @@ type Bot implements Account {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -755,24 +765,24 @@ type Bot implements Account {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -809,12 +819,12 @@ type Bot implements Account {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -826,8 +836,8 @@ type Bot implements Account {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -841,7 +851,7 @@ type Bot implements Account {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 }
 
@@ -961,8 +971,8 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -975,10 +985,10 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -1022,11 +1032,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -1036,8 +1046,8 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -1055,24 +1065,24 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -1109,12 +1119,12 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -1126,8 +1136,8 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -1141,7 +1151,7 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -1183,7 +1193,17 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -1192,12 +1212,12 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -1573,8 +1593,8 @@ type Conversation {
   """
   List the comments for this conversation. Not backed by a loader, don't use this in lists.
   """
-  comments(limit: Int, offset: Int): CommentCollection
-  followers(limit: Int = 10, offset: Int = 0): AccountCollection
+  comments(limit: Int! = 150, offset: Int! = 0): CommentCollection!
+  followers(limit: Int! = 10, offset: Int! = 0): AccountCollection!
   stats: ConversationStats
 }
 
@@ -2842,7 +2862,17 @@ type Credit implements Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
-  description: String
+  description(
+    """
+    Wether to generate the description dynamically.
+    """
+    dynamic: Boolean = false
+
+    """
+    Wether to generate the full description when using dynamic.
+    """
+    full: Boolean = false
+  ): String
   amount: Amount!
   amountInHostCurrency: Amount!
   netAmount(
@@ -3127,7 +3157,17 @@ type Debit implements Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
-  description: String
+  description(
+    """
+    Wether to generate the description dynamically.
+    """
+    dynamic: Boolean = false
+
+    """
+    Wether to generate the full description when using dynamic.
+    """
+    full: Boolean = false
+  ): String
   amount: Amount!
   amountInHostCurrency: Amount!
   netAmount(
@@ -3287,8 +3327,8 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -3301,10 +3341,10 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -3348,11 +3388,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -3362,8 +3402,8 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -3381,24 +3421,24 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -3435,12 +3475,12 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -3452,8 +3492,8 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -3467,7 +3507,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -3509,7 +3549,17 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -3518,12 +3568,12 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -3612,12 +3662,12 @@ type Expense {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: ASC }
   ): CommentCollection
 
@@ -4270,8 +4320,8 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -4284,10 +4334,10 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -4331,11 +4381,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -4345,8 +4395,8 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -4364,24 +4414,24 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -4418,12 +4468,12 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -4435,8 +4485,8 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -4450,7 +4500,7 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -4492,7 +4542,17 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -4501,12 +4561,12 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -4629,8 +4689,8 @@ type Host implements Account & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -4643,10 +4703,10 @@ type Host implements Account & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -4690,11 +4750,11 @@ type Host implements Account & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -4704,8 +4764,8 @@ type Host implements Account & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -4723,24 +4783,24 @@ type Host implements Account & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -4777,12 +4837,12 @@ type Host implements Account & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -4794,8 +4854,8 @@ type Host implements Account & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -4809,7 +4869,7 @@ type Host implements Account & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -4821,7 +4881,17 @@ type Host implements Account & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -4830,12 +4900,12 @@ type Host implements Account & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -4869,7 +4939,33 @@ type Host implements Account & AccountWithContributions {
     Superior date limit in which we're calculating the metrics
     """
     to: String
+
+    """
+    The start date of the time series
+    """
+    dateFrom: DateTime
+
+    """
+    The end date of the time series
+    """
+    dateTo: DateTime
   ): HostMetrics!
+  hostMetricsTimeSeries(
+    """
+    The start date of the time series
+    """
+    dateFrom: DateTime!
+
+    """
+    The end date of the time series
+    """
+    dateTo: DateTime!
+
+    """
+    The time unit of the time series
+    """
+    timeUnit: TimeUnit!
+  ): HostMetricsTimeSeries!
 
   """
   The list of payment methods (Stripe, Paypal, manual bank transfer, etc ...) the Host can accept for its Collectives
@@ -4904,12 +5000,12 @@ type Host implements Account & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
 
     """
     A term to search membership. Searches in collective tags, name, slug, members description and role.
@@ -4922,14 +5018,14 @@ type Host implements Account & AccountWithContributions {
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
   ): HostApplicationCollection!
   hostedVirtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
     collectiveAccountIds: [AccountReferenceInput] = null
   ): VirtualCardCollection!
-  hostedVirtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
-  hostedVirtualCardCollectives(limit: Int = 100, offset: Int = 0): AccountCollection!
+  hostedVirtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
+  hostedVirtualCardCollectives(limit: Int! = 100, offset: Int! = 0): AccountCollection!
 }
 
 type HostApplication {
@@ -5049,6 +5145,26 @@ type HostMetrics {
   Host fee sharing percent
   """
   hostFeeSharePercent: Int
+}
+
+"""
+Host metrics time series
+"""
+type HostMetricsTimeSeries {
+  """
+  History of the collected platform tips
+  """
+  platformTips: TimeSeriesAmount!
+
+  """
+  History of the host fees collected
+  """
+  hostFees: TimeSeriesAmount!
+
+  """
+  History of the share of host fees collected owed to Open Collective Inc.
+  """
+  hostFeeShare: TimeSeriesAmountWithSettlement!
 }
 
 """
@@ -5208,8 +5324,8 @@ type Individual implements Account {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -5222,10 +5338,10 @@ type Individual implements Account {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -5269,11 +5385,11 @@ type Individual implements Account {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -5283,8 +5399,8 @@ type Individual implements Account {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -5302,24 +5418,24 @@ type Individual implements Account {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -5358,12 +5474,12 @@ type Individual implements Account {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -5375,8 +5491,8 @@ type Individual implements Account {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -5390,7 +5506,7 @@ type Individual implements Account {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
   firstName: String @deprecated(reason: "2020-10-12: Use the name field")
   lastName: String @deprecated(reason: "2020-10-12: Use the name field")
@@ -6604,6 +6720,11 @@ type Order {
   The permissions given to current logged in user for this order
   """
   permissions: OrderPermissions!
+
+  """
+  Data related to the order
+  """
+  data: JSON
 }
 
 """
@@ -6890,8 +7011,8 @@ type Organization implements Account & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -6904,10 +7025,10 @@ type Organization implements Account & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -6951,11 +7072,11 @@ type Organization implements Account & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -6965,8 +7086,8 @@ type Organization implements Account & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -6984,24 +7105,24 @@ type Organization implements Account & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -7040,12 +7161,12 @@ type Organization implements Account & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -7057,8 +7178,8 @@ type Organization implements Account & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -7072,7 +7193,7 @@ type Organization implements Account & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -7084,7 +7205,17 @@ type Organization implements Account & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -7093,12 +7224,12 @@ type Organization implements Account & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -7465,8 +7596,8 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -7479,10 +7610,10 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -7526,11 +7657,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -7540,8 +7671,8 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -7559,24 +7690,24 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -7613,12 +7744,12 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -7630,8 +7761,8 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -7645,7 +7776,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -7687,7 +7818,17 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -7696,12 +7837,12 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 
@@ -7755,6 +7896,47 @@ type Query {
     """
     throwIfMissing: Boolean = true
   ): Account
+  accounts(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    Only accounts that match these tags
+    """
+    tag: [String]
+
+    """
+    Only accounts that match these account types
+    """
+    type: [AccountType]
+
+    """
+    Only return active collectives
+    """
+    isActive: Boolean
+
+    """
+    Only accounts with custom contribution (/donate) enabled
+    """
+    hasCustomContributionsEnabled: Boolean
+
+    """
+    Only accounts that support one of these payment services will be returned
+    """
+    supportedPaymentMethodService: [PaymentMethodService]
+
+    """
+    The order of results
+    """
+    orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+  ): AccountCollection!
   collective(
     """
     The public id identifying the Collective (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
@@ -7828,12 +8010,12 @@ type Query {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
 
     """
     Reference of an account that is the payee of an expense
@@ -7909,7 +8091,7 @@ type Query {
     Whether to include expenses from children of the account (Events and Projects)
     """
     includeChildrenExpenses: Boolean! = false
-  ): ExpenseCollection
+  ): ExpenseCollection!
   expense(
     """
     Public expense identifier
@@ -7930,12 +8112,12 @@ type Query {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
 
     """
     Filter hosts by tags (multiple = OR)
@@ -7973,12 +8155,12 @@ type Query {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
 
     """
     Return only orders made from/to account
@@ -8045,12 +8227,12 @@ type Query {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
 
     """
     The transaction type (DEBIT or CREDIT)
@@ -8119,15 +8301,26 @@ type Query {
     hasOrder: Boolean
 
     """
+    Whether to include regular transactions from the account (turn false if you
+    only want Incognito or Gift Card transactions)
+    """
+    includeRegularTransactions: Boolean! = true
+
+    """
     If the account is a user and this field is true, contributions from the
     incognito profile will be included too (admins only)
     """
     includeIncognitoTransactions: Boolean! = false
 
     """
-    Whether to include transactions from children of the account (Events and Projects)
+    Whether to include transactions from children (Events and Projects)
     """
     includeChildrenTransactions: Boolean! = false
+
+    """
+    Whether to include transactions from Gift Cards issued by the account.
+    """
+    includeGiftCardTransactions: Boolean! = false
 
     """
     Whether to include debt transactions
@@ -8143,7 +8336,7 @@ type Query {
     To filter by transaction kind
     """
     kind: [TransactionKind]
-  ): TransactionCollection
+  ): TransactionCollection!
   update(
     """
     Public identifier
@@ -8234,7 +8427,7 @@ type Tier {
   """
   Get all orders
   """
-  orders(limit: Int = 100, offset: Int = 0, status: [OrderStatus]): OrderCollection
+  orders(limit: Int! = 100, offset: Int! = 0, status: [OrderStatus]): OrderCollection!
   amount: Amount!
   type: TierType!
   interval: TierInterval @deprecated(reason: "2020-08-24: Please use \"frequency\"")
@@ -8294,6 +8487,94 @@ enum TierType {
   PRODUCT
 }
 
+interface TimeSeries {
+  """
+  The start date of the time series
+  """
+  dateFrom: DateTime!
+
+  """
+  The end date of the time series
+  """
+  dateTo: DateTime!
+
+  """
+  The interval between two data points
+  """
+  timeUnit: TimeUnit!
+}
+
+"""
+Amount time series
+"""
+type TimeSeriesAmount implements TimeSeries {
+  """
+  The start date of the time series
+  """
+  dateFrom: DateTime!
+
+  """
+  The end date of the time series
+  """
+  dateTo: DateTime!
+
+  """
+  The interval between two data points
+  """
+  timeUnit: TimeUnit!
+
+  """
+  Time series data points
+  """
+  nodes: [TimeSeriesAmountNode!]!
+}
+
+type TimeSeriesAmountNode {
+  date: DateTime!
+  amount: Amount!
+}
+
+"""
+Amounts with settlements time series
+"""
+type TimeSeriesAmountWithSettlement implements TimeSeries {
+  """
+  The start date of the time series
+  """
+  dateFrom: DateTime!
+
+  """
+  The end date of the time series
+  """
+  dateTo: DateTime!
+
+  """
+  The interval between two data points
+  """
+  timeUnit: TimeUnit!
+
+  """
+  Time series data points
+  """
+  nodes: [TimeSeriesAmountWithSettlementNode!]!
+}
+
+type TimeSeriesAmountWithSettlementNode {
+  date: DateTime!
+  amount: Amount!
+  settlementStatus: TransactionSettlementStatus!
+}
+
+enum TimeUnit {
+  SECOND
+  MINUTE
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
 """
 Transaction interface shared by all kind of transactions (Debit, Credit)
 """
@@ -8304,7 +8585,17 @@ interface Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
-  description: String
+  description(
+    """
+    Wether to generate the description dynamically.
+    """
+    dynamic: Boolean = false
+
+    """
+    Wether to generate the full description when using dynamic.
+    """
+    full: Boolean = false
+  ): String
   amount: Amount!
   amountInHostCurrency: Amount!
   netAmount(
@@ -8424,6 +8715,12 @@ input TransactionReferenceInput {
   The internal id of the transaction (ie: 580)
   """
   legacyId: Int
+}
+
+enum TransactionSettlementStatus {
+  OWED
+  INVOICED
+  SETTLED
 }
 
 """
@@ -8548,7 +8845,7 @@ type Update {
   """
   List the comments for this update. Not backed by a loader, don't use this in lists.
   """
-  comments(limit: Int, offset: Int): CommentCollection
+  comments(limit: Int! = 150, offset: Int! = 0): CommentCollection
 }
 
 """
@@ -8705,8 +9002,8 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   Get all members (admins, members, backers, followers)
   """
   members(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
 
@@ -8719,10 +9016,10 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     Order of the results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
-  ): MemberCollection
+  ): MemberCollection!
   memberOf(
-    limit: Int
-    offset: Int
+    limit: Int! = 150
+    offset: Int! = 0
     role: [MemberRole]
     accountType: [AccountType]
     account: AccountReferenceInput
@@ -8766,11 +9063,11 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
-  ): MemberOfCollection
+  ): MemberOfCollection!
   transactions(
     type: TransactionType
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     orderBy: ChronologicalOrderInput = { field: CREATED_AT, direction: DESC }
 
     """
@@ -8780,8 +9077,8 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     includeIncognitoTransactions: Boolean! = false
   ): TransactionCollection!
   orders(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     filter: AccountOrdersFilter
     status: [OrderStatus]
     tierSlug: String
@@ -8799,24 +9096,24 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   ): OrderCollection!
   settings: JSON!
   conversations(
-    limit: Int
-    offset: Int
+    limit: Int! = 15
+    offset: Int! = 0
 
     """
     Only return conversations matching this tag
     """
     tag: String
-  ): ConversationCollection
+  ): ConversationCollection!
 
   """
   Returns conversation's tags for collective sorted by popularity
   """
-  conversationsTags(limit: Int = 30): [TagStat]
+  conversationsTags(limit: Int! = 30): [TagStat]
 
   """
   Returns expense tags for collective sorted by popularity
   """
-  expensesTags(limit: Int = 30): [TagStat]
+  expensesTags(limit: Int! = 30): [TagStat]
   transferwise: TransferWise
 
   """
@@ -8853,12 +9150,12 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     onlyPublishedUpdates: Boolean
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
@@ -8870,8 +9167,8 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   """
   features: CollectiveFeatures!
   virtualCards(
-    limit: Int = 100
-    offset: Int = 0
+    limit: Int! = 100
+    offset: Int! = 0
     state: String = null
     merchantAccount: AccountReferenceInput = null
 
@@ -8885,7 +9182,7 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     """
     dateTo: DateTime = null
   ): VirtualCardCollection!
-  virtualCardMerchants(limit: Int = 100, offset: Int = 0): AccountCollection!
+  virtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   childrenAccounts(limit: Int! = 100, offset: Int! = 0, accountType: [AccountType]): AccountCollection!
 
   """
@@ -8927,7 +9224,17 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     """
     accountType: AccountType
   ): Int!
-  tiers: TierCollection!
+  tiers(
+    """
+    The number of results to fetch
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): TierCollection!
 
   """
   All the persons and entities that contribute to this account
@@ -8936,12 +9243,12 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     """
     The number of results to fetch (default 10, max 1000)
     """
-    limit: Int = 10
+    limit: Int! = 10
 
     """
     The offset to use to fetch
     """
-    offset: Int = 0
+    offset: Int! = 0
     roles: [MemberRole]
   ): ContributorCollection!
 

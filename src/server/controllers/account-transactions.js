@@ -24,7 +24,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
       group
       type
       kind
-      description
+      description(dynamic: true, full: $fullDescription)
       createdAt
       amount {
         value
@@ -116,6 +116,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $includeGiftCardTransactions: Boolean
     $includeRegularTransactions: Boolean
     $fetchHostFee: Boolean
+    $fullDescription: Boolean
   ) {
     transactions(
       includeDebts: true
@@ -152,6 +153,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $minAmount: Int
     $maxAmount: Int
     $fetchHostFee: Boolean
+    $fullDescription: Boolean
   ) {
     transactions(
       includeDebts: true
@@ -340,6 +342,12 @@ const accountTransactions = async (req, res) => {
   variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);
   if (variables.fetchHostFee) {
     variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
+  }
+
+  if (req.query.fullDescription) {
+    variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription);
+  } else {
+    variables.fullDescription = req.params.reportType === 'hostTransactions' ? true : false;
   }
 
   let fields = get(req.query, 'fields', '')
