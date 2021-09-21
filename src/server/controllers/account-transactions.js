@@ -50,6 +50,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         id
         slug
         name
+        legalName
         type
         ... on Individual {
           email
@@ -59,6 +60,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         id
         slug
         name
+        legalName
         type
         ... on Individual {
           email
@@ -68,6 +70,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         id
         slug
         name
+        legalName
         type
       }
       order {
@@ -181,6 +184,18 @@ const formatAmountAsString = (amount) => {
   return `${amountAsString} ${amount.currency}`;
 };
 
+const formatAccountName = (account) => {
+  const legalName = account?.legalName;
+  const name = account?.name;
+  if (!legalName && !name) {
+    return '';
+  } else if (legalName && name && legalName !== name) {
+    return `${legalName} (${name})`;
+  } else {
+    return legalName || name;
+  }
+};
+
 const csvMapping = {
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
@@ -201,15 +216,15 @@ const csvMapping = {
   netAmount: (t) => get(t, 'netAmountInHostCurrency.value', 0),
   currency: (t) => get(t, 'amountInHostCurrency.currency'),
   accountSlug: (t) => get(t, 'account.slug'),
-  accountName: (t) => get(t, 'account.name'),
+  accountName: (t) => formatAccountName(t.account),
   accountType: (t) => get(t, 'account.type'),
   accountEmail: (t) => get(t, 'account.email'),
   oppositeAccountSlug: (t) => get(t, 'oppositeAccount.slug'),
-  oppositeAccountName: (t) => get(t, 'oppositeAccount.name'),
+  oppositeAccountName: (t) => formatAccountName(t.oppositeAccount),
   oppositeAccountType: (t) => get(t, 'oppositeAccount.type'),
   oppositeAccountEmail: (t) => get(t, 'oppositeAccount.email'),
   hostSlug: (t) => get(t, 'host.slug'),
-  hostName: (t) => get(t, 'host.name'),
+  hostName: (t) => formatAccountName(t.host),
   hostType: (t) => get(t, 'host.type'),
   orderId: (t) => get(t, 'order.id'),
   orderLegacyId: (t) => get(t, 'order.legacyId'),
