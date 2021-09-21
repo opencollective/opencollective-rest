@@ -269,7 +269,9 @@ const defaultFields = [
   'netAmount',
   'currency',
   'accountSlug',
+  'accountName',
   'oppositeAccountSlug',
+  'oppositeAccountName',
 ];
 
 const applyMapping = (mapping, row) => {
