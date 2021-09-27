@@ -260,6 +260,7 @@ const allFields = Object.keys(csvMapping);
 const defaultFields = [
   'datetime',
   'shortGroup',
+  'description',
   'type',
   'kind',
   'isRefund',
@@ -274,6 +275,12 @@ const defaultFields = [
   'accountName',
   'oppositeAccountSlug',
   'oppositeAccountName',
+  // Payment Method (for orders)
+  'paymentMethodService',
+  'paymentMethodType',
+  // Type and Payout Method (for expenses)
+  'expenseType',
+  'payoutMethodType',
 ];
 
 const applyMapping = (mapping, row) => {

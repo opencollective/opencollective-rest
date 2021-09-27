@@ -52,7 +52,7 @@ You can create new API Keys from the following page: https://opencollective.com/
 | legacyId             | legacyId                         | auto-increment identifier for the transaction             |
 | group                | group                            | group identifier of the transaction                       |
 | shortGroup           | group                            | first 8 characters of the `group`                         | Yes       |
-| description          | description                      | human readable description of the transaction             |
+| description          | description                      | human readable description of the transaction             | Yes       |
 | type                 | type                             | `CREDIT` or `DEBIT`                                       | Yes       |
 | kind                 | kind                             | `CONTRIBUTION`, `ADDED_FUNDS`, `EXPENSE`, etc ...         | Yes       |
 | isRefund             | isRefund                         | `REFUND` if it's a refund, empty if not                   | Yes       |
@@ -63,10 +63,10 @@ You can create new API Keys from the following page: https://opencollective.com/
 | netAmount            | netAmountInHostCurrency.value    | accounted amount after payment processor fees             | Yes       |
 | currency             | netAmountInHostCurrency.currency | accounted currency                                        | Yes       |
 | accountSlug          | account.slug                     | slug of the account on the main side of the transaction   | Yes       |
-| accountName          | account.name                     | name of the account on the main side of the transaction   |
+| accountName          | account.name                     | name of the account on the main side of the transaction   | Yes       |
 | accountType          | account.type                     | type of the account on the main side of the transaction   |
 | oppositeAccountSlug  | oppositeAccount.slug             | slug of the account on the opposite side                  | Yes       |
-| oppositeAccountName  | oppositeAccount.name             | name of the account on the opposite side                  |
+| oppositeAccountName  | oppositeAccount.name             | name of the account on the opposite side                  | Yes       |
 | oppositeAccountType  | oppositeAccount.type             | type of the account on the opposite side                  |
 | hostSlug             | host.slug                        | slug of the host accounting the transaction               |
 | oppositeAccountName  | oppositeAccount.name             | name of the host accounting the transaction               |
@@ -74,12 +74,12 @@ You can create new API Keys from the following page: https://opencollective.com/
 | orderId              | order.id                         | unique identifier for the order                           |
 | orderLegacyId        | order.legacyId                   | auto-increment identifier for the order                   |
 | orderFrequency       | order.frequency                  | frequency of the order (`ONETIME`, `MONTHLY` or `YEARLY`) |
-| paymentMethodService | paymentMethod.service            | service of the payment method ( `STRIPE`, etc ...)        |
-| paymentMethodType    | paymentMethod.type               | type of the payment method (`CREDITCARD`, etc ...)        |
+| paymentMethodService | paymentMethod.service            | service of the payment method ( `STRIPE`, etc ...)        | Yes       |
+| paymentMethodType    | paymentMethod.type               | type of the payment method (`CREDITCARD`, etc ...)        | Yes       |
 | expenseId            | expense.id                       | unique identifier for the expense                         |
 | expenseLegacyId      | expense.legacyId                 | auto-increment identifier for the expense                 |
-| expenseType          | expense.type                     | type of the expense (`INVOICE`, `RECEIPT`, etc ...)       |
-| payoutMethodType     | payoutMethod.type                | type of the payout method (`PAYPAL`, etc ...)             |
+| expenseType          | expense.type                     | type of the expense (`INVOICE`, `RECEIPT`, etc ...)       | Yes       |
+| payoutMethodType     | payoutMethod.type                | type of the payout method (`PAYPAL`, etc ...)             | Yes       |
 
 ### Adding fields
 
