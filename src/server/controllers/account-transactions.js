@@ -311,6 +311,7 @@ const accountTransactions = async (req, res) => {
     'includeIncognitoTransactions',
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
+    'includeRegularTransactions',
   ]);
   variables.limit = variables.limit ? Number(variables.limit) : 1000;
   variables.offset = Number(variables.offset) || 0;
