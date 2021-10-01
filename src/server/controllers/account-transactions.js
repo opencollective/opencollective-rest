@@ -157,12 +157,12 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $maxAmount: Int
     $fetchHostFee: Boolean
     $fullDescription: Boolean
-    $hostedAccount: [AccountReferenceInput!]
+    $account: [AccountReferenceInput!]
   ) {
     transactions(
       includeDebts: true
       host: { slug: $slug }
-      account: $hostedAccount
+      account: $account
       limit: $limit
       offset: $offset
       type: $type
@@ -300,7 +300,7 @@ const applyMapping = (mapping, row) => {
 
 const accountTransactions = async (req, res) => {
   const variables = pick({ ...req.params, ...req.query }, [
-    'hostedAccount',
+    'account',
     'slug',
     'limit',
     'offset',
@@ -318,8 +318,8 @@ const accountTransactions = async (req, res) => {
   variables.limit = variables.limit ? Number(variables.limit) : 1000;
   variables.offset = Number(variables.offset) || 0;
 
-  if (variables.hostedAccount) {
-    variables.hostedAccount = variables.hostedAccount.split(',').map((slug) => ({ slug }));
+  if (variables.account) {
+    variables.account = variables.account.split(',').map((slug) => ({ slug }));
   }
 
   if (variables.dateFrom) {
