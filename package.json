@@ -11,7 +11,7 @@
     "npm": "6.x"
   },
   "dependencies": {
-    "@apollo/client": "3.4.13",
+    "@apollo/client": "3.4.16",
     "@hyperwatch/hyperwatch": "3.8.2",
     "cloudflare-ip": "0.0.7",
     "cors": "2.8.5",
