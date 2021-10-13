@@ -1,16 +1,11 @@
 import gqlV2 from 'graphql-tag';
-import { Parser } from 'json2csv';
 import { difference, get, head, intersection, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
+import { applyMapping, json2csv } from '../lib/csv';
 import { graphqlRequest } from '../lib/graphql';
 import { parseToBooleanDefaultFalse, parseToBooleanDefaultTrue } from '../lib/utils';
 import { logger } from '../logger';
-
-function json2csv(data, opts) {
-  const parser = new Parser(opts);
-  return parser.parse(data);
-}
 
 export const transactionsFragment = gqlV2/* GraphQL */ `
   fragment TransactionsFragment on TransactionCollection {
@@ -284,19 +279,6 @@ const defaultFields = [
   'expenseType',
   'payoutMethodType',
 ];
-
-const applyMapping = (mapping, row) => {
-  const res = {};
-  Object.keys(mapping).map((key) => {
-    const val = mapping[key];
-    if (typeof val === 'function') {
-      return (res[key] = val(row));
-    } else {
-      return (res[key] = get(row, val));
-    }
-  });
-  return res;
-};
 
 const accountTransactions = async (req, res) => {
   const variables = pick({ ...req.params, ...req.query }, [

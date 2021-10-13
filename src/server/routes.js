@@ -61,7 +61,7 @@ export const loadRoutes = (app) => {
   );
 
   app.get(
-    '/v2/:slug/orders/:filter(incoming|outgoing)?/:status(active|cancelled|error|paid|pending)?',
+    '/v2/:slug/orders/:filter(incoming|outgoing)?/:status(active|cancelled|error|paid|pending)?(.:format(json|csv|txt))?',
     controllers.accountOrders,
   );
 

@@ -1,8 +1,23 @@
 import gqlV2 from 'graphql-tag';
-import { intersection, pick } from 'lodash';
+import { get, intersection, pick } from 'lodash';
+import moment from 'moment';
 
+import { applyMapping, json2csv } from '../lib/csv';
 import { graphqlRequest } from '../lib/graphql';
 import { logger } from '../logger';
+
+const csvMapping = {
+  createdAt: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
+  updatedAt: (t) => moment.utc(t.updatedAt).format('YYYY-MM-DDTHH:mm:ss'),
+  legacyId: 'legacyId',
+  shortId: (t) => t.id.substr(0, 8),
+  status: 'status',
+  frequency: 'frequency',
+  amount: (t) => get(t, 'amount.value', 0),
+  currency: (t) => get(t, 'amount.currency', 0),
+  fromAccountSlug: (t) => get(t, 'fromAccount.slug'),
+  fromAccountType: (t) => get(t, 'fromAccount.type'),
+};
 
 const query = gqlV2/* GraphQL */ `
   query account(
@@ -19,6 +34,8 @@ const query = gqlV2/* GraphQL */ `
         offset
         totalCount
         nodes {
+          id
+          legacyId
           fromAccount {
             name
             slug
@@ -29,6 +46,7 @@ const query = gqlV2/* GraphQL */ `
           }
           amount {
             value
+            currency
           }
           tier {
             slug
@@ -39,6 +57,7 @@ const query = gqlV2/* GraphQL */ `
             value
           }
           createdAt
+          updatedAt
         }
       }
     }
@@ -70,7 +89,29 @@ const accountOrders = async (req, res) => {
 
   try {
     const result = await graphqlRequest(query, variables, { version: 'v2' });
-    res.send(result.account.orders);
+
+    switch (req.params.format) {
+      case 'txt':
+      case 'csv': {
+        if (req.params.format === 'csv') {
+          res.setHeader('content-type', 'text/csv;charset=utf-8');
+        } else {
+          res.setHeader('content-type', 'text/plain;charset=utf-8');
+        }
+
+        if (result.account.orders === 0) {
+          res.status(404).send('No order found.');
+          break;
+        }
+
+        const mappedOrders = result.account.orders.nodes.map((t) => applyMapping(csvMapping, t));
+
+        res.send(json2csv(mappedOrders));
+        break;
+      }
+      default:
+        res.send(result.account.orders);
+    }
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');
