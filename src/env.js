@@ -1,7 +1,18 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 import debug from 'debug';
 import dotenv from 'dotenv';
+import lodash from 'lodash';
+
+// Load extra env file on demand
+// e.g. `npm run dev production` -> `.env.production`
+const extraEnv = process.env.EXTRA_ENV || lodash.last(process.argv);
+const extraEnvPath = path.join(__dirname, '..', `.env.${extraEnv}`);
+if (fs.existsSync(extraEnvPath)) {
+  dotenv.config({ path: extraEnvPath });
+}
 
 dotenv.config();
 debug.enable(process.env.DEBUG);
