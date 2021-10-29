@@ -88,6 +88,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         id
         legacyId
         type
+        tags
         createdAt
         payoutMethod {
           type
@@ -100,6 +101,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
 `;
 
 /* $fetchHostFee seems not used but it is in fragment */
+
 /* eslint-disable graphql/template-strings */
 
 const transactionsQuery = gqlV2/* GraphQL */ `
@@ -238,6 +240,7 @@ const csvMapping = {
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
   expenseType: (t) => get(t, 'expense.type'),
+  expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
 };
 
@@ -282,6 +285,7 @@ const defaultFields = [
   'paymentMethodType',
   // Type and Payout Method (for expenses)
   'expenseType',
+  'expenseTags',
   'payoutMethodType',
 ];
 
