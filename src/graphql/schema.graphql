@@ -124,7 +124,7 @@ type Collective implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -327,7 +327,7 @@ type Collective implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
 }
 
 """
@@ -339,8 +339,6 @@ input CollectiveAttributesInputType {
   type: String
   name: String
   company: String
-  firstName: String
-  lastName: String
   email: String
   description: String
   longDescription: String
@@ -392,6 +390,8 @@ type CollectiveFeatures {
   HOST_DASHBOARD: CollectiveFeatureStatus
   CONNECTED_ACCOUNTS: CollectiveFeatureStatus
   ALIPAY: CollectiveFeatureStatus
+  USE_PAYMENT_METHODS: CollectiveFeatureStatus
+  EMIT_GIFT_CARDS: CollectiveFeatureStatus
   VIRTUAL_CARDS: CollectiveFeatureStatus
   REQUEST_VIRTUAL_CARDS: CollectiveFeatureStatus
 }
@@ -444,7 +444,6 @@ input CollectiveInputType {
   tags: [String]
   tiers: [TierInputType]
   settings: JSON
-  data: JSON
 
   """
   Private instructions related to an event
@@ -453,11 +452,9 @@ input CollectiveInputType {
   members: [MemberInputType]
   notifications: [NotificationInputType]
   HostCollectiveId: Int
-  hostFeePercent: Int
+  hostFeePercent: Float
   ParentCollectiveId: Int
   email: String
-  firstName: String
-  lastName: String
   isIncognito: Boolean
   isActive: Boolean
   contributionPolicy: String
@@ -493,7 +490,7 @@ interface CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -523,7 +520,7 @@ interface CollectiveInterface {
   isArchived: Boolean
   isApproved: Boolean
   isDeletable: Boolean
-  hasVirtualCards: Boolean
+  hasVirtualCards: Boolean @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
   host: CollectiveInterface
   hostCollective: CollectiveInterface
 
@@ -854,7 +851,6 @@ Input type for CommentType
 input CommentAttributesInputType {
   id: Int
   html: String
-  UpdateId: Int
 }
 
 """
@@ -868,10 +864,6 @@ input CommentInputType {
   Not supported yet. Defaults to user collective ID.
   """
   FromCollectiveId: Int
-  CollectiveId: Int
-  ExpenseId: Int
-  UpdateId: Int
-  ConversationId: Int
 }
 
 """
@@ -1120,7 +1112,7 @@ type Event implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -1323,7 +1315,7 @@ type Event implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
 }
 
 """
@@ -1505,7 +1497,7 @@ type Fund implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -1708,7 +1700,7 @@ type Fund implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
 }
 
 """
@@ -2098,11 +2090,6 @@ type Mutation {
     limitedToTags: [String]
 
     """
-    Limit this payment method to make donations to those collectives
-    """
-    limitedToCollectiveIds: [Int]
-
-    """
     Limit this payment method to make donations to the collectives hosted by those hosts
     """
     limitedToHostCollectiveIds: [Int]
@@ -2362,7 +2349,6 @@ input OrderInputType {
   publicMessage: String
   privateMessage: String
   paymentMethod: PaymentMethodInputType
-  user: UserInputType
   fromCollective: CollectiveAttributesInputType
   collective: CollectiveAttributesInputType!
   tier: TierInputType
@@ -2538,7 +2524,7 @@ type Organization implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -2741,7 +2727,7 @@ type Organization implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
   email: String
 }
 
@@ -2924,7 +2910,7 @@ type Project implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -3127,7 +3113,7 @@ type Project implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
 }
 
 """
@@ -3338,11 +3324,6 @@ type Query {
     isHost: Boolean
 
     """
-    Whether to return only active accounts
-    """
-    onlyActive: Boolean
-
-    """
     Whether to skip recent accounts (48h)
     """
     skipRecentAccounts: Boolean = false
@@ -3352,11 +3333,6 @@ type Query {
     """
     limit: Int = 20
     offset: Int = 0
-
-    """
-    This flag is now ignored in favor of regular search
-    """
-    useAlgolia: Boolean = false
   ): CollectiveSearchResults
   allTransactionsFromPaymentMethod(
     uuid: String!
@@ -3759,7 +3735,7 @@ type User implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -3962,7 +3938,7 @@ type User implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
   firstName: String @deprecated(reason: "2020-03-27: These field are now deprecated in favor of collective.name")
   lastName: String @deprecated(reason: "2020-03-27: These field are now deprecated in favor of collective.name")
   email: String
@@ -3977,8 +3953,8 @@ type UserDetails {
   CollectiveId: Int
   collective: CollectiveInterface
   username: String
-  firstName: String
-  lastName: String
+  firstName: String @deprecated(reason: "2021-09-24: Use \"name\"")
+  lastName: String @deprecated(reason: "2021-09-24: Use \"name\"")
   name: String
   image: String
   email: String
@@ -4005,8 +3981,6 @@ Input type for UserType
 input UserInputType {
   id: Int
   email: Email
-  firstName: String
-  lastName: String
   legalName: String
   name: String
   company: String
@@ -4016,7 +3990,6 @@ input UserInputType {
   twitterHandle: String
   githubHandle: String
   website: String
-  paypalEmail: String
   newsletterOptIn: Boolean
   location: LocationInputType
 }
@@ -4051,7 +4024,7 @@ type Vendor implements CollectiveInterface {
   startsAt: DateString
   endsAt: DateString
   timezone: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   platformFeePercent: Int
   currency: String
   image: String
@@ -4254,5 +4227,5 @@ type Vendor implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean!
+  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
 }
