@@ -204,11 +204,6 @@ interface Account {
     type: [PaymentMethodType]
 
     """
-    Filter on given types (CREDITCARD, GIFTCARD...)
-    """
-    enumType: [PaymentMethodType]
-
-    """
     Filter on the given service types (opencollective, stripe, paypal...)
     """
     service: [PaymentMethodService]
@@ -244,7 +239,11 @@ interface Account {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -305,11 +304,6 @@ input AccountReferenceInput {
   id: String
 
   """
-  The internal id of the account (ie: 580)
-  """
-  legacyId: Int
-
-  """
   The slug identifying the account (ie: babel for https://opencollective.com/babel)
   """
   slug: String
@@ -324,7 +318,7 @@ scalar AccountSettingsKey
 Stats for the Account
 """
 type AccountStats {
-  id: Int
+  id: String
 
   """
   Amount of money in cents in the currency of the collective currently available to spend
@@ -349,7 +343,19 @@ type AccountStats {
   """
   Net amount received
   """
-  totalAmountReceived: Amount!
+  totalAmountReceived(
+    kind: [TransactionKind]
+
+    """
+    Calculate total amount received before this date
+    """
+    dateTo: DateTime
+
+    """
+    Calculate total amount received after this date
+    """
+    dateFrom: DateTime
+  ): Amount!
   yearlyBudget: Amount!
   yearlyBudgetManaged: Amount!
 }
@@ -472,6 +478,16 @@ interface AccountWithHost {
   Returns whether it's active: can accept financial contributions and pay expenses.
   """
   isActive: Boolean!
+}
+
+"""
+An account that has a parent account
+"""
+interface AccountWithParent {
+  """
+  The Account parenting this account
+  """
+  parent: Account
 }
 
 """
@@ -795,7 +811,6 @@ type Bot implements Account {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -825,7 +840,11 @@ type Bot implements Account {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -1095,7 +1114,6 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -1125,7 +1143,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -1275,6 +1297,8 @@ type CollectiveFeatures {
   HOST_DASHBOARD: CollectiveFeatureStatus
   CONNECTED_ACCOUNTS: CollectiveFeatureStatus
   ALIPAY: CollectiveFeatureStatus
+  USE_PAYMENT_METHODS: CollectiveFeatureStatus
+  EMIT_GIFT_CARDS: CollectiveFeatureStatus
   VIRTUAL_CARDS: CollectiveFeatureStatus
   REQUEST_VIRTUAL_CARDS: CollectiveFeatureStatus
 }
@@ -1466,6 +1490,31 @@ enum ContributionFrequency {
   MONTHLY
   YEARLY
   ONETIME
+}
+
+"""
+Contribution statistics related to the given accounts
+"""
+type ContributionStats {
+  """
+  The total number of contributions
+  """
+  contributionsCount: Int!
+
+  """
+  Number of one time contributions
+  """
+  oneTimeContributionsCount: Int!
+
+  """
+  Number of recurring contributions
+  """
+  recurringContributionsCount: Int!
+
+  """
+  The daily average income
+  """
+  dailyAverageIncomeAmount: Amount!
 }
 
 """
@@ -2943,6 +2992,11 @@ type Credit implements Transaction {
     """
     kind: [TransactionKind]
   ): [Transaction]!
+
+  """
+  Merchant id related to the Transaction (Stripe, PayPal, Wise, Privacy)
+  """
+  merchantId: String
 }
 
 input CreditCardCreateInput {
@@ -3041,6 +3095,11 @@ enum Currency {
   Forint
   """
   HUF
+
+  """
+  Rupiah
+  """
+  IDR
 
   """
   Indian Rupee
@@ -3238,6 +3297,11 @@ type Debit implements Transaction {
     """
     kind: [TransactionKind]
   ): [Transaction]!
+
+  """
+  Merchant id related to the Transaction (Stripe, PayPal, Wise, Privacy)
+  """
+  merchantId: String
 }
 
 """
@@ -3261,7 +3325,7 @@ type EmojiReactionResponse {
 """
 This represents an Event account
 """
-type Event implements Account & AccountWithHost & AccountWithContributions {
+type Event implements Account & AccountWithHost & AccountWithContributions & AccountWithParent {
   id: String
   legacyId: Int
 
@@ -3451,7 +3515,6 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -3481,7 +3544,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -3589,7 +3656,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions {
   contributionPolicy: String
 
   """
-  The Account hosting this Event
+  The Account parenting this account
   """
   parent: Account
 
@@ -3690,6 +3757,11 @@ type Expense {
   The account who created this expense
   """
   createdByAccount: Account
+
+  """
+  The account from where the expense was paid
+  """
+  host: Account
 
   """
   The payout method to use for this expense
@@ -4114,6 +4186,36 @@ input ExpenseReferenceInput {
   legacyId: Int
 }
 
+"""
+Expense statistics related to the given accounts
+"""
+type ExpenseStats {
+  """
+  The total number of expenses
+  """
+  expensesCount: Int!
+
+  """
+  The daily average paid in expenses
+  """
+  dailyAverageAmount: Amount!
+
+  """
+  Number of invoices
+  """
+  invoicesCount: Int!
+
+  """
+  Number of reimbursements
+  """
+  reimbursementsCount: Int!
+
+  """
+  Number of grants
+  """
+  grantsCount: Int!
+}
+
 enum ExpenseStatus {
   DRAFT
   UNVERIFIED
@@ -4166,6 +4268,11 @@ enum ExpenseType {
   Funding Request: Request funding for a project or initiative.
   """
   FUNDING_REQUEST
+
+  """
+  Grant: Request funding for a project or initiative.
+  """
+  GRANT
 
   """
   Unclassified expense
@@ -4444,7 +4551,6 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -4474,7 +4580,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -4603,11 +4713,6 @@ input GuestInfoInput {
   Full name of the user
   """
   name: String
-
-  """
-  The unique guest token
-  """
-  token: String
 
   """
   Address of the user, mandatory when amount is above $5000.
@@ -4813,7 +4918,6 @@ type Host implements Account & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -4843,7 +4947,11 @@ type Host implements Account & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -4924,22 +5032,12 @@ type Host implements Account & AccountWithContributions {
   """
   balance: Int @deprecated(reason: "2020/04/09 - Should not have been introduced. Use stats.balance.value")
   contributionPolicy: String
-  hostFeePercent: Int
+  hostFeePercent: Float
   totalHostedCollectives: Int
   isOpenToApplications: Boolean
   termsUrl: URL
   plan: HostPlan!
   hostMetrics(
-    """
-    Inferior date limit in which we're calculating the metrics
-    """
-    from: String
-
-    """
-    Superior date limit in which we're calculating the metrics
-    """
-    to: String
-
     """
     The start date of the time series
     """
@@ -5026,6 +5124,43 @@ type Host implements Account & AccountWithContributions {
   ): VirtualCardCollection!
   hostedVirtualCardMerchants(limit: Int! = 100, offset: Int! = 0): AccountCollection!
   hostedVirtualCardCollectives(limit: Int! = 100, offset: Int! = 0): AccountCollection!
+  contributionStats(
+    """
+    A collection of accounts for which the contribution stats should be returned.
+    """
+    account: [AccountReferenceInput!]
+
+    """
+    Calculate contribution statistics beginning from this date.
+    """
+    dateFrom: DateTime
+
+    """
+    Calculate contribution statistics until this date.
+    """
+    dateTo: DateTime
+  ): ContributionStats!
+  expenseStats(
+    """
+    A collection of accounts for which the expense stats should be returned.
+    """
+    account: [AccountReferenceInput!]
+
+    """
+    Calculate expense statistics beginning from this date.
+    """
+    dateFrom: DateTime
+
+    """
+    Calculate expense statistics until this date.
+    """
+    dateTo: DateTime
+  ): ExpenseStats!
+
+  """
+  Returns whether the host is trusted or not
+  """
+  isTrustedHost: Boolean!
 }
 
 type HostApplication {
@@ -5448,7 +5583,6 @@ type Individual implements Account {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -5480,7 +5614,11 @@ type Individual implements Account {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -5771,11 +5909,6 @@ type Mutation {
     amount: AmountInput!
     description: String!
     hostFeePercent: Float!
-
-    """
-    Can only be set if root
-    """
-    platformFeePercent: Float
   ): Order!
   createCollective(
     """
@@ -6642,6 +6775,7 @@ type Mutation {
 
 input NewAccountOrganizationInput {
   name: String
+  legalName: String
   slug: String
   description: String
   website: String
@@ -6654,15 +6788,11 @@ input NewAccountOrReferenceInput {
   id: String
 
   """
-  The internal id of the account (ie: 580)
-  """
-  legacyId: Int
-
-  """
   The slug identifying the account (ie: babel for https://opencollective.com/babel)
   """
   slug: String
   name: String
+  legalName: String
   email: String
   organization: NewAccountOrganizationInput
   newsletterOptIn: Boolean
@@ -6725,6 +6855,13 @@ type Order {
   Data related to the order
   """
   data: JSON
+
+  """
+  Custom data related to the order, based on the fields described by
+  tier.customFields. Must be authenticated as an admin of the fromAccount or
+  toAccount (returns null otherwise)
+  """
+  customData: JSON
 }
 
 """
@@ -6819,6 +6956,11 @@ input OrderCreateInput {
   tier: TierReferenceInput
 
   """
+  Data related to this order
+  """
+  data: JSON
+
+  """
   If the tier has some "customFields", use this field to set their values
   """
   customData: JSON
@@ -6869,6 +7011,11 @@ input OrderReferenceInput {
   The public id identifying the order (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
   """
   id: String
+
+  """
+  The legacy public id identifying the order (ie: 4242)
+  """
+  legacyId: Int
 }
 
 """
@@ -7135,7 +7282,6 @@ type Organization implements Account & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -7167,7 +7313,11 @@ type Organization implements Account & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -7314,12 +7464,6 @@ input PaymentMethodInput {
   Type of this payment method
   """
   type: PaymentMethodType
-
-  """
-  Type of this payment method
-  """
-  legacyType: PaymentMethodLegacyType
-  newType: PaymentMethodType
 
   """
   Name of this payment method
@@ -7530,7 +7674,7 @@ enum ProcessOrderAction {
 """
 This represents an Project account
 """
-type Project implements Account & AccountWithHost & AccountWithContributions {
+type Project implements Account & AccountWithHost & AccountWithContributions & AccountWithParent {
   id: String
   legacyId: Int
 
@@ -7720,7 +7864,6 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -7750,7 +7893,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -7858,7 +8005,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions {
   contributionPolicy: String
 
   """
-  The Account hosting this Project
+  The Account parenting this account
   """
   parent: Account
 }
@@ -8045,11 +8192,6 @@ type Query {
     """
     Only expenses that match these tags
     """
-    tags: [String]
-
-    """
-    Only expenses that match these tags
-    """
     tag: [String]
 
     """
@@ -8094,11 +8236,6 @@ type Query {
   ): ExpenseCollection!
   expense(
     """
-    Public expense identifier
-    """
-    id: String
-
-    """
     Identifiers to retrieve the expense.
     """
     expense: ExpenseReferenceInput
@@ -8118,11 +8255,6 @@ type Query {
     The offset to use to fetch
     """
     offset: Int! = 0
-
-    """
-    Filter hosts by tags (multiple = OR)
-    """
-    tags: [String]
 
     """
     Filter hosts by tags (multiple = OR)
@@ -8246,9 +8378,9 @@ type Query {
     fromAccount: AccountReferenceInput
 
     """
-    Reference of the account assigned to the main side of the transaction (CREDIT -> recipient, DEBIT -> sender)
+    Reference of the account(s) assigned to the main side of the transaction (CREDIT -> recipient, DEBIT -> sender)
     """
-    account: AccountReferenceInput
+    account: [AccountReferenceInput!]
 
     """
     Reference of the host accounting the transaction
@@ -8256,24 +8388,9 @@ type Query {
     host: AccountReferenceInput
 
     """
-    NOT IMPLEMENTED. Only return transactions that match these tags.
-    """
-    tags: [String]
-
-    """
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
-
-    """
-    Only return transactions where the amount is greater than or equal to this value (in cents)
-    """
-    minAmount: Int
-
-    """
-    Only return transactions where the amount is lower than or equal to this value (in cents)
-    """
-    maxAmount: Int
 
     """
     Only return transactions that were created after this date
@@ -8326,11 +8443,6 @@ type Query {
     Whether to include debt transactions
     """
     includeDebts: Boolean! = false
-
-    """
-    To filter by transaction kind
-    """
-    kinds: [TransactionKind]
 
     """
     To filter by transaction kind
@@ -8654,6 +8766,11 @@ interface Transaction {
     """
     kind: [TransactionKind]
   ): [Transaction]!
+
+  """
+  Merchant id related to the Transaction (Stripe, PayPal, Wise, Privacy)
+  """
+  merchantId: String
 }
 
 """
@@ -9126,7 +9243,6 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
   """
   paymentMethods(
     type: [PaymentMethodType]
-    enumType: [PaymentMethodType]
     service: [PaymentMethodService]
 
     """
@@ -9156,7 +9272,11 @@ type Vendor implements Account & AccountWithHost & AccountWithContributions {
     The offset to use to fetch
     """
     offset: Int! = 0
-    onlyPublishedUpdates: Boolean
+
+    """
+    Only return published updates. You must be an admin of the account to see unpublished updates.
+    """
+    onlyPublishedUpdates: Boolean = false
     onlyChangelogUpdates: Boolean
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
     searchTerm: String
@@ -9276,6 +9396,9 @@ type VirtualCard {
   last4: String
   data: JSONObject
   privateData: JSONObject
+  provider: String
+  spendingLimitAmount: Int
+  spendingLimitInterval: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -9296,6 +9419,12 @@ input VirtualCardInput {
   last4: String
   data: JSONObject
   privateData: JSONObject
+  provider: VirtualCardProvider
+}
+
+enum VirtualCardProvider {
+  PRIVACY
+  STRIPE
 }
 
 input VirtualCardReferenceInput {

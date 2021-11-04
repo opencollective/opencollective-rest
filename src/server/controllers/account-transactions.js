@@ -96,6 +96,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
       }
       isRefund
       isRefunded
+      merchantId
     }
   }
 `;
@@ -242,6 +243,7 @@ const csvMapping = {
   expenseType: (t) => get(t, 'expense.type'),
   expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
+  merchantId: (t) => get(t, 'merchantId'),
 };
 
 const allKinds = [
@@ -287,6 +289,8 @@ const defaultFields = [
   'expenseType',
   'expenseTags',
   'payoutMethodType',
+  // Extra fields
+  'merchantId',
 ];
 
 const applyMapping = (mapping, row) => {
