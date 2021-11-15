@@ -96,6 +96,9 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
       }
       isRefund
       isRefunded
+      refundTransaction {
+        id
+      }
       merchantId
     }
   }
@@ -216,6 +219,8 @@ const csvMapping = {
   kind: 'kind',
   isRefund: (t) => (t.isRefund ? 'REFUND' : ''),
   isRefunded: (t) => (t.isRefunded ? 'REFUNDED' : ''),
+  refundId: (t) => get(t, 'refundTransaction.id', ''),
+  refundshortId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
   displayAmount: (t) => formatAmountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   paymentProcessorFee: (t) => get(t, 'paymentProcessorFee.value', 0),
@@ -266,12 +271,14 @@ const allFields = Object.keys(csvMapping);
 
 const defaultFields = [
   'datetime',
+  'shortId',
   'shortGroup',
   'description',
   'type',
   'kind',
   'isRefund',
   'isRefunded',
+  'refundshortId',
   'displayAmount',
   'amount',
   'paymentProcessorFee',
