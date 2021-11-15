@@ -11,7 +11,7 @@
     "npm": "6.x"
   },
   "dependencies": {
-    "@apollo/client": "3.4.16",
+    "@apollo/client": "3.4.17",
     "@hyperwatch/hyperwatch": "3.8.2",
     "cloudflare-ip": "0.0.7",
     "cors": "2.8.5",
@@ -23,7 +23,7 @@
     "express-ws": "5.0.2",
     "graphql": "15.7.2",
     "graphql-request": "3.6.1",
-    "graphql-tag": "2.12.5",
+    "graphql-tag": "2.12.6",
     "json2csv": "5.0.6",
     "lodash": "4.17.21",
     "moment": "2.29.1",
