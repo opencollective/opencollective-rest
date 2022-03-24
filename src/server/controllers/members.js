@@ -25,9 +25,19 @@ export async function list(req, res, next) {
   }
 
   const headers = {};
-  if (req.headers.authorization) {
-    res.setHeader('cache-control', 'no-cache'); // don't cache at CDN level as the result contains private information
-    headers.authorization = req.headers.authorization;
+
+  // Forward Api Key or Authorization header
+  const apiKey = req.get('Api-Key') || req.query.apiKey;
+  const authorization = req.get('Authorization');
+  if (authorization) {
+    headers['Authorization'] = authorization;
+  } else if (apiKey) {
+    headers['Api-Key'] = apiKey;
+  }
+
+  // don't cache at CDN level as the result contains private information
+  if (Object.keys(headers).length) {
+    res.setHeader('cache-control', 'no-cache');
   }
 
   const query = gql`
