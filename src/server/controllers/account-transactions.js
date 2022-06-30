@@ -34,6 +34,10 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
+      balanceInHostCurrency {
+        value
+        currency
+      }
       paymentProcessorFee {
         value
         currency
@@ -226,6 +230,7 @@ const csvMapping = {
   paymentProcessorFee: (t) => get(t, 'paymentProcessorFee.value', 0),
   hostFee: (t) => get(t, 'hostFee.value', 0),
   netAmount: (t) => get(t, 'netAmountInHostCurrency.value', 0),
+  balance: (t) => get(t, 'balanceInHostCurrency.value'),
   currency: (t) => get(t, 'amountInHostCurrency.currency'),
   accountSlug: (t) => get(t, 'account.slug'),
   accountName: (t) => formatAccountName(t.account),
