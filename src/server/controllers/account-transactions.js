@@ -289,6 +289,7 @@ const defaultFields = [
   'paymentProcessorFee',
   'hostFee',
   'netAmount',
+  'balance',
   'currency',
   'accountSlug',
   'accountName',
