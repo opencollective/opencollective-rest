@@ -82,7 +82,7 @@ describe('api.json.test.js', () => {
           name: 'Brussels',
           address: 'Brussels',
           lat: 50.8503396,
-          long: 4.351710300000036,
+          long: 4.3517103,
         },
         url: 'https://opencollective.com/veganizerbxl/events/vegandiningweek-407ev',
         info: 'https://opencollective.com/veganizerbxl/events/vegandiningweek-407ev.json',

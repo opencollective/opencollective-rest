@@ -7,8 +7,8 @@
   },
   "private": true,
   "engines": {
-    "node": "14.x",
-    "npm": "6.x"
+    "node": "16.x",
+    "npm": "8.x"
   },
   "dependencies": {
     "@apollo/client": "3.4.17",
@@ -46,14 +46,16 @@
     "eslint:quiet": "npm run eslint -- --quiet",
     "git:clean": "./scripts/git_clean.sh",
     "graphql:update": "npm-run-all graphql:updateV1 graphql:updateV2",
-    "graphql:updateV1": "npx get-graphql-schema http://localhost:3060/graphql > src/graphql/schema.graphql && prettier src/graphql/schema.graphql --write",
-    "graphql:updateV2": "npx get-graphql-schema http://localhost:3060/graphql/v2 > src/graphql/schemaV2.graphql && prettier src/graphql/schemaV2.graphql --write",
-    "lint": "npm run eslint && npm run prettier:check",
+    "graphql:updateV1": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schema.graphql --output src/graphql/schema.graphql && prettier src/graphql/schema.graphql --write",
+    "graphql:updateV2": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schemaV2.graphql --output src/graphql/schemaV2.graphql && prettier src/graphql/schemaV2.graphql --write",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:quiet": "npm run lint -- --quiet",
     "prettier": "prettier \"src/**/*.js\" \"test/**/*.js\"",
     "prettier:check": "npm run prettier -- --list-different",
     "prettier:write": "npm run prettier -- --write",
     "start": "node dist/server",
-    "test:server": "TZ=UTC ./scripts/run_server_tests.sh"
+    "test:server": "TZ=UTC ./scripts/run_test.sh"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",
@@ -88,6 +90,11 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "opencollective-api/"
+    ]
   },
   "lint-staged": {
     "*.{js,json,md,graphql}": [
