@@ -10,7 +10,7 @@ If you see a step below that could be improved (or is outdated), please update t
 
 ### Prerequisite
 
-1. Make sure you have Node.js version >= 12.
+1. Make sure you have Node.js version >= 16.
 
 - We recommend using [nvm](https://github.com/creationix/nvm): `nvm install && nvm use`.
 
@@ -53,7 +53,7 @@ You can run the tests using `npm test` or more specifically:
 
 To update:
 
-- GraphQL schema for eslint: run `npm run graphql:get-schema:dev`
+- GraphQL schema for eslint: run `npm run graphql:update`
 
 ## Deployment
 
