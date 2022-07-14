@@ -21,7 +21,7 @@
     "express-basic-auth": "1.2.1",
     "express-winston": "4.2.0",
     "express-ws": "5.0.2",
-    "graphql": "15.8.0",
+    "graphql": "16.5.0",
     "graphql-request": "3.7.0",
     "graphql-tag": "2.12.6",
     "json2csv": "5.0.6",
