@@ -28,7 +28,7 @@
     "lodash": "4.17.21",
     "moment": "2.29.1",
     "node-fetch": "2.6.7",
-    "omit-deep-lodash": "1.1.6",
+    "omit-deep-lodash": "1.1.7",
     "react": "17.0.2",
     "winston": "3.8.1"
   },
