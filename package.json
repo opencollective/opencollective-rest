@@ -30,7 +30,7 @@
     "node-fetch": "2.6.7",
     "omit-deep-lodash": "1.1.6",
     "react": "17.0.2",
-    "winston": "3.3.3"
+    "winston": "3.8.1"
   },
   "scripts": {
     "build": "npm run build:clean && npm run build:updates && npm run build:server",
