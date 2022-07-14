@@ -419,7 +419,14 @@ const accountTransactions = async (req, res) => {
       .map(trim)
       .filter((v) => !!v);
 
-    const baseFields = variables.fetchHostFee ? allFields : difference(allFields, ['hostFee']);
+    let baseFields = [...allFields];
+
+    if (!variables.fetchHostFee) {
+      baseFields = baseFields.filter((field) => field !== 'hostFee');
+    }
+    if (req.params.reportType === 'hostTransactions') {
+      baseFields = baseFields.filter((field) => field !== 'balance');
+    }
 
     fields = difference(intersection(baseFields, [...defaultFields, ...add]), remove);
   }
