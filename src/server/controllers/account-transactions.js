@@ -42,6 +42,10 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
+      platformFee {
+        value
+        currency
+      }
       hostFee(fetchHostFee: $fetchHostFee) {
         value
         currency
@@ -228,6 +232,7 @@ const csvMapping = {
   displayAmount: (t) => formatAmountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   paymentProcessorFee: (t) => get(t, 'paymentProcessorFee.value', 0),
+  platformFee: (t) => get(t, 'platformFee.value', 0),
   hostFee: (t) => get(t, 'hostFee.value', 0),
   netAmount: (t) => get(t, 'netAmountInHostCurrency.value', 0),
   balance: (t) => get(t, 'balanceInHostCurrency.value'),
