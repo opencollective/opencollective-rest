@@ -87,6 +87,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         status
         createdAt
         frequency
+        memo
       }
       paymentMethod {
         service
@@ -259,6 +260,7 @@ const csvMapping = {
   expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
   merchantId: (t) => get(t, 'merchantId'),
+  memo: (t) => get(t, 'order.memo'),
 };
 
 const allKinds = [
@@ -309,6 +311,7 @@ const defaultFields = [
   'payoutMethodType',
   // Extra fields
   'merchantId',
+  'memo',
 ];
 
 const applyMapping = (mapping, row) => {
