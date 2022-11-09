@@ -260,7 +260,7 @@ const csvMapping = {
   expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
   merchantId: (t) => get(t, 'merchantId'),
-  memo: (t) => get(t, 'order.memo'),
+  orderMemo: (t) => get(t, 'order.memo'),
 };
 
 const allKinds = [
@@ -311,7 +311,7 @@ const defaultFields = [
   'payoutMethodType',
   // Extra fields
   'merchantId',
-  'memo',
+  'orderMemo',
 ];
 
 const applyMapping = (mapping, row) => {
