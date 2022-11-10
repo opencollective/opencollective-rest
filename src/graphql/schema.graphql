@@ -91,7 +91,6 @@ interface CollectiveInterface {
   isArchived: Boolean
   isApproved: Boolean
   isDeletable: Boolean
-  hasVirtualCards: Boolean @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
   host: CollectiveInterface
   hostCollective: CollectiveInterface
 
@@ -170,12 +169,18 @@ interface CollectiveInterface {
   stats: CollectiveStatsType
   transactions(type: String, limit: Int, offset: Int, includeExpenseTransactions: Boolean): [Transaction]
   expenses(type: String, limit: Int, offset: Int, status: String, includeHostedCollectives: Boolean): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -249,6 +254,11 @@ interface CollectiveInterface {
   Categories set by Open Collective to help moderation.
   """
   categories: [String]!
+
+  """
+  Policies for the account. To see non-public policies you need to be admin and have the scope: "account".
+  """
+  policies: Policies!
 }
 
 """
@@ -754,6 +764,9 @@ enum OrderStatus {
   EXPIRED
   PLEDGED
   REJECTED
+  DISPUTED
+  REFUNDED
+  IN_REVIEW
 }
 
 """
@@ -1105,6 +1118,7 @@ type CollectiveFeatures {
   ALIPAY: CollectiveFeatureStatus
   USE_PAYMENT_METHODS: CollectiveFeatureStatus
   EMIT_GIFT_CARDS: CollectiveFeatureStatus
+  EMAIL_NOTIFICATIONS_PANEL: CollectiveFeatureStatus
   VIRTUAL_CARDS: CollectiveFeatureStatus
   REQUEST_VIRTUAL_CARDS: CollectiveFeatureStatus
 }
@@ -1150,6 +1164,25 @@ type PlanType {
   hostFees: Boolean
   hostFeeSharePercent: Float
   platformTips: Boolean
+}
+
+type Policies {
+  EXPENSE_AUTHOR_CANNOT_APPROVE: Boolean
+  COLLECTIVE_MINIMUM_ADMINS: COLLECTIVE_MINIMUM_ADMINS
+}
+
+type COLLECTIVE_MINIMUM_ADMINS {
+  numberOfAdmins: Int
+  applies: PolicyApplication
+  freeze: Boolean
+}
+
+"""
+Defines how the policy is applied
+"""
+enum PolicyApplication {
+  ALL_COLLECTIVES
+  NEW_COLLECTIVES
 }
 
 """
@@ -1395,6 +1428,11 @@ type Collective implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -1506,6 +1544,11 @@ type Collective implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -1516,6 +1559,7 @@ type Collective implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -1578,7 +1622,7 @@ type Collective implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
 }
 
 """
@@ -1636,6 +1680,11 @@ type Event implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -1747,6 +1796,11 @@ type Event implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -1757,6 +1811,7 @@ type Event implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -1819,7 +1874,7 @@ type Event implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
 }
 
 """
@@ -1877,6 +1932,11 @@ type Fund implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -1988,6 +2048,11 @@ type Fund implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -1998,6 +2063,7 @@ type Fund implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -2060,7 +2126,7 @@ type Fund implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
 }
 
 """
@@ -2118,6 +2184,11 @@ type Organization implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -2229,6 +2300,11 @@ type Organization implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -2239,6 +2315,7 @@ type Organization implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -2301,8 +2378,8 @@ type Organization implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
-  email: String
+  policies: Policies!
+  email: String @deprecated(reason: "2022-07-18: This field is deprecated and will return null")
 }
 
 """
@@ -2360,6 +2437,11 @@ type Project implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -2471,6 +2553,11 @@ type Project implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -2481,6 +2568,7 @@ type Project implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -2543,7 +2631,7 @@ type Project implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
 }
 
 """
@@ -2843,6 +2931,11 @@ type User implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -2954,6 +3047,11 @@ type User implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -2964,6 +3062,7 @@ type User implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -3026,7 +3125,7 @@ type User implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
   email: String
   applications: [Application]
 }
@@ -3086,6 +3185,11 @@ type Vendor implements CollectiveInterface {
   isHost: Boolean
 
   """
+  Returns whether this host is trusted or not
+  """
+  isTrustedHost: Boolean!
+
+  """
   Returns whether this host accepts applications for new collectives
   """
   canApply: Boolean
@@ -3197,6 +3301,11 @@ type Vendor implements CollectiveInterface {
     includeExpenseTransactions: Boolean
   ): [Transaction]
   expenses(type: String, limit: Int, offset: Int, includeHostedCollectives: Boolean, status: String): [ExpenseType]
+
+  """
+  The list of expense types supported by this account
+  """
+  supportedExpenseTypes: [String!]!
   role: String
   twitterHandle: String
   githubHandle: String @deprecated(reason: "2022-06-03: Please use repositoryUrl")
@@ -3207,6 +3316,7 @@ type Vendor implements CollectiveInterface {
   repositoryUrl: String
   website: String
   updates(limit: Int, offset: Int, onlyPublishedUpdates: Boolean): [UpdateType]
+    @deprecated(reason: "2022-09-09: Updates moved to GQLV2")
   events(
     limit: Int
     offset: Int
@@ -3269,7 +3379,7 @@ type Vendor implements CollectiveInterface {
   stats: CollectiveStatsType
   contributionPolicy: String
   categories: [String]!
-  hasVirtualCards: Boolean! @deprecated(reason: "2021-10-12: Use features.VIRTUAL_CARDS === ACTIVE")
+  policies: Policies!
 }
 
 """
@@ -3314,8 +3424,6 @@ type Query {
     includeHostedCollectivesTransactions: Boolean
   ): [Transaction]
   Application(id: Int): Application
-  allUpdates(CollectiveId: Int!, includeHostedCollectives: Boolean, limit: Int, offset: Int): [UpdateType]
-    @deprecated(reason: "2022-01-26: This endpoint is deprecated and will be removed soon")
   Transaction(id: Int, uuid: String): Transaction
   allCollectives(
     """
@@ -3452,6 +3560,11 @@ type Query {
     hostCollectiveIds: [Int]
 
     """
+    Limit the search to collectives under these parent collectives
+    """
+    parentCollectiveIds: [Int]
+
+    """
     Only return collectives of this type
     """
     types: [TypeOfCollective]
@@ -3462,9 +3575,9 @@ type Query {
     isHost: Boolean
 
     """
-    Whether to return only active accounts
+    Included collectives which are archived
     """
-    onlyActive: Boolean @deprecated(reason: "2021-01-20: Not supported anymore.")
+    includeArchived: Boolean
 
     """
     Whether to skip recent accounts (48h)
@@ -3482,14 +3595,6 @@ type Query {
     limit: Int = 20
     offset: Int = 0
   ): CollectiveSearchResults
-  allTransactionsFromPaymentMethod(
-    uuid: String!
-    type: String
-    limit: Int
-    offset: Int
-    dateFrom: String
-    dateTo: String
-  ): [Transaction] @deprecated(reason: "2021-01-29: Not used anymore")
 }
 
 """
@@ -3497,16 +3602,6 @@ This represents an Invoice
 """
 type InvoiceType {
   slug: String
-
-  """
-  Title for the invoice. Depending on the type of legal entity, a host should issue an Invoice or a Receipt.
-  """
-  title: String @deprecated(reason: "Replaced by host.settings.invoice.templates.[templateName].title")
-
-  """
-  more info about the invoice, which is then printed on receipts that go to financial contributors.
-  """
-  extraInfo: String @deprecated(reason: "Replaced by host.settings.invoice.templates.[templateName].info")
 
   """
   dateFrom and dateTo will be set for any invoice over a period of time. They will not be set for an invoice for a single transaction.
@@ -3603,6 +3698,7 @@ type Mutation {
   archiveCollective(id: Int!): CollectiveInterface
   unarchiveCollective(id: Int!): CollectiveInterface
   sendMessageToCollective(collectiveId: Int!, message: String!, subject: String): SendMessageToCollectiveResult
+    @deprecated(reason: "2022-08-01: Please use the sendMessage mutation from GraphQL v2 instead.")
 
   """
   Create a user with an optional organization.
