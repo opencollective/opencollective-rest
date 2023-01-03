@@ -36,7 +36,7 @@ E.g. https://rest.opencollective.com/v2/opensource/hostTransactions.csv
 
 Create an Api Key and pass it in the URL parameters as `apiKey`.
 
-You can create new API Keys from the following page: https://opencollective.com/applications
+You can create new Personal token from the following page: `https://opencollective.com/{userSlug}/admin/for-developers`
 
 ### Tips
 
