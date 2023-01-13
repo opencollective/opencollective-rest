@@ -427,16 +427,14 @@ const accountTransactions = async (req, res) => {
       .map(trim)
       .filter((v) => !!v);
 
-    let baseFields = [...allFields];
+    const baseAllFields =
+      req.params.reportType === 'hostTransactions' ? allFields.filter((field) => field !== 'balance') : allFields;
 
-    if (!variables.fetchHostFee) {
-      baseFields = baseFields.filter((field) => field !== 'hostFee');
-    }
-    if (req.params.reportType === 'hostTransactions') {
-      baseFields = baseFields.filter((field) => field !== 'balance');
-    }
+    const baseDefaultFields = !variables.fetchHostFee
+      ? defaultFields.filter((field) => field !== 'hostFee')
+      : defaultFields;
 
-    fields = difference(intersection(baseFields, [...defaultFields, ...add]), remove);
+    fields = difference(intersection(baseAllFields, [...baseDefaultFields, ...add]), remove);
   }
 
   const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll);
@@ -444,7 +442,7 @@ const accountTransactions = async (req, res) => {
   try {
     // Forward Api Key or Authorization header
     const headers = {};
-    const apiKey = req.get('Api-Key') || req.query.apiKey;
+    const apiKey = req.get('Personal-Token') || req.query.personalToken || req.get('Api-Key') || req.query.apiKey;
     const authorization = req.get('Authorization');
     if (authorization) {
       headers['Authorization'] = authorization;
