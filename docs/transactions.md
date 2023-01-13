@@ -31,12 +31,16 @@ E.g. https://rest.opencollective.com/v2/opensource/hostTransactions.csv
 - `includeGiftCardTransactions`: include transactions with Gift Cards issued by the account
 - `includeRegularTransactions`: include regular transactions of the account (default to true, use to exclude)
 - `account`: (hostTransactions only) transactions associated with these accounts (comma separated list of slug)
+- `fetchAll`: if set, will automatically paginate to fetch all results
+- `flattenHostFee`: if set, will generate a dedicated column for Host Fees instead of separate entries
 
 ### Authentication
 
-Create an Api Key and pass it in the URL parameters as `apiKey`.
+Create a Personal Token and pass it in the URL parameters as `personalToken`.
 
-You can create new API Keys from the following page: https://opencollective.com/applications
+To create a new Personal Token, go to your personal settings, then navigate to the "For Developers" section.
+
+The URL should be: https://opencollective.com/{slug}/admin/for-developers
 
 ### Tips
 

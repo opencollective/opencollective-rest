@@ -444,7 +444,7 @@ const accountTransactions = async (req, res) => {
   try {
     // Forward Api Key or Authorization header
     const headers = {};
-    const apiKey = req.get('Api-Key') || req.query.apiKey;
+    const apiKey = req.get('Personal-Token') || req.query.personalToken || req.get('Api-Key') || req.query.apiKey;
     const authorization = req.get('Authorization');
     if (authorization) {
       headers['Authorization'] = authorization;
