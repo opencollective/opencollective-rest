@@ -30,7 +30,11 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
 
@@ -72,7 +76,11 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
 
@@ -128,7 +136,11 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
 
