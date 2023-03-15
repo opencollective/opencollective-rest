@@ -132,7 +132,7 @@ describe('api.json.test.js', () => {
     });
 
     test('return /:collectiveSlug/events/:eventSlug/attendees.json', async () => {
-      const attendees = await fetchJson('/veganizerbxl/events/superfilles/attendees.json');
+      const attendees = await fetchJson('/veganizerbxl/events/superfilles/all.json');
       console.log(attendees);
       validateMember(attendees[0]);
       expect(attendees[0].role).toEqual('ATTENDEE');
