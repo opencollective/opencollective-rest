@@ -12,6 +12,7 @@ const fetchResponse = (path) => {
 const fetchJson = (path) => fetchResponse(path).then((response) => response.json());
 
 const validateMember = (member) => {
+  expect(member).toHaveProperty('email', null);
   expect(member).toHaveProperty('MemberId');
   expect(member).toHaveProperty('name');
   expect(member).toHaveProperty('image');
@@ -132,6 +133,7 @@ describe('api.json.test.js', () => {
 
     test('return /:collectiveSlug/events/:eventSlug/attendees.json', async () => {
       const attendees = await fetchJson('/veganizerbxl/events/superfilles/attendees.json');
+      console.log(attendees);
       validateMember(attendees[0]);
       expect(attendees[0].role).toEqual('ATTENDEE');
       expect(attendees[1].role).toEqual('ATTENDEE');
@@ -139,6 +141,7 @@ describe('api.json.test.js', () => {
 
     test('return /:collectiveSlug/events/:eventSlug/followers.json', async () => {
       const followers = await fetchJson('/veganizerbxl/events/superfilles/followers.json');
+      console.log(followers);
       validateMember(followers[0]);
       expect(followers[0].role).toEqual('FOLLOWER');
       expect(followers[1].role).toEqual('FOLLOWER');
@@ -146,6 +149,7 @@ describe('api.json.test.js', () => {
 
     test('return /:collectiveSlug/events/:eventSlug/organizers.json', async () => {
       const organizers = await fetchJson('/veganizerbxl/events/superfilles/organizers.json');
+      console.log(organizers);
       validateMember(organizers[0]);
       expect(organizers[0].role).toEqual('ADMIN');
       expect(organizers[1].role).toEqual('ADMIN');
