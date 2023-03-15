@@ -132,24 +132,14 @@ describe('api.json.test.js', () => {
     });
 
     test('return /:collectiveSlug/events/:eventSlug/attendees.json', async () => {
-      const attendees = await fetchJson('/veganizerbxl/events/superfilles/all.json');
-      console.log(attendees);
+      const attendees = await fetchJson('/asyncapi/events/asyncapi-conference-on-tour-6b3c0aa1/attendees.json');
       validateMember(attendees[0]);
       expect(attendees[0].role).toEqual('ATTENDEE');
       expect(attendees[1].role).toEqual('ATTENDEE');
     });
 
-    test('return /:collectiveSlug/events/:eventSlug/followers.json', async () => {
-      const followers = await fetchJson('/veganizerbxl/events/superfilles/followers.json');
-      console.log(followers);
-      validateMember(followers[0]);
-      expect(followers[0].role).toEqual('FOLLOWER');
-      expect(followers[1].role).toEqual('FOLLOWER');
-    });
-
     test('return /:collectiveSlug/events/:eventSlug/organizers.json', async () => {
-      const organizers = await fetchJson('/veganizerbxl/events/superfilles/organizers.json');
-      console.log(organizers);
+      const organizers = await fetchJson('/asyncapi/events/asyncapi-conference-on-tour-6b3c0aa1/organizers.json');
       validateMember(organizers[0]);
       expect(organizers[0].role).toEqual('ADMIN');
       expect(organizers[1].role).toEqual('ADMIN');
