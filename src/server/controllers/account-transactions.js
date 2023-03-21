@@ -328,6 +328,10 @@ const applyMapping = (mapping, row) => {
 };
 
 const accountTransactions = async (req, res) => {
+  if (!['HEAD', 'GET'].includes(req.method)) {
+    return res.status(405).send({ error: { message: 'Method not allowed' } });
+  }
+
   const variables = pick({ ...req.params, ...req.query }, [
     'account',
     'slug',
@@ -345,7 +349,14 @@ const accountTransactions = async (req, res) => {
     'includeGiftCardTransactions',
     'includeRegularTransactions',
   ]);
-  variables.limit = variables.limit ? Number(variables.limit) : 1000;
+  variables.limit =
+    // If HEAD, we only want count, so we set limit to 1 to make it faster
+    req.method === 'HEAD'
+      ? 1
+      : // Else, we use the limit provided by the user, or default to 1000
+      variables.limit
+      ? Number(variables.limit)
+      : 1000;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.account) {
@@ -458,9 +469,15 @@ const accountTransactions = async (req, res) => {
       case 'txt':
       case 'csv': {
         if (req.params.format === 'csv') {
-          res.setHeader('content-type', 'text/csv;charset=utf-8');
+          res.append('Content-Type', `text/csv;charset=utf-8`);
         } else {
-          res.setHeader('content-type', 'text/plain;charset=utf-8');
+          res.append('Content-Type', `text/plain;charset=utf-8`);
+        }
+
+        res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
+        res.append('X-Exported-Rows', result.transactions.totalCount);
+        if (req.method === 'HEAD') {
+          return res.status(200).end();
         }
 
         if (result.transactions.totalCount === 0) {
