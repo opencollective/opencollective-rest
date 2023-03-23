@@ -350,9 +350,9 @@ const accountTransactions = async (req, res) => {
     'includeRegularTransactions',
   ]);
   variables.limit =
-    // If HEAD, we only want count, so we set limit to 1 to make it faster
+    // If HEAD, we only want count, so we set limit to 0
     req.method === 'HEAD'
-      ? 1
+      ? 0
       : // Else, we use the limit provided by the user, or default to 1000
       variables.limit
       ? Number(variables.limit)
