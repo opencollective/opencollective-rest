@@ -475,7 +475,16 @@ const accountTransactions = async (req, res) => {
         } else {
           res.append('Content-Type', `text/plain;charset=utf-8`);
         }
-
+        let filename =
+          req.params.reportType === 'hostTransactions'
+            ? `${variables.slug}-host-transactions`
+            : `${variables.slug}-transactions`;
+        if (variables.dateFrom) {
+          const until = variables.dateTo || moment.utc().toISOString();
+          filename += `-${variables.dateFrom.slice(0, 10)}-${until.slice(0, 10)}`;
+        }
+        filename += `.${req.params.format}`;
+        res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.transactions.totalCount);
         if (req.method === 'HEAD') {
