@@ -30,10 +30,13 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
-
       - name: Restore .npm cache
         uses: actions/cache@v3
         with:
@@ -72,10 +75,13 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
-
       - name: Restore .npm cache
         uses: actions/cache@v3
         with:
@@ -125,13 +131,20 @@ jobs:
       - name: Install postgresql-client
         run: sudo apt-get install -y postgresql-client
 
+        # Checkouts
+      - name: Checkout (rest)
+        uses: actions/checkout@v3
+  
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version-file: 'package.json'
+
+      - name: Force NPM version (this step can be moved once Vercel defaults to node 18.14)
+        shell: bash
+        run: npm install -g npm@8.19.2
 
       # Npm cache
-
       - name: Restore .npm cache
         uses: actions/cache@v3
         with:
@@ -141,18 +154,12 @@ jobs:
             - ${{ runner.os }}-npm-cache-${{ github.sha }}
             - ${{ runner.os }}-npm-cache-
 
-      # Checkouts
-
-      - name: Checkout (rest)
-        uses: actions/checkout@v3
-
+      # Prepare API
       - name: Checkout (api)
         uses: actions/checkout@v3
         with:
           repository: opencollective/opencollective-api
-          path: opencollective-api
-
-      # Prepare API
+          path: opencollective-api 
 
       - name: Restore node_modules (api)
         uses: actions/cache@v3
@@ -172,7 +179,6 @@ jobs:
         run: npm run build
 
       # Prepare Rest
-
       - name: Restore node_modules (rest)
         uses: actions/cache@v3
         id: rest-node-modules
@@ -188,7 +194,6 @@ jobs:
         run: npm run build
 
       # Prepare DB
-
       - name: Restore DB
         working-directory: opencollective-api
         run: npm run db:restore
@@ -198,6 +203,5 @@ jobs:
         run: npm run db:migrate
 
       # Run test
-
       - name: Run test
         run: ./scripts/run_test.sh

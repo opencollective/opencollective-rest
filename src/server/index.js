@@ -1,6 +1,7 @@
 import '../env';
 
 import cloudflareIps from 'cloudflare-ip/ips.json';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
@@ -15,6 +16,7 @@ app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'].concat(cloudflar
 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json({ limit: '50mb' }));
+app.use(cookieParser());
 
 hyperwatch(app);
 

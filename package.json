@@ -7,13 +7,14 @@
   },
   "private": true,
   "engines": {
-    "node": "16.x",
+    "node": "18.x",
     "npm": "8.x"
   },
   "dependencies": {
     "@apollo/client": "3.6.9",
     "@hyperwatch/hyperwatch": "3.8.2",
     "cloudflare-ip": "0.0.7",
+    "cookie-parser": "^1.4.6",
     "cors": "2.8.5",
     "debug": "4.3.4",
     "dotenv": "16.0.2",
