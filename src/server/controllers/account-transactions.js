@@ -88,6 +88,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         createdAt
         frequency
         memo
+        processedAt
       }
       paymentMethod {
         service
@@ -261,6 +262,7 @@ const csvMapping = {
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
   merchantId: (t) => get(t, 'merchantId'),
   orderMemo: (t) => get(t, 'order.memo'),
+  orderProcessedDate: (t) => (t.order?.processedAt ? moment.utc(t.order.processedAt).format('YYYY-MM-DD') : ''),
 };
 
 const allKinds = [
@@ -312,6 +314,7 @@ const defaultFields = [
   // Extra fields
   'merchantId',
   'orderMemo',
+  'orderProcessedDate',
 ];
 
 const applyMapping = (mapping, row) => {
