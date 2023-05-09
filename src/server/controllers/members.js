@@ -95,7 +95,7 @@ export async function list(req, res, next) {
       }
     }
   `;
-  const vars = { collectiveSlug: eventSlug || collectiveSlug };
+  const vars = { collectiveSlug: eventSlug || collectiveSlug, limit: 1000 };
   if (role === 'attendees') vars.role = 'ATTENDEE';
   if (role === 'followers') vars.role = 'FOLLOWER';
   if (role === 'organizers') vars.role = 'ADMIN';
