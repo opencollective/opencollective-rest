@@ -105,11 +105,6 @@ export async function list(req, res, next) {
   if (req.query.limit) vars.limit = Number(req.query.limit);
   if (req.query.offset) vars.offset = Number(req.query.offset);
 
-  // Only return max 50 at a time
-  if (req.params.format === 'json') {
-    vars.limit = Math.min(req.query.limit, 50);
-  }
-
   let result;
   try {
     result = await simpleGraphqlRequest(query, vars, { headers });
