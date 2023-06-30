@@ -54,6 +54,16 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
+      taxAmount {
+        value
+        currency
+      }
+      taxInfo {
+        id
+        type
+        rate
+        idNumber
+      }
       account {
         id
         slug
@@ -263,6 +273,10 @@ const csvMapping = {
   merchantId: (t) => get(t, 'merchantId'),
   orderMemo: (t) => get(t, 'order.memo'),
   orderProcessedDate: (t) => (t.order?.processedAt ? moment.utc(t.order.processedAt).format('YYYY-MM-DD') : ''),
+  taxAmount: (t) => get(t, 'taxAmount.value', 0),
+  taxType: (t) => get(t, 'taxInfo.type'),
+  taxRate: (t) => get(t, 'taxInfo.rate'),
+  taxIdNumber: (t) => get(t, 'taxInfo.idNumber'),
 };
 
 const allKinds = [
