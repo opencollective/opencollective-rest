@@ -80,9 +80,6 @@ export async function list(req, res, next) {
               service
               username
             }
-            ... on Organization {
-              email
-            }
             ... on User {
               email
             }
