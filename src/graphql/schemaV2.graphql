@@ -1114,11 +1114,12 @@ enum OrderStatus {
   PAID
   ERROR
   PROCESSING
-  REJECTED
   ACTIVE
   CANCELLED
   PENDING
   EXPIRED
+  PLEDGED
+  REJECTED
   DISPUTED
   REFUNDED
   IN_REVIEW
@@ -1163,12 +1164,22 @@ interface Transaction {
     Fetch HOST_FEE transaction and integrate in calculation for retro-compatiblity.
     """
     fetchHostFee: Boolean = false
+
+    """
+    Fetch PAYMENT_PROCESSOR_FEE transaction for retro-compatiblity.
+    """
+    fetchPaymentProcessorFee: Boolean = false
   ): Amount!
   netAmountInHostCurrency(
     """
     Fetch HOST_FEE transaction and integrate in calculation for retro-compatiblity.
     """
     fetchHostFee: Boolean = false
+
+    """
+    Fetch PAYMENT_PROCESSOR_FEE transaction for retro-compatiblity.
+    """
+    fetchPaymentProcessorFee: Boolean = false
   ): Amount!
   taxAmount: Amount!
 
@@ -5040,7 +5051,6 @@ enum ActivityType {
   TICKET_CONFIRMED
   ORDER_CANCELED_ARCHIVED_COLLECTIVE
   ORDER_PENDING
-  ORDER_PENDING_CRYPTO
   ORDER_PENDING_CONTRIBUTION_NEW
   ORDER_PENDING_CONTRIBUTION_REMINDER
   ORDER_PROCESSING
@@ -5085,6 +5095,7 @@ enum ActivityType {
   COLLECTIVE_VIRTUAL_CARD_CREATED
   SUBSCRIPTION_CONFIRMED
   COLLECTIVE_COMMENT_CREATED
+  ORDER_PENDING_CRYPTO
   BACKYOURSTACK_DISPATCH_CONFIRMED
 }
 
@@ -13268,7 +13279,6 @@ enum ActivityAndClassesType {
   TICKET_CONFIRMED
   ORDER_CANCELED_ARCHIVED_COLLECTIVE
   ORDER_PENDING
-  ORDER_PENDING_CRYPTO
   ORDER_PENDING_CONTRIBUTION_NEW
   ORDER_PENDING_CONTRIBUTION_REMINDER
   ORDER_PROCESSING
@@ -13313,6 +13323,7 @@ enum ActivityAndClassesType {
   COLLECTIVE_VIRTUAL_CARD_CREATED
   SUBSCRIPTION_CONFIRMED
   COLLECTIVE_COMMENT_CREATED
+  ORDER_PENDING_CRYPTO
   BACKYOURSTACK_DISPATCH_CONFIRMED
   COLLECTIVE
   EXPENSES
