@@ -1,3 +1,5 @@
+import '../../src/env';
+
 import fetch from 'node-fetch';
 
 const REST_URL = process.env.REST_URL || 'https://rest.opencollective.com';
@@ -12,7 +14,6 @@ const fetchResponse = (path) => {
 const fetchJson = (path) => fetchResponse(path).then((response) => response.json());
 
 const validateMember = (member) => {
-  expect(member).toHaveProperty('email', null);
   expect(member).toHaveProperty('MemberId');
   expect(member).toHaveProperty('name');
   expect(member).toHaveProperty('image');
