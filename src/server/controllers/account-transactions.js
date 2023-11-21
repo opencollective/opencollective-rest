@@ -38,7 +38,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
-      paymentProcessorFee {
+      paymentProcessorFee(fetchPaymentProcessorFee: $fetchPaymentProcessorFee) {
         value
         currency
       }
@@ -50,7 +50,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
-      netAmountInHostCurrency(fetchHostFee: $fetchHostFee) {
+      netAmountInHostCurrency(fetchHostFee: $fetchHostFee, fetchPaymentProcessorFee: $fetchPaymentProcessorFee) {
         value
         currency
       }
@@ -146,6 +146,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $includeGiftCardTransactions: Boolean
     $includeRegularTransactions: Boolean
     $fetchHostFee: Boolean
+    $fetchPaymentProcessorFee: Boolean
     $fullDescription: Boolean
   ) {
     transactions(
@@ -183,6 +184,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $minAmount: Int
     $maxAmount: Int
     $fetchHostFee: Boolean
+    $fetchPaymentProcessorFee: Boolean
     $fullDescription: Boolean
     $account: [AccountReferenceInput!]
   ) {
@@ -435,6 +437,11 @@ const accountTransactions = async (req, res) => {
     variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
   }
 
+  variables.fetchPaymentProcessorFee = parseToBooleanDefaultFalse(req.query.flattenPaymentProcessorFee);
+  if (variables.fetchPaymentProcessorFee) {
+    variables.kind = difference(variables.kind || allKinds, ['PAYMENT_PROCESSOR_FEE']);
+  }
+
   if (req.query.fullDescription) {
     variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription);
   } else {
@@ -460,9 +467,13 @@ const accountTransactions = async (req, res) => {
     const baseAllFields =
       req.params.reportType === 'hostTransactions' ? allFields.filter((field) => field !== 'balance') : allFields;
 
-    const baseDefaultFields = !variables.fetchHostFee
-      ? defaultFields.filter((field) => field !== 'hostFee')
-      : defaultFields;
+    let baseDefaultFields = defaultFields;
+    if (!variables.fetchHostFee) {
+      baseDefaultFields = baseDefaultFields.filter((field) => field !== 'hostFee');
+    }
+    if (!variables.fetchPaymentProcessorFee) {
+      baseDefaultFields = baseDefaultFields.filter((field) => field !== 'paymentProcessorFee');
+    }
 
     fields = difference(intersection(baseAllFields, [...baseDefaultFields, ...add]), remove);
   }
