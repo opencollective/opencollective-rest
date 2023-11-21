@@ -90,35 +90,6 @@ export async function fetchCollective(collectiveSlug) {
   return result.Collective;
 }
 
-export async function fetchEvents(parentCollectiveSlug, options = { limit: 10 }) {
-  const query = gql`
-    query fetchEvents($slug: String!, $limit: Int) {
-      allEvents(slug: $slug, limit: $limit) {
-        id
-        name
-        description
-        slug
-        image
-        startsAt
-        endsAt
-        timezone
-        location {
-          name
-          address
-          lat
-          long
-        }
-      }
-    }
-  `;
-
-  const result = await graphqlRequest(query, {
-    slug: parentCollectiveSlug,
-    limit: options.limit || 10,
-  });
-  return result.allEvents;
-}
-
 export async function fetchEvent(eventSlug) {
   const query = gql`
     query Collective($slug: String) {

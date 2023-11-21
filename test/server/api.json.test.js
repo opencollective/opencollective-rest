@@ -1,3 +1,5 @@
+import '../../src/env';
+
 import fetch from 'node-fetch';
 
 const REST_URL = process.env.REST_URL || 'https://rest.opencollective.com';
@@ -12,7 +14,6 @@ const fetchResponse = (path) => {
 const fetchJson = (path) => fetchResponse(path).then((response) => response.json());
 
 const validateMember = (member) => {
-  expect(member).toHaveProperty('email', null);
   expect(member).toHaveProperty('MemberId');
   expect(member).toHaveProperty('name');
   expect(member).toHaveProperty('image');
@@ -68,29 +69,6 @@ describe('api.json.test.js', () => {
   });
 
   describe('event', () => {
-    test('return /:collectiveSlug/events.json', async () => {
-      const events = await fetchJson('/veganizerbxl/events.json');
-      expect(events).toHaveLength(6);
-      expect(events[0]).toEqual({
-        id: 8722,
-        name: 'Vegan Dining Week',
-        description: null,
-        slug: 'vegandiningweek-407ev',
-        image: 'https://cl.ly/1G0T0G2c062b/Slice.png',
-        startsAt: 'Fri Nov 10 2017 22:00:00 GMT+0000 (Coordinated Universal Time)',
-        endsAt: 'Sat Nov 18 2017 22:00:00 GMT+0000 (Coordinated Universal Time)',
-        timezone: 'Europe/Brussels',
-        location: {
-          name: 'Brussels',
-          address: 'Brussels',
-          lat: 50.8503396,
-          long: 4.3517103,
-        },
-        url: 'https://opencollective.com/veganizerbxl/events/vegandiningweek-407ev',
-        info: 'https://opencollective.com/veganizerbxl/events/vegandiningweek-407ev.json',
-      });
-    });
-
     test('return /:collectiveSlug/events/:eventSlug.json', async () => {
       const event = await fetchJson('/veganizerbxl/events/superfilles.json');
       expect(event).toEqual({
