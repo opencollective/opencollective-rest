@@ -34,7 +34,6 @@ export const loadRoutes = (app) => {
     controllers.members.list,
   );
 
-  app.get('/:version(v1)?/:collectiveSlug/events.:format(json)', controllers.events.list);
   app.get('/:version(v1)?/:collectiveSlug/events/:eventSlug.:format(json)', controllers.events.info);
   app.get(
     '/:version(v1)?/:collectiveSlug/events/:eventSlug/:role(attendees|followers|organizers|all).:format(json|csv)',
