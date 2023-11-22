@@ -375,9 +375,9 @@ const accountTransactions = async (req, res) => {
     req.method === 'HEAD'
       ? 0
       : // Else, we use the limit provided by the user, or default to 1000
-      variables.limit
-      ? Number(variables.limit)
-      : 1000;
+        variables.limit
+        ? Number(variables.limit)
+        : 1000;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.account) {
