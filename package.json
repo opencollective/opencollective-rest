@@ -54,7 +54,8 @@
     "prettier:write": "npm run prettier -- --write",
     "start": "node dist/server",
     "test:server": "TZ=UTC ./scripts/run_test.sh",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "depcheck": "npx depcheck"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.4",
@@ -98,5 +99,10 @@
   "cacheDirectories": [
     "node_modules"
   ],
+  "depcheck": {
+    "ignores": [
+      "jest"
+    ]
+  },
   "heroku-run-build-script": true
 }
