@@ -93,14 +93,30 @@ export async function list(req, res, next) {
     }
   `;
   const vars = { collectiveSlug: eventSlug || collectiveSlug, limit: 1000 };
-  if (role === 'attendees') vars.role = 'ATTENDEE';
-  if (role === 'followers') vars.role = 'FOLLOWER';
-  if (role === 'organizers') vars.role = 'ADMIN';
-  if (tierSlug) vars.tierSlug = tierSlug;
-  if (backerType) vars.backerType = backerType;
-  if (req.query.TierId) vars.TierId = Number(req.query.TierId);
-  if (req.query.limit) vars.limit = Number(req.query.limit);
-  if (req.query.offset) vars.offset = Number(req.query.offset);
+  if (role === 'attendees') {
+    vars.role = 'ATTENDEE';
+  }
+  if (role === 'followers') {
+    vars.role = 'FOLLOWER';
+  }
+  if (role === 'organizers') {
+    vars.role = 'ADMIN';
+  }
+  if (tierSlug) {
+    vars.tierSlug = tierSlug;
+  }
+  if (backerType) {
+    vars.backerType = backerType;
+  }
+  if (req.query.TierId) {
+    vars.TierId = Number(req.query.TierId);
+  }
+  if (req.query.limit) {
+    vars.limit = Number(req.query.limit);
+  }
+  if (req.query.offset) {
+    vars.offset = Number(req.query.offset);
+  }
 
   let result;
   try {
@@ -116,10 +132,18 @@ export async function list(req, res, next) {
   const members = result.Collective.members;
 
   const isActive = (r) => {
-    if (!r.tier || !r.tier.interval) return true;
-    if (!r.transactions[0] || !r.transactions[0].createdAt) return false;
-    if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 60) return true;
-    if (r.tier.interval === 'year' && days(new Date(r.transactions[0].createdAt)) <= 365) return true;
+    if (!r.tier || !r.tier.interval) {
+      return true;
+    }
+    if (!r.transactions[0] || !r.transactions[0].createdAt) {
+      return false;
+    }
+    if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 60) {
+      return true;
+    }
+    if (r.tier.interval === 'year' && days(new Date(r.transactions[0].createdAt)) <= 365) {
+      return true;
+    }
     return false;
   };
 
