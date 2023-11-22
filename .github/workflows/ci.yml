@@ -20,6 +20,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
 
+    timeout-minutes: 15
+
     steps:
       - name: Update apt
         run: sudo apt-get update || exit 0
@@ -57,6 +59,8 @@ jobs:
 
   prettier:
     runs-on: ubuntu-latest
+
+    timeout-minutes: 15
 
     steps:
       - name: Update apt
@@ -96,8 +100,53 @@ jobs:
 
       - run: npm run prettier:check
 
+  depcheck:
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 15
+
+    steps:
+      - name: Update apt
+        run: sudo apt-get update || exit 0
+
+      - name: Install graphicsmagick
+        run: sudo apt-get install -y graphicsmagick
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+
+      # Npm cache
+      - name: Restore .npm cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ github.sha }}
+          restore-keys: |
+            - ${{ runner.os }}-npm-cache-${{ github.sha }}
+            - ${{ runner.os }}-npm-cache-
+
+      - name: Restore node_modules
+        uses: actions/cache@v3
+        id: node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
+
+      - run: npm run depcheck
+
   test:
     runs-on: ubuntu-latest
+
+    timeout-minutes: 30
 
     services:
       redis:
