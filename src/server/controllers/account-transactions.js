@@ -183,6 +183,12 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $dateTo: DateTime
     $minAmount: Int
     $maxAmount: Int
+    $searchTerm: String
+    $includeIncognitoTransactions: Boolean
+    $includeChildrenTransactions: Boolean
+    $includeGiftCardTransactions: Boolean
+    $includeRegularTransactions: Boolean
+    $includeHost: Boolean
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
     $fullDescription: Boolean
@@ -200,6 +206,12 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       dateTo: $dateTo
       minAmount: $minAmount
       maxAmount: $maxAmount
+      searchTerm: $searchTerm
+      includeIncognitoTransactions: $includeIncognitoTransactions
+      includeChildrenTransactions: $includeChildrenTransactions
+      includeGiftCardTransactions: $includeGiftCardTransactions
+      includeRegularTransactions: $includeRegularTransactions
+      includeHost: $includeHost
     ) {
       ...TransactionsFragment
     }
@@ -369,6 +381,7 @@ const accountTransactions = async (req, res) => {
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
     'includeRegularTransactions',
+    'includeHost'
   ]);
   variables.limit =
     // If HEAD, we only want count, so we set limit to 0
@@ -430,6 +443,10 @@ const accountTransactions = async (req, res) => {
 
   if (variables.includeRegularTransactions) {
     variables.includeRegularTransactions = parseToBooleanDefaultTrue(variables.includeRegularTransactions);
+  }
+
+  if (variables.includeHost) {
+    variables.includeHost = parseToBooleanDefaultTrue(variables.includeHost);
   }
 
   variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);
