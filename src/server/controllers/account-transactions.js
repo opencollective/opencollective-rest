@@ -184,10 +184,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $minAmount: Int
     $maxAmount: Int
     $searchTerm: String
-    $includeIncognitoTransactions: Boolean
     $includeChildrenTransactions: Boolean
-    $includeGiftCardTransactions: Boolean
-    $includeRegularTransactions: Boolean
     $includeHost: Boolean
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
@@ -207,10 +204,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       minAmount: $minAmount
       maxAmount: $maxAmount
       searchTerm: $searchTerm
-      includeIncognitoTransactions: $includeIncognitoTransactions
       includeChildrenTransactions: $includeChildrenTransactions
-      includeGiftCardTransactions: $includeGiftCardTransactions
-      includeRegularTransactions: $includeRegularTransactions
       includeHost: $includeHost
     ) {
       ...TransactionsFragment
@@ -381,7 +375,7 @@ const accountTransactions = async (req, res) => {
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
     'includeRegularTransactions',
-    'includeHost'
+    'includeHost',
   ]);
   variables.limit =
     // If HEAD, we only want count, so we set limit to 0
