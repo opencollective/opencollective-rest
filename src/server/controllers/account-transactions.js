@@ -50,11 +50,15 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         value
         currency
       }
-      netAmountInHostCurrency(fetchHostFee: $fetchHostFee, fetchPaymentProcessorFee: $fetchPaymentProcessorFee) {
+      netAmountInHostCurrency(
+        fetchHostFee: $fetchHostFee
+        fetchPaymentProcessorFee: $fetchPaymentProcessorFee
+        fetchTax: $fetchTax
+      ) {
         value
         currency
       }
-      taxAmount {
+      taxAmount(fetchTax: $fetchTax) {
         value
         currency
       }
@@ -147,6 +151,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $includeRegularTransactions: Boolean
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
+    $fetchTax: Boolean
     $fullDescription: Boolean
   ) {
     transactions(
@@ -188,6 +193,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $includeHost: Boolean
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
+    $fetchTax: Boolean
     $fullDescription: Boolean
     $account: [AccountReferenceInput!]
   ) {
@@ -291,18 +297,20 @@ const csvMapping = {
 
 const allKinds = [
   'ADDED_FUNDS',
+  'BALANCE_TRANSFER',
   'CONTRIBUTION',
   'EXPENSE',
   'HOST_FEE',
   'HOST_FEE_SHARE',
+  'HOST_FEE_SHARE_DEBT',
   'PAYMENT_PROCESSOR_COVER',
   'PAYMENT_PROCESSOR_FEE',
+  'PAYMENT_PROCESSOR_DISPUTE_FEE',
   'PLATFORM_FEE',
   'PLATFORM_TIP',
-  'PREPAID_PAYMENT_METHOD',
-  'HOST_FEE_SHARE_DEBT',
   'PLATFORM_TIP_DEBT',
-  'BALANCE_TRANSFER',
+  'PREPAID_PAYMENT_METHOD',
+  'TAX',
 ];
 
 const allFields = Object.keys(csvMapping);
@@ -453,6 +461,11 @@ const accountTransactions = async (req, res) => {
     variables.kind = difference(variables.kind || allKinds, ['PAYMENT_PROCESSOR_FEE']);
   }
 
+  variables.fetchTax = parseToBooleanDefaultFalse(req.query.flattenTax);
+  if (variables.fetchTax) {
+    variables.kind = difference(variables.kind || allKinds, ['TAX']);
+  }
+
   if (req.query.fullDescription) {
     variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription);
   } else {
@@ -485,7 +498,15 @@ const accountTransactions = async (req, res) => {
     if (!variables.fetchPaymentProcessorFee) {
       baseDefaultFields = baseDefaultFields.filter((field) => field !== 'paymentProcessorFee');
     }
-
+    if (!variables.fetchTax) {
+      // No need to remove taxAmount because it's not in the default fields
+      // baseDefaultFields = baseDefaultFields.filter((field) => field !== 'taxAmount');
+    }
+    // Remove netAmount if not needed
+    // For later
+    // if (!variables.fetchPaymentProcessorFee && !variables.fetchTax) {
+    //   baseDefaultFields = baseDefaultFields.filter((field) => field !== 'netAmount');
+    // }
     fields = difference(intersection(baseAllFields, [...baseDefaultFields, ...add]), remove);
   }
 
