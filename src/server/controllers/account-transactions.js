@@ -118,6 +118,11 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         payoutMethod {
           type
         }
+        accountingCategory @include(if: $hasAccountingCategoryField) {
+          id
+          code
+          name
+        }
       }
       isRefund
       isRefunded
@@ -153,6 +158,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $fetchPaymentProcessorFee: Boolean
     $fetchTax: Boolean
     $fullDescription: Boolean
+    $hasAccountingCategoryField: Boolean!
   ) {
     transactions(
       includeDebts: true
@@ -196,6 +202,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $fetchTax: Boolean
     $fullDescription: Boolean
     $account: [AccountReferenceInput!]
+    $hasAccountingCategoryField: Boolean!
   ) {
     transactions(
       includeDebts: true
@@ -241,7 +248,16 @@ const formatAccountName = (account) => {
   }
 };
 
+const formatAccountingCategory = (accountingCategory) => {
+  if (!accountingCategory) {
+    return '';
+  } else {
+    return `${accountingCategory.code} - ${accountingCategory.name}`;
+  }
+};
+
 const csvMapping = {
+  accountingCategory: (t) => formatAccountingCategory(get(t, 'expense.accountingCategory')),
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
   id: 'id',
@@ -511,6 +527,9 @@ const accountTransactions = async (req, res) => {
   }
 
   const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll);
+
+  // Add fields info to the query, to prevent fetching what's not needed
+  variables.hasAccountingCategoryField = fields.includes('accountingCategory');
 
   try {
     // Forward Api Key or Authorization header
