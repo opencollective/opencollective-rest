@@ -248,16 +248,9 @@ const formatAccountName = (account) => {
   }
 };
 
-const formatAccountingCategory = (accountingCategory) => {
-  if (!accountingCategory) {
-    return '';
-  } else {
-    return `${accountingCategory.code} - ${accountingCategory.name}`;
-  }
-};
-
 const csvMapping = {
-  accountingCategory: (t) => formatAccountingCategory(get(t, 'expense.accountingCategory')),
+  accountingCategoryCode: (t) => get(t, 'expense.accountingCategory.code') || '',
+  accountingCategoryName: (t) => get(t, 'expense.accountingCategory.name') || '',
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
   id: 'id',
@@ -529,7 +522,7 @@ const accountTransactions = async (req, res) => {
   const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll);
 
   // Add fields info to the query, to prevent fetching what's not needed
-  variables.hasAccountingCategoryField = fields.includes('accountingCategory');
+  variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));
 
   try {
     // Forward Api Key or Authorization header
