@@ -27,7 +27,7 @@
     "graphql-tag": "2.12.6",
     "json2csv": "5.0.7",
     "lodash": "4.17.21",
-    "moment": "2.29.4",
+    "moment": "2.30.1",
     "node-fetch": "2.7.0",
     "omit-deep-lodash": "1.1.7",
     "react": "18.2.0",
