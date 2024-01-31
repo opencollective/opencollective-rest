@@ -515,7 +515,8 @@ const accountTransactions = async (req, res) => {
   try {
     // Forward Api Key or Authorization header
     const headers = {};
-    const apiKey = req.get('Personal-Token') || req.query.personalToken || req.get('Api-Key') || req.query.apiKey;
+    const apiKey = req.get('Api-Key') || req.query.apiKey;
+    const personalToken = req.get('Personal-Token') || req.query.personalToken;
     // Support Cookies for direct-download capability
     const authorization = req.get('Authorization') || req.cookies?.authorization;
 
@@ -523,6 +524,8 @@ const accountTransactions = async (req, res) => {
       headers['Authorization'] = authorization;
     } else if (apiKey) {
       headers['Api-Key'] = apiKey;
+    } else if (personalToken) {
+      headers['Personal-Token'] = personalToken;
     }
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
