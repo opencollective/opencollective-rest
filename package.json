@@ -54,7 +54,8 @@
     "prettier:write": "npm run prettier -- --write",
     "start": "node dist/server",
     "test:server": "TZ=UTC ./scripts/run_test.sh",
-    "prepare": "husky install",
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
     "depcheck": "npx depcheck"
   },
   "devDependencies": {
@@ -74,7 +75,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-simple-import-sort": "^10.0.0",
-    "husky": "^8.0.3",
+    "husky": "^9.0.7",
     "jest": "^29.7.0",
     "lint-staged": "^15.1.0",
     "nodemon": "^3.0.1",
