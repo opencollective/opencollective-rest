@@ -28,11 +28,14 @@ export async function list(req, res, next) {
 
   // Forward Api Key or Authorization header
   const apiKey = req.get('Api-Key') || req.query.apiKey;
+  const personalToken = req.get('Personal-Token') || req.query.personalToken;
   const authorization = req.get('Authorization');
   if (authorization) {
     headers['Authorization'] = authorization;
   } else if (apiKey) {
     headers['Api-Key'] = apiKey;
+  } else if (personalToken) {
+    headers['Personal-Token'] = personalToken;
   }
 
   // don't cache at CDN level as the result contains private information
