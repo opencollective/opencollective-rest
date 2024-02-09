@@ -164,6 +164,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $fetchTax: Boolean
     $fullDescription: Boolean
     $hasAccountingCategoryField: Boolean!
+    $paymentMethodType: [PaymentMethodType]
   ) {
     transactions(
       includeDebts: true
@@ -181,6 +182,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       includeChildrenTransactions: $includeChildrenTransactions
       includeGiftCardTransactions: $includeGiftCardTransactions
       includeRegularTransactions: $includeRegularTransactions
+      paymentMethodType: $paymentMethodType
     ) {
       ...TransactionsFragment
     }
@@ -208,6 +210,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $fullDescription: Boolean
     $account: [AccountReferenceInput!]
     $hasAccountingCategoryField: Boolean!
+    $paymentMethodType: [PaymentMethodType]
   ) {
     transactions(
       includeDebts: true
@@ -224,6 +227,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       searchTerm: $searchTerm
       includeChildrenTransactions: $includeChildrenTransactions
       includeHost: $includeHost
+      paymentMethodType: $paymentMethodType
     ) {
       ...TransactionsFragment
     }
@@ -396,6 +400,7 @@ const accountTransactions = async (req, res) => {
     'dateTo',
     'minAmount',
     'maxAmount',
+    'paymentMethodType',
     'searchTerm',
     'includeIncognitoTransactions',
     'includeChildrenTransactions',
@@ -447,6 +452,10 @@ const accountTransactions = async (req, res) => {
 
   if (variables.kind) {
     variables.kind = variables.kind.split(',').map(toUpper).map(trim);
+  }
+
+  if (variables.paymentMethodType) {
+    variables.paymentMethodType = variables.paymentMethodType.split(',').map(toUpper).map(trim);
   }
 
   if (variables.includeIncognitoTransactions) {
@@ -532,7 +541,6 @@ const accountTransactions = async (req, res) => {
 
   // Add fields info to the query, to prevent fetching what's not needed
   variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));
-
   try {
     // Forward Api Key or Authorization header
     const headers = {};
