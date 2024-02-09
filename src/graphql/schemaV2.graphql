@@ -1107,6 +1107,11 @@ type Order {
   permissions: OrderPermissions!
 
   """
+  The accounting category attached to this order
+  """
+  accountingCategory: AccountingCategory
+
+  """
   The list of activities (ie. approved, edited, etc) for this Order ordered by date ascending
   """
   activities: ActivityCollection!
@@ -1525,6 +1530,7 @@ type Expense {
   The payout method to use for this expense
   """
   payoutMethod: PayoutMethod
+  paymentMethod: PaymentMethod
 
   """
   The virtual card used to pay for this charge
@@ -1583,7 +1589,7 @@ type Expense {
     Details of the transfer
     """
     details: JSON
-  ): JSON
+  ): [TransferWiseRequiredField]
   recurringExpense: RecurringExpense
 
   """
@@ -1649,6 +1655,16 @@ type AccountingCategory {
   friendlyName: String
 
   """
+  Whether this category is only meant for the host admins
+  """
+  hostOnly: Boolean!
+
+  """
+  Instructions for the expense submitters
+  """
+  instructions: String
+
+  """
   The account this category belongs to
   """
   account: Host!
@@ -1657,6 +1673,16 @@ type AccountingCategory {
   If meant for expenses, the types of expenses this category applies to
   """
   expensesTypes: [ExpenseType]
+
+  """
+  The kind of transactions this category applies to
+  """
+  kind: AccountingCategoryKind
+
+  """
+  The time of creation of this accounting category
+  """
+  createdAt: DateTime!
 }
 
 """
@@ -2378,7 +2404,12 @@ type Host implements Account & AccountWithContributions {
   """
   List of accounting categories for this host
   """
-  accountingCategories: AccountingCategoryCollection!
+  accountingCategories(
+    """
+    Filter accounting categories by kind
+    """
+    kind: [AccountingCategoryKind!]
+  ): AccountingCategoryCollection!
   hostFeePercent: Float
   totalHostedCollectives: Int @deprecated(reason: "2023-03-20: Renamed to totalHostedAccounts")
   totalHostedAccounts: Int
@@ -2690,7 +2721,7 @@ type Host implements Account & AccountWithContributions {
     """
     Filter on frozen accounts
     """
-    isFrozen: Boolean = false
+    isFrozen: Boolean
 
     """
     Filter on unhosted accounts
@@ -2706,6 +2737,11 @@ type Host implements Account & AccountWithContributions {
     A term to search membership. Searches in collective tags, name, slug, members description and role.
     """
     searchTerm: String
+
+    """
+    Order of the results
+    """
+    orderBy: OrderByInput
   ): AccountCollection!
 }
 
@@ -2975,6 +3011,9 @@ enum PaymentMethodType {
   bacs_debit @deprecated(reason: "Please use uppercase values")
   bancontact @deprecated(reason: "Please use uppercase values")
   link @deprecated(reason: "Please use uppercase values")
+  bank_transfer @deprecated(reason: "Please use uppercase values")
+  payout @deprecated(reason: "Please use uppercase values")
+  virtual_card @deprecated(reason: "Please use uppercase values")
   ALIPAY
   CREDITCARD
   PREPAID
@@ -2992,6 +3031,9 @@ enum PaymentMethodType {
   BACS_DEBIT
   BANCONTACT
   LINK
+  BANK_TRANSFER
+  PAYOUT
+  VIRTUAL_CARD
 }
 
 input ExpenseReferenceInput {
@@ -4109,6 +4151,7 @@ enum PaymentMethodService {
   OPENCOLLECTIVE
   PREPAID
   THEGIVINGBLOCK
+  WISE
 }
 
 enum PaymentMethodLegacyType {
@@ -4641,12 +4684,12 @@ type TimeSeriesAmount implements TimeSeries {
   """
   The start date of the time series
   """
-  dateFrom: DateTime!
+  dateFrom: DateTime
 
   """
   The end date of the time series
   """
-  dateTo: DateTime!
+  dateTo: DateTime
 
   """
   The interval between two data points
@@ -4663,12 +4706,12 @@ interface TimeSeries {
   """
   The start date of the time series
   """
-  dateFrom: DateTime!
+  dateFrom: DateTime
 
   """
   The end date of the time series
   """
-  dateTo: DateTime!
+  dateTo: DateTime
 
   """
   The interval between two data points
@@ -5199,6 +5242,7 @@ enum ActivityType {
   ORDER_PROCESSING
   ORDER_PAYMENT_FAILED
   ORDER_THANKYOU
+  ORDER_UPDATED
   VENDOR_CREATED
   VENDOR_EDITED
   VENDOR_DELETED
@@ -5285,6 +5329,12 @@ type AccountingCategoryCollection implements Collection {
   The Accounting Categories
   """
   nodes: [AccountingCategory!]!
+}
+
+enum AccountingCategoryKind {
+  ADDED_FUNDS
+  CONTRIBUTION
+  EXPENSE
 }
 
 """
@@ -5429,12 +5479,12 @@ type HostMetricsTimeSeries {
   """
   The start date of the time series
   """
-  dateFrom: DateTime!
+  dateFrom: DateTime
 
   """
   The end date of the time series
   """
-  dateTo: DateTime!
+  dateTo: DateTime
 
   """
   The interval between two data points
@@ -5479,12 +5529,12 @@ type TimeSeriesAmountWithSettlement implements TimeSeries {
   """
   The start date of the time series
   """
-  dateFrom: DateTime!
+  dateFrom: DateTime
 
   """
   The end date of the time series
   """
-  dateTo: DateTime!
+  dateTo: DateTime
 
   """
   The interval between two data points
@@ -5516,12 +5566,12 @@ type TimeSeriesAmountWithKind implements TimeSeries {
   """
   The start date of the time series
   """
-  dateFrom: DateTime!
+  dateFrom: DateTime
 
   """
   The end date of the time series
   """
-  dateTo: DateTime!
+  dateTo: DateTime
 
   """
   The interval between two data points
@@ -6045,6 +6095,37 @@ type ExpenseQuote {
   estimatedDeliveryAt: DateTime
 }
 
+type TransferWiseRequiredField {
+  type: String
+  title: String
+  fields: [TransferWiseField]
+}
+
+type TransferWiseField {
+  name: String
+  group: [TransferWiseFieldGroup]
+}
+
+type TransferWiseFieldGroup {
+  key: String
+  name: String
+  type: String
+  required: Boolean
+  refreshRequirementsOnChange: Boolean
+  displayFormat: String
+  example: String
+  minLength: Int
+  maxLength: Int
+  validationRegexp: String
+  validationAsync: String
+  valuesAllowed: [TransferWiseFieldVatvkluesAllowed]
+}
+
+type TransferWiseFieldVatvkluesAllowed {
+  key: String
+  name: String
+}
+
 """
 A recurring expense object
 """
@@ -6192,6 +6273,11 @@ type OrderPermissions {
   Whether the current user can set tags on this order
   """
   canSetTags: Boolean!
+
+  """
+  Whether the current user can update the accounting category of this order
+  """
+  canUpdateAccountingCategory: Boolean!
 }
 
 """
@@ -10560,37 +10646,6 @@ type TransferWise {
   amountBatched: Amount
 }
 
-type TransferWiseRequiredField {
-  type: String
-  title: String
-  fields: [TransferWiseField]
-}
-
-type TransferWiseField {
-  name: String
-  group: [TransferWiseFieldGroup]
-}
-
-type TransferWiseFieldGroup {
-  key: String
-  name: String
-  type: String
-  required: Boolean
-  refreshRequirementsOnChange: Boolean
-  displayFormat: String
-  example: String
-  minLength: Int
-  maxLength: Int
-  validationRegexp: String
-  validationAsync: String
-  valuesAllowed: [TransferWiseFieldVatvkluesAllowed]
-}
-
-type TransferWiseFieldVatvkluesAllowed {
-  key: String
-  name: String
-}
-
 """
 The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -13655,6 +13710,7 @@ enum ActivityAndClassesType {
   ORDER_PROCESSING
   ORDER_PAYMENT_FAILED
   ORDER_THANKYOU
+  ORDER_UPDATED
   VENDOR_CREATED
   VENDOR_EDITED
   VENDOR_DELETED
@@ -15360,6 +15416,11 @@ type Mutation {
     The tax to apply to the order
     """
     tax: TaxInput
+
+    """
+    The accounting category of this order
+    """
+    accountingCategory: AccountingCategoryReferenceInput
   ): Order!
 
   """
@@ -16244,6 +16305,21 @@ type Mutation {
   ): Order
 
   """
+  Update the accounting category of an order. Scope: "orders".
+  """
+  updateOrderAccountingCategory(
+    """
+    Reference to the Order to update
+    """
+    order: OrderReferenceInput!
+
+    """
+    Reference to the Accounting Category to update the order with
+    """
+    accountingCategory: AccountingCategoryReferenceInput
+  ): Order!
+
+  """
   Confirm an order (strong customer authentication). Scope: "orders".
   """
   confirmOrder(
@@ -16958,6 +17034,16 @@ enum TaxType {
   GST
 }
 
+"""
+Reference to an accounting category
+"""
+input AccountingCategoryReferenceInput {
+  """
+  The ID of the accounting category
+  """
+  id: NonEmptyString!
+}
+
 input CollectiveCreateInput {
   name: String!
   slug: String!
@@ -17153,6 +17239,7 @@ input AccountingCategoryInput {
   The ID of the accounting category to edit
   """
   id: NonEmptyString
+  kind: AccountingCategoryKind! = EXPENSE
 
   """
   The code of the accounting category
@@ -17168,6 +17255,12 @@ input AccountingCategoryInput {
   A friendly name for non-accountants (i.e. expense submitters and collective admins)
   """
   friendlyName: String
+
+  """
+  Whether this category is only meant for the host admins
+  """
+  hostOnly: Boolean! = false
+  instructions: String
 
   """
   If meant for expenses, the types of expenses this category applies to
@@ -17493,16 +17586,6 @@ input ExpenseTaxInput {
   idNumber: String
 }
 
-"""
-Reference to an accounting category
-"""
-input AccountingCategoryReferenceInput {
-  """
-  The ID of the accounting category
-  """
-  id: NonEmptyString!
-}
-
 input RecurringExpenseInput {
   """
   The interval in which this recurring expense is created
@@ -17767,6 +17850,11 @@ input ProcessExpensePaymentParams {
   Transfer details for fulfilling the expense
   """
   transfer: ProcessExpenseTransferParams
+
+  """
+  Payment method using for paying the expense
+  """
+  paymentMethodService: PaymentMethodService
 }
 
 enum MarkAsUnPaidExpenseStatus {
@@ -18387,6 +18475,11 @@ input PendingOrderCreateInput {
   Custom Host fee percent for this order
   """
   hostFeePercent: Float
+
+  """
+  The accounting category of this order
+  """
+  accountingCategory: AccountingCategoryReferenceInput
 }
 
 """
@@ -18462,6 +18555,11 @@ input PendingOrderEditInput {
   Custom Host fee percent for this order
   """
   hostFeePercent: Float
+
+  """
+  The accounting category of this order
+  """
+  accountingCategory: AccountingCategoryReferenceInput
 }
 
 type CreditCardWithStripeError {

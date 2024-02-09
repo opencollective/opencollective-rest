@@ -104,6 +104,11 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         memo
         processedAt
         customData
+        accountingCategory @include(if: $hasAccountingCategoryField) {
+          id
+          code
+          name
+        }
       }
       paymentMethod {
         service
@@ -248,9 +253,13 @@ const formatAccountName = (account) => {
   }
 };
 
+const getAccountingCategory = (transaction) => {
+  return get(transaction, 'expense.accountingCategory') || get(transaction, 'order.accountingCategory');
+};
+
 const csvMapping = {
-  accountingCategoryCode: (t) => get(t, 'expense.accountingCategory.code') || '',
-  accountingCategoryName: (t) => get(t, 'expense.accountingCategory.name') || '',
+  accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
+  accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
   id: 'id',
