@@ -26,6 +26,7 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
       kind
       description(dynamic: true, full: $fullDescription)
       createdAt
+      clearedAt
       amount {
         value
         currency
@@ -152,6 +153,8 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $kind: [TransactionKind]
     $dateFrom: DateTime
     $dateTo: DateTime
+    $clearedFrom: DateTime
+    $clearedTo: DateTime
     $minAmount: Int
     $maxAmount: Int
     $searchTerm: String
@@ -175,6 +178,8 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       kind: $kind
       dateFrom: $dateFrom
       dateTo: $dateTo
+      clearedFrom: $clearedFrom
+      clearedTo: $clearedTo
       minAmount: $minAmount
       maxAmount: $maxAmount
       searchTerm: $searchTerm
@@ -199,6 +204,8 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $kind: [TransactionKind]
     $dateFrom: DateTime
     $dateTo: DateTime
+    $clearedFrom: DateTime
+    $clearedTo: DateTime
     $minAmount: Int
     $maxAmount: Int
     $searchTerm: String
@@ -222,6 +229,8 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       kind: $kind
       dateFrom: $dateFrom
       dateTo: $dateTo
+      clearedFrom: $clearedFrom
+      clearedTo: $clearedTo
       minAmount: $minAmount
       maxAmount: $maxAmount
       searchTerm: $searchTerm
@@ -266,6 +275,7 @@ const csvMapping = {
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
+  effectiveDate: (t) => (t.clearedAt ? moment.utc(t.clearedAt).format('YYYY-MM-DDTHH:mm:ss') : ''),
   id: 'id',
   legacyId: 'legacyId',
   shortId: (t) => t.id.substr(0, 8),
@@ -434,6 +444,19 @@ const accountTransactions = async (req, res) => {
       variables.dateTo.set('hour', 23).set('minute', 59).set('second', 59);
     }
     variables.dateTo = variables.dateTo.toISOString();
+  }
+  if (variables.clearedFrom) {
+    variables.clearedFrom = moment.utc(variables.clearedFrom).toISOString();
+  }
+  if (variables.clearedTo) {
+    // Detect short form (e.g: 2021-08-30)
+    const shortDate = variables.clearedTo.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
+    variables.clearedTo = moment.utc(variables.clearedTo);
+    // Extend to end of the day, 1 sec before midnight
+    if (shortDate) {
+      variables.clearedTo.set('hour', 23).set('minute', 59).set('second', 59);
+    }
+    variables.clearedTo = variables.clearedTo.toISOString();
   }
 
   if (variables.minAmount) {
