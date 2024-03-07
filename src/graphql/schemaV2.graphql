@@ -4467,6 +4467,51 @@ type AccountStats {
   ): TimeSeriesAmount!
 
   """
+  Balance time series
+  """
+  balanceTimeSeries(
+    """
+    The start date of the time series
+    """
+    dateFrom: DateTime
+
+    """
+    The end date of the time series
+    """
+    dateTo: DateTime
+
+    """
+    The time unit of the time series (such as MONTH, YEAR, WEEK etc). If no value is provided this is calculated using the dateFrom and dateTo values.
+    """
+    timeUnit: TimeUnit
+
+    """
+    Return the net amount (with payment processor fees removed)
+    """
+    net: Boolean = false
+
+    """
+    Filter by kind
+    """
+    kind: [TransactionKind]
+
+    """
+    Calculate amount for the last x months. Cannot be used with startDate/endDate
+    """
+    periodInMonths: Int
+
+    """
+    Include transactions from children (Projects and Events)
+    """
+    includeChildren: Boolean = false
+
+    """
+    An optional currency. If not provided, will use the collective currency.
+    """
+    currency: Currency
+  ): TimeSeriesAmount!
+
+  """
   Total of paid expenses to the account, filter per expense type
   """
   totalPaidExpenses(
@@ -5108,6 +5153,11 @@ type AccountPermissions {
   Whether the current user can contact this account
   """
   contact: Permission!
+
+  """
+  Whether the current user can download this account's payment receipts
+  """
+  canDownloadPaymentReceipts: Permission!
 }
 
 type Permission {
@@ -5169,6 +5219,11 @@ type Activity {
   The update related to this activity, if any
   """
   update: Update
+
+  """
+  The conversation related to this activity, if any
+  """
+  conversation: Conversation
 
   """
   The transaction related to this activity, if any

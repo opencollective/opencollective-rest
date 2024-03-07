@@ -85,6 +85,7 @@ export async function list(req, res, next) {
             }
             ... on User {
               email
+              newsletterOptIn
             }
           }
           tier {
@@ -169,6 +170,7 @@ export async function list(req, res, next) {
     description: 'member.description',
     image: 'member.image',
     email: 'member.email',
+    newsletterOptIn: 'member.newsletterOptIn',
     twitter: (r) => {
       return r.member.twitterHandle ? `https://twitter.com/${r.member.twitterHandle}` : null;
     },
