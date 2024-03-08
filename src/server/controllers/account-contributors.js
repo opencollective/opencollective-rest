@@ -95,7 +95,7 @@ const csvMapping = {
   latestContributionDate: (m) =>
     m.account.latestContributions.nodes[0] &&
     moment.utc(m.account.latestContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
-  email: ' account.email',
+  email: 'account.email',
   website: 'account.website',
 };
 
