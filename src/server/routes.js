@@ -68,4 +68,6 @@ export const loadRoutes = (app) => {
     '/v2/:slug/:reportType(hostTransactions|transactions)/:type(credit|debit)?/:kind(contribution|expense|added_funds|host_fee|host_fee_share|host_fee_share_debt|platform_tip|platform_tip_debt)?.:format(json|csv|txt)',
     controllers.accountTransactions,
   );
+
+  app.get('/v2/:slug/contributors.:format(json|csv)', controllers.accountContributors);
 };

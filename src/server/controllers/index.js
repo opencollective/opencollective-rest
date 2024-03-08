@@ -1,3 +1,4 @@
+import accountContributors from './account-contributors';
 import accountOrders from './account-orders';
 import accountTransactions from './account-transactions';
 import * as collectives from './collectives';
@@ -10,6 +11,7 @@ export default {
   events,
   members,
   transactions,
+  accountContributors,
   accountOrders,
   accountTransactions,
 };
