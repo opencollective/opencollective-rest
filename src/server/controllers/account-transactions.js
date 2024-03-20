@@ -121,6 +121,10 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
         type
         tags
         createdAt
+        amount: amountV2 {
+          value
+          currency
+        }
         payoutMethod {
           type
         }
@@ -129,11 +133,21 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
           code
           name
         }
+        approvedBy {
+          slug
+        }
+        paidBy {
+          slug
+        }
+        createdByAccount {
+          slug
+        }
       }
       isRefund
       isRefunded
       refundTransaction {
         id
+        legacyId
       }
       merchantId
     }
@@ -290,6 +304,8 @@ const csvMapping = {
   shortRefundId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
   displayAmount: (t) => formatAmountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
+  creditAmount: (t) => (t.type === 'CREDIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
+  debitAmount: (t) => (t.type === 'DEBIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
   paymentProcessorFee: (t) => get(t, 'paymentProcessorFee.value', 0),
   platformFee: (t) => get(t, 'platformFee.value', 0),
   hostFee: (t) => get(t, 'hostFee.value', 0),
@@ -325,6 +341,15 @@ const csvMapping = {
   taxType: (t) => get(t, 'taxInfo.type'),
   taxRate: (t) => get(t, 'taxInfo.rate'),
   taxIdNumber: (t) => get(t, 'taxInfo.idNumber'),
+  refundLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
+  expenseTotalAmount: (t) => get(t, 'expense.amount.value'),
+  expenseCurrency: (t) => get(t, 'expense.amount.currency'),
+  expenseSubmittedByHandle: (t) => get(t, 'expense.createdByAccount.slug'),
+  expenseApprovedByHandle: (t) =>
+    get(t, 'expense.approvedBy', [])
+      ?.map((a) => a.slug)
+      .join(' '),
+  expensePaidByHandle: (t) => get(t, 'expense.paidBy.slug'),
 };
 
 const allKinds = [
