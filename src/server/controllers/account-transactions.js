@@ -419,6 +419,10 @@ const applyMapping = (mapping, row) => {
   return res;
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const accountTransactions = async (req, res) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     return res.status(405).send({ error: { message: 'Method not allowed' } });
@@ -671,10 +675,15 @@ const accountTransactions = async (req, res) => {
     }
   } catch (err) {
     if (err.message.match(/No account found/)) {
-      return res.status(404).send('Not account found.');
+      res.status(404).send('Not account found.');
+    } else {
+      logger.error(`Error while fetching collective transactions: ${err.message}`);
+      if (res.headersSent) {
+        res.end(`\nError while fetching account transactions.`);
+      } else {
+        res.status(400).send(`Error while fetching account transactions.`);
+      }
     }
-    logger.error(`Error while fetching collective transactions: ${err.message}`);
-    res.status(400).send(`Error while fetching account transactions.`);
   }
 };
 
