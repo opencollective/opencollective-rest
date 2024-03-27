@@ -1,6 +1,6 @@
 import { Parser } from '@json2csv/plainjs';
 import gqlV2 from 'graphql-tag';
-import { difference, get, head, intersection, pick, toUpper, trim } from 'lodash';
+import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
@@ -182,6 +182,10 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $fullDescription: Boolean
     $hasAccountingCategoryField: Boolean!
     $paymentMethodType: [PaymentMethodType]
+    $expenseType: [ExpenseType]
+    $expense: ExpenseReferenceInput
+    $order: OrderReferenceInput
+    $isRefund: Boolean
   ) {
     transactions(
       includeDebts: true
@@ -232,6 +236,10 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $account: [AccountReferenceInput!]
     $hasAccountingCategoryField: Boolean!
     $paymentMethodType: [PaymentMethodType]
+    $expenseType: [ExpenseType]
+    $expense: ExpenseReferenceInput
+    $order: OrderReferenceInput
+    $isRefund: Boolean
   ) {
     transactions(
       includeDebts: true
@@ -446,6 +454,10 @@ const accountTransactions = async (req, res) => {
     'includeGiftCardTransactions',
     'includeRegularTransactions',
     'includeHost',
+    'expenseType',
+    'expenseId',
+    'orderId',
+    'isRefund',
   ]);
   variables.limit =
     // If HEAD, we only want count, so we set limit to 0
@@ -543,6 +555,23 @@ const accountTransactions = async (req, res) => {
   variables.fetchTax = parseToBooleanDefaultFalse(req.query.flattenTax);
   if (variables.fetchTax) {
     variables.kind = difference(variables.kind || allKinds, ['TAX']);
+  }
+
+  if (variables.expenseType) {
+    variables.expenseType = variables.expenseType.split(',').map(toUpper).map(trim);
+  }
+
+  if (variables.orderId) {
+    variables.order = { legacyId: parseInt(variables.orderId) };
+  }
+
+  if (variables.expenseId) {
+    variables.expense = { legacyId: parseInt(variables.expenseId) };
+  }
+
+  // isRefund can be false but default should be undefined
+  if (!isNil(variables.isRefund)) {
+    variables.isRefund = parseToBooleanDefaultFalse(variables.isRefund);
   }
 
   if (req.query.fullDescription) {
