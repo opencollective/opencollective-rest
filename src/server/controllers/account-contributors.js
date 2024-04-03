@@ -1,5 +1,5 @@
+import { Parser } from '@json2csv/plainjs';
 import gqlV2 from 'graphql-tag';
-import { Parser } from 'json2csv';
 import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 

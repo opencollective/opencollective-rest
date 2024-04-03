@@ -13,6 +13,7 @@
   "dependencies": {
     "@apollo/client": "3.9.6",
     "@hyperwatch/hyperwatch": "4.0.0",
+    "@json2csv/plainjs": "7.0.6",
     "cloudflare-ip": "0.0.7",
     "cookie-parser": "^1.4.6",
     "cors": "2.8.5",
@@ -25,7 +26,6 @@
     "graphql": "16.8.1",
     "graphql-request": "6.1.0",
     "graphql-tag": "2.12.6",
-    "json2csv": "5.0.7",
     "lodash": "4.17.21",
     "moment": "2.30.1",
     "node-fetch": "2.7.0",
