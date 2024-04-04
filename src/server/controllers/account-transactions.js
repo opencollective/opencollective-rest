@@ -616,6 +616,9 @@ const accountTransactions = async (req, res) => {
     switch (req.params.format) {
       case 'txt':
       case 'csv': {
+        if (authorization || apiKey || personalToken) {
+          res.append('Cache-Control', 'no-cache');
+        }
         if (req.params.format === 'csv') {
           res.append('Content-Type', `text/csv;charset=utf-8`);
         } else {
