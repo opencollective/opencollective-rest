@@ -616,6 +616,7 @@ const accountTransactions = async (req, res) => {
     switch (req.params.format) {
       case 'txt':
       case 'csv': {
+        // don't cache at CDN level as the result may contain private information
         if (authorization || apiKey || personalToken) {
           res.append('Cache-Control', 'no-cache');
         }
