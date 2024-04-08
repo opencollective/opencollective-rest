@@ -206,6 +206,10 @@ const transactionsQuery = gqlV2/* GraphQL */ `
       includeGiftCardTransactions: $includeGiftCardTransactions
       includeRegularTransactions: $includeRegularTransactions
       paymentMethodType: $paymentMethodType
+      expenseType: $expenseType
+      expense: $expense
+      order: $order
+      isRefund: $isRefund
     ) {
       ...TransactionsFragment
     }
@@ -259,6 +263,10 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       includeChildrenTransactions: $includeChildrenTransactions
       includeHost: $includeHost
       paymentMethodType: $paymentMethodType
+      expenseType: $expenseType
+      expense: $expense
+      order: $order
+      isRefund: $isRefund
     ) {
       ...TransactionsFragment
     }
