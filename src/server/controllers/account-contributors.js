@@ -48,6 +48,25 @@ const contributorsQuery = gqlV2/* GraphQL */ `
                 createdAt
               }
             }
+            pausedRecurringContributions: orders(
+              searchTerm: $slug
+              status: PAUSED
+              orderBy: { field: CREATED_AT, direction: DESC }
+            ) {
+              totalCount
+              nodes {
+                frequency
+                amount {
+                  value
+                  currency
+                }
+                tier {
+                  slug
+                  name
+                }
+                createdAt
+              }
+            }
             latestContributions: transactions(
               limit: 1
               kind: CONTRIBUTION
@@ -79,16 +98,19 @@ const contributorsQuery = gqlV2/* GraphQL */ `
   }
 `;
 
+const activeRecurringContribution = (m) =>
+  get(m, 'account.activeRecurringContributions.nodes[0]') || get(m, 'account.pausedRecurringContributions.nodes[0]');
+
 const csvMapping = {
   contributorUrl: (m) => `${process.env.WEBSITE_URL}/${m.account.slug}`,
   contributorName: 'account.name',
   contributorType: 'account.type',
   totalContributions: 'totalDonations.value',
   currency: 'totalDonations.currency',
-  activeRecurringContribution: (m) => (m.account.activeRecurringContributions.nodes.length ? 'yes' : 'no'),
-  activeRecurringContributionTier: (m) => get(m, 'account.activeRecurringContributions.nodes[0].tier.slug'), // Or name?
-  activeRecurringContributionAmount: (m) => get(m, 'account.activeRecurringContributions.nodes[0].amount.value'), // Currency?
-  activeRecurringContributionFrequency: (m) => get(m, 'account.activeRecurringContributions.nodes[0].frequency'),
+  activeRecurringContribution: (m) => (activeRecurringContribution(m) ? 'yes' : 'no'),
+  activeRecurringContributionTier: (m) => get(activeRecurringContribution(m), 'tier.slug'),
+  activeRecurringContributionAmount: (m) => get(activeRecurringContribution(m), 'amount.value'), // Currency?
+  activeRecurringContributionFrequency: (m) => get(activeRecurringContribution(m), 'frequency'),
   firstContributionDate: (m) =>
     m.account.firstContributions.nodes[0] &&
     moment.utc(m.account.firstContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
