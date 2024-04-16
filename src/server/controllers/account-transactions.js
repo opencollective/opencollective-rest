@@ -12,6 +12,9 @@ function json2csv(data, opts) {
   return parser.parse(data);
 }
 
+const splitIds = (str) => str?.split(',').map(trim);
+const splitEnums = (str) => splitIds(str).map(toUpper);
+
 export const transactionsFragment = gqlV2/* GraphQL */ `
   fragment TransactionsFragment on TransactionCollection {
     __typename
@@ -160,56 +163,66 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
 
 const transactionsQuery = gqlV2/* GraphQL */ `
   query AccountTransactions(
-    $slug: String
-    $limit: Int
-    $offset: Int
-    $type: TransactionType
-    $kind: [TransactionKind]
-    $dateFrom: DateTime
-    $dateTo: DateTime
+    $accountingCategory: [String]
     $clearedFrom: DateTime
     $clearedTo: DateTime
-    $minAmount: Int
-    $maxAmount: Int
-    $searchTerm: String
-    $includeIncognitoTransactions: Boolean
-    $includeChildrenTransactions: Boolean
-    $includeGiftCardTransactions: Boolean
-    $includeRegularTransactions: Boolean
+    $dateFrom: DateTime
+    $dateTo: DateTime
+    $excludeAccount: [AccountReferenceInput!]
+    $expense: ExpenseReferenceInput
+    $expenseType: [ExpenseType]
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
     $fetchTax: Boolean
     $fullDescription: Boolean
+    $group: [String]
     $hasAccountingCategoryField: Boolean!
-    $paymentMethodType: [PaymentMethodType]
-    $expenseType: [ExpenseType]
-    $expense: ExpenseReferenceInput
-    $order: OrderReferenceInput
+    $includeChildrenTransactions: Boolean
+    $includeGiftCardTransactions: Boolean
+    $includeIncognitoTransactions: Boolean
+    $includeRegularTransactions: Boolean
     $isRefund: Boolean
+    $kind: [TransactionKind]
+    $limit: Int
+    $maxAmount: Int
+    $merchantId: [String]
+    $minAmount: Int
+    $offset: Int
+    $order: OrderReferenceInput
+    $paymentMethodService: [PaymentMethodService]
+    $paymentMethodType: [PaymentMethodType]
+    $searchTerm: String
+    $slug: String
+    $type: TransactionType
   ) {
     transactions(
-      includeDebts: true
       account: { slug: $slug }
-      limit: $limit
-      offset: $offset
-      type: $type
-      kind: $kind
-      dateFrom: $dateFrom
-      dateTo: $dateTo
+      accountingCategory: $accountingCategory
       clearedFrom: $clearedFrom
       clearedTo: $clearedTo
-      minAmount: $minAmount
-      maxAmount: $maxAmount
-      searchTerm: $searchTerm
-      includeIncognitoTransactions: $includeIncognitoTransactions
-      includeChildrenTransactions: $includeChildrenTransactions
-      includeGiftCardTransactions: $includeGiftCardTransactions
-      includeRegularTransactions: $includeRegularTransactions
-      paymentMethodType: $paymentMethodType
-      expenseType: $expenseType
+      dateFrom: $dateFrom
+      dateTo: $dateTo
+      excludeAccount: $excludeAccount
       expense: $expense
-      order: $order
+      expenseType: $expenseType
+      group: $group
+      includeChildrenTransactions: $includeChildrenTransactions
+      includeDebts: true
+      includeGiftCardTransactions: $includeGiftCardTransactions
+      includeIncognitoTransactions: $includeIncognitoTransactions
+      includeRegularTransactions: $includeRegularTransactions
       isRefund: $isRefund
+      kind: $kind
+      limit: $limit
+      maxAmount: $maxAmount
+      merchantId: $merchantId
+      minAmount: $minAmount
+      offset: $offset
+      order: $order
+      paymentMethodService: $paymentMethodService
+      paymentMethodType: $paymentMethodType
+      searchTerm: $searchTerm
+      type: $type
     ) {
       ...TransactionsFragment
     }
@@ -219,54 +232,64 @@ const transactionsQuery = gqlV2/* GraphQL */ `
 
 const hostTransactionsQuery = gqlV2/* GraphQL */ `
   query HostTransactions(
-    $slug: String
-    $limit: Int
-    $offset: Int
-    $type: TransactionType
-    $kind: [TransactionKind]
-    $dateFrom: DateTime
-    $dateTo: DateTime
+    $account: [AccountReferenceInput!]
+    $accountingCategory: [String]
     $clearedFrom: DateTime
     $clearedTo: DateTime
-    $minAmount: Int
-    $maxAmount: Int
-    $searchTerm: String
-    $includeChildrenTransactions: Boolean
-    $includeHost: Boolean
+    $dateFrom: DateTime
+    $dateTo: DateTime
+    $excludeAccount: [AccountReferenceInput!]
+    $expense: ExpenseReferenceInput
+    $expenseType: [ExpenseType]
     $fetchHostFee: Boolean
     $fetchPaymentProcessorFee: Boolean
     $fetchTax: Boolean
     $fullDescription: Boolean
-    $account: [AccountReferenceInput!]
+    $group: [String]
     $hasAccountingCategoryField: Boolean!
-    $paymentMethodType: [PaymentMethodType]
-    $expenseType: [ExpenseType]
-    $expense: ExpenseReferenceInput
-    $order: OrderReferenceInput
+    $includeChildrenTransactions: Boolean
+    $includeHost: Boolean
     $isRefund: Boolean
+    $kind: [TransactionKind]
+    $limit: Int
+    $maxAmount: Int
+    $merchantId: [String]
+    $minAmount: Int
+    $offset: Int
+    $order: OrderReferenceInput
+    $paymentMethodService: [PaymentMethodService]
+    $paymentMethodType: [PaymentMethodType]
+    $searchTerm: String
+    $slug: String
+    $type: TransactionType
   ) {
     transactions(
-      includeDebts: true
-      host: { slug: $slug }
       account: $account
-      limit: $limit
-      offset: $offset
-      type: $type
-      kind: $kind
-      dateFrom: $dateFrom
-      dateTo: $dateTo
+      accountingCategory: $accountingCategory
       clearedFrom: $clearedFrom
       clearedTo: $clearedTo
-      minAmount: $minAmount
-      maxAmount: $maxAmount
-      searchTerm: $searchTerm
-      includeChildrenTransactions: $includeChildrenTransactions
-      includeHost: $includeHost
-      paymentMethodType: $paymentMethodType
-      expenseType: $expenseType
+      dateFrom: $dateFrom
+      dateTo: $dateTo
+      excludeAccount: $excludeAccount
       expense: $expense
-      order: $order
+      expenseType: $expenseType
+      group: $group
+      host: { slug: $slug }
+      includeChildrenTransactions: $includeChildrenTransactions
+      includeDebts: true
+      includeHost: $includeHost
       isRefund: $isRefund
+      kind: $kind
+      limit: $limit
+      maxAmount: $maxAmount
+      merchantId: $merchantId
+      minAmount: $minAmount
+      offset: $offset
+      order: $order
+      paymentMethodService: $paymentMethodService
+      paymentMethodType: $paymentMethodType
+      searchTerm: $searchTerm
+      type: $type
     ) {
       ...TransactionsFragment
     }
@@ -446,26 +469,31 @@ const accountTransactions = async (req, res) => {
 
   const variables = pick({ ...req.params, ...req.query }, [
     'account',
-    'slug',
-    'limit',
-    'offset',
-    'type',
-    'kind',
+    'accountingCategory',
     'dateFrom',
     'dateTo',
-    'minAmount',
-    'maxAmount',
-    'paymentMethodType',
-    'searchTerm',
-    'includeIncognitoTransactions',
+    'excludeAccount',
+    'expenseId',
+    'expenseType',
+    'group',
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
-    'includeRegularTransactions',
     'includeHost',
-    'expenseType',
-    'expenseId',
-    'orderId',
+    'includeIncognitoTransactions',
+    'includeRegularTransactions',
     'isRefund',
+    'kind',
+    'limit',
+    'maxAmount',
+    'merchantId',
+    'minAmount',
+    'offset',
+    'orderId',
+    'paymentMethodService',
+    'paymentMethodType',
+    'searchTerm',
+    'slug',
+    'type',
   ]);
   variables.limit =
     // If HEAD, we only want count, so we set limit to 0
@@ -479,6 +507,9 @@ const accountTransactions = async (req, res) => {
 
   if (variables.account) {
     variables.account = variables.account.split(',').map((slug) => ({ slug }));
+  }
+  if (variables.excludeAccount) {
+    variables.excludeAccount = variables.excludeAccount.split(',').map((slug) => ({ slug }));
   }
 
   if (variables.dateFrom) {
@@ -523,11 +554,23 @@ const accountTransactions = async (req, res) => {
   }
 
   if (variables.kind) {
-    variables.kind = variables.kind.split(',').map(toUpper).map(trim);
+    variables.kind = splitEnums(variables.kind);
+  }
+  if (variables.paymentMethodService) {
+    variables.paymentMethodService = splitEnums(variables.paymentMethodService);
+  }
+  if (variables.paymentMethodType) {
+    variables.paymentMethodType = splitEnums(variables.paymentMethodType);
   }
 
-  if (variables.paymentMethodType) {
-    variables.paymentMethodType = variables.paymentMethodType.split(',').map(toUpper).map(trim);
+  if (variables.group) {
+    variables.group = splitIds(variables.group);
+  }
+  if (variables.merchantId) {
+    variables.merchantId = splitIds(variables.merchantId);
+  }
+  if (variables.accountingCategory) {
+    variables.accountingCategory = splitIds(variables.accountingCategory);
   }
 
   if (variables.includeIncognitoTransactions) {
@@ -566,7 +609,7 @@ const accountTransactions = async (req, res) => {
   }
 
   if (variables.expenseType) {
-    variables.expenseType = variables.expenseType.split(',').map(toUpper).map(trim);
+    variables.expenseType = splitEnums(variables.expenseType);
   }
 
   if (variables.orderId) {

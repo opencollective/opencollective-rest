@@ -44,6 +44,7 @@
     "dev": "nodemon --exec babel-node -- src/server",
     "git:clean": "./scripts/git_clean.sh",
     "graphql:update": "npm-run-all graphql:updateV1 graphql:updateV2",
+    "graphql:update:local": "cp ../frontend/lib/graphql/*.graphql src/graphql/ && prettier src/graphql/*.graphql --write",
     "graphql:updateV1": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schema.graphql --output src/graphql/schema.graphql && prettier src/graphql/schema.graphql --write",
     "graphql:updateV2": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schemaV2.graphql --output src/graphql/schemaV2.graphql && prettier src/graphql/schemaV2.graphql --write",
     "lint": "eslint \"src/**/*.js\" \"test/**/*.js\"",
