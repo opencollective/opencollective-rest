@@ -275,6 +275,16 @@ interface Account {
   Get pending member invitations for this account
   """
   memberInvitations(role: [MemberRole]): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 100
     offset: Int! = 0
@@ -331,6 +341,16 @@ interface Account {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -450,13 +470,23 @@ interface Account {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -582,6 +612,7 @@ interface Account {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -1839,6 +1870,16 @@ type Host implements Account & AccountWithContributions {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -1911,6 +1952,16 @@ type Host implements Account & AccountWithContributions {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -2030,13 +2081,23 @@ type Host implements Account & AccountWithContributions {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -2162,6 +2223,7 @@ type Host implements Account & AccountWithContributions {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -2469,6 +2531,16 @@ type Host implements Account & AccountWithContributions {
   contributionPolicy: String
 
   """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
+
+  """
   List of accounting categories for this host
   """
   accountingCategories(
@@ -2483,6 +2555,7 @@ type Host implements Account & AccountWithContributions {
   isOpenToApplications: Boolean
   termsUrl: URL
   plan: HostPlan!
+  hostTransactionsReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): HostTransactionReports
   transactionsReport(dateFrom: DateTime, dateTo: DateTime): [TransactionSum]
   hostMetrics(
     """
@@ -2864,6 +2937,16 @@ interface AccountWithContributions {
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
 }
 
 """
@@ -2974,6 +3057,84 @@ input AccountReferenceInput {
   The slug identifying the account (ie: babel for https://opencollective.com/babel)
   """
   slug: String
+}
+
+"""
+A legal document (e.g. W9, W8BEN, W8BEN-E)
+"""
+type LegalDocument {
+  """
+  Unique identifier for this legal document
+  """
+  id: String!
+
+  """
+  The year this legal document is for
+  """
+  year: Int!
+
+  """
+  The type of legal document
+  """
+  type: LegalDocumentType!
+
+  """
+  The status of the request for this legal document
+  """
+  status: LegalDocumentRequestStatus!
+
+  """
+  The service that provided this legal document
+  """
+  service: LegalDocumentService!
+
+  """
+  The date and time the request for this legal document was created
+  """
+  requestedAt: DateTime!
+
+  """
+  The date and time this legal document was last updated
+  """
+  updatedAt: DateTime!
+
+  """
+  The account this legal document is for
+  """
+  account: Account!
+
+  """
+  URL to download the file. Must be logged in as an account admin. The returned URL will be protected by authentication + 2FA.
+  """
+  documentLink: URL
+}
+
+"""
+Type for a required legal document
+"""
+enum LegalDocumentType {
+  """
+  US tax form (W9, W8BEN, W8BEN-E)
+  """
+  US_TAX_FORM
+}
+
+"""
+Status for a legal document
+"""
+enum LegalDocumentRequestStatus {
+  NOT_REQUESTED
+  REQUESTED
+  RECEIVED
+  ERROR
+}
+
+"""
+Type for a required legal document
+"""
+enum LegalDocumentService {
+  DROPBOX_FORMS
+  OPENCOLLECTIVE
 }
 
 """
@@ -3102,6 +3263,15 @@ enum PaymentMethodType {
   BANK_TRANSFER
   PAYOUT
   VIRTUAL_CARD
+}
+
+enum PaymentMethodService {
+  PAYPAL
+  STRIPE
+  OPENCOLLECTIVE
+  PREPAID
+  THEGIVINGBLOCK
+  WISE
 }
 
 input ExpenseReferenceInput {
@@ -4213,15 +4383,6 @@ type PaymentMethod {
   ): OrderCollection
 }
 
-enum PaymentMethodService {
-  PAYPAL
-  STRIPE
-  OPENCOLLECTIVE
-  PREPAID
-  THEGIVINGBLOCK
-  WISE
-}
-
 enum PaymentMethodLegacyType {
   ALIPAY
   CREDIT_CARD
@@ -4860,6 +5021,7 @@ enum TimeUnit {
   DAY
   WEEK
   MONTH
+  QUARTER
   YEAR
 }
 
@@ -5352,6 +5514,7 @@ enum ActivityType {
   COLLECTIVE_EXPENSE_RECURRING_DRAFTED
   COLLECTIVE_EXPENSE_MISSING_RECEIPT
   TAXFORM_REQUEST
+  TAXFORM_RECEIVED
   COLLECTIVE_VIRTUAL_CARD_ADDED
   COLLECTIVE_VIRTUAL_CARD_MISSING_RECEIPTS
   COLLECTIVE_VIRTUAL_CARD_RESUMED
@@ -5379,6 +5542,8 @@ enum ActivityType {
   SUBSCRIPTION_ACTIVATED
   SUBSCRIPTION_CANCELED
   SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+  SUBSCRIPTION_READY_TO_BE_RESUMED
   TICKET_CONFIRMED
   ORDER_CANCELED_ARCHIVED_COLLECTIVE
   ORDER_PENDING
@@ -5560,6 +5725,60 @@ type HostPlan {
   Ability to collect Platform Tips.
   """
   platformTips: Boolean
+}
+
+"""
+EXPERIMENTAL (this may change or be deleted): Host transaction report
+"""
+type HostTransactionReports {
+  """
+  The start date of the time series
+  """
+  dateFrom: DateTime
+
+  """
+  The end date of the time series
+  """
+  dateTo: DateTime
+
+  """
+  The interval between two data points
+  """
+  timeUnit: TimeUnit!
+  nodes: [HostTransactionReportNode!]
+}
+
+type HostTransactionReportNode {
+  date: DateTime!
+  managedFunds: TransactionsReport!
+  operationalFunds: TransactionsReport!
+}
+
+"""
+Transactions report
+"""
+type TransactionsReport {
+  startingBalance: Amount!
+  endingBalance: Amount!
+  totalChange: Amount!
+  groups: [TransactionsAmountGroup]!
+}
+
+"""
+EXPERIMENTAL (this may change or be deleted): Transaction amounts grouped by type, kind, isRefund, isHost, expenseType
+"""
+type TransactionsAmountGroup {
+  netAmount: Amount
+  amount: Amount
+  platformFee: Amount
+  paymentProcessorFee: Amount
+  hostFee: Amount
+  taxAmount: Amount
+  type: TransactionType
+  kind: TransactionKind
+  isRefund: Boolean
+  isHost: Boolean
+  expenseType: ExpenseType
 }
 
 """
@@ -6223,16 +6442,6 @@ type ExpensePermissions {
 }
 
 """
-Type for a required legal document
-"""
-enum LegalDocumentType {
-  """
-  US tax form (W9)
-  """
-  US_TAX_FORM
-}
-
-"""
 Fields for an expense quote
 """
 type ExpenseQuote {
@@ -6435,6 +6644,11 @@ type OrderPermissions {
   Whether the current user can update the accounting category of this order
   """
   canUpdateAccountingCategory: Boolean!
+
+  """
+  If paused, whether the current user can resume this order
+  """
+  canResume: Boolean!
 }
 
 """
@@ -6635,6 +6849,16 @@ type Bot implements Account {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -6707,6 +6931,16 @@ type Bot implements Account {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -6826,13 +7060,23 @@ type Bot implements Account {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -6958,6 +7202,7 @@ type Bot implements Account {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -7334,6 +7579,16 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -7406,6 +7661,16 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -7525,13 +7790,23 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -7657,6 +7932,7 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -8002,6 +8278,16 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
 }
 
 """
@@ -8196,7 +8482,7 @@ type Credit implements Transaction {
   ): [Transaction]!
 
   """
-  Merchant id related to the Transaction (Stripe, PayPal, Wise, Privacy)
+  Merchant ID related to the Transaction (Stripe, PayPal, Wise, Privacy)
   """
   merchantId: String
   balanceInHostCurrency: Amount
@@ -8340,7 +8626,7 @@ type Debit implements Transaction {
   ): [Transaction]!
 
   """
-  Merchant id related to the Transaction (Stripe, PayPal, Wise, Privacy)
+  Merchant ID related to the Transaction (Stripe, PayPal, Wise, Privacy)
   """
   merchantId: String
   balanceInHostCurrency: Amount
@@ -8464,6 +8750,16 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -8536,6 +8832,16 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -8655,13 +8961,23 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -8787,6 +9103,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -9132,6 +9449,16 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
 
   """
   The Account parenting this account
@@ -9383,6 +9710,16 @@ type Individual implements Account {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -9455,6 +9792,16 @@ type Individual implements Account {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -9574,13 +9921,23 @@ type Individual implements Account {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -9706,6 +10063,7 @@ type Individual implements Account {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -10288,6 +10646,16 @@ type Organization implements Account & AccountWithContributions {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -10360,6 +10728,16 @@ type Organization implements Account & AccountWithContributions {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -10479,13 +10857,23 @@ type Organization implements Account & AccountWithContributions {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -10611,6 +10999,7 @@ type Organization implements Account & AccountWithContributions {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -10914,6 +11303,16 @@ type Organization implements Account & AccountWithContributions {
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
   email: String @deprecated(reason: "2022-07-18: This field is deprecated and will return null")
 
   """
@@ -11077,6 +11476,16 @@ type Vendor implements Account & AccountWithContributions {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -11149,6 +11558,16 @@ type Vendor implements Account & AccountWithContributions {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -11268,13 +11687,23 @@ type Vendor implements Account & AccountWithContributions {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -11400,6 +11829,7 @@ type Vendor implements Account & AccountWithContributions {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -11705,6 +12135,16 @@ type Vendor implements Account & AccountWithContributions {
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
   vendorInfo: VendorInfo
 
   """
@@ -11856,6 +12296,11 @@ type Query {
     includeArchived: Boolean
 
     """
+    Ignore individual accounts used to make contributions as guests
+    """
+    skipGuests: Boolean = true
+
+    """
     Only return "active" accounts with Financial Contributions enabled if true.
     """
     isActive: Boolean
@@ -11874,6 +12319,11 @@ type Query {
     Host hosting the account
     """
     host: [AccountReferenceInput]
+
+    """
+    Parent Collective hosting the account
+    """
+    parent: [AccountReferenceInput]
 
     """
     Only return accounts that match these account types (COLLECTIVE, FUND, EVENT, PROJECT, ORGANIZATION or INDIVIDUAL)
@@ -12081,6 +12531,7 @@ type Query {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -12237,6 +12688,11 @@ type Query {
     Included collectives which are archived
     """
     includeArchived: Boolean
+
+    """
+    Ignore individual accounts used to make contributions as guests
+    """
+    skipGuests: Boolean = true
 
     """
     Only return "active" accounts with Financial Contributions enabled if true.
@@ -12501,6 +12957,16 @@ type Query {
     paymentMethodType: [PaymentMethodType]
 
     """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
+
+    """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
     """
     fromAccount: AccountReferenceInput
@@ -12618,13 +13084,23 @@ type Query {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   update(
     """
@@ -12679,6 +13155,11 @@ type Query {
     """
     amount: AmountInput!
     frequency: ContributionFrequency!
+
+    """
+    The order for which the plan is created, if any
+    """
+    order: OrderReferenceInput
 
     """
     The tier you are contributing to
@@ -14030,6 +14511,7 @@ enum ActivityAndClassesType {
   COLLECTIVE_EXPENSE_RECURRING_DRAFTED
   COLLECTIVE_EXPENSE_MISSING_RECEIPT
   TAXFORM_REQUEST
+  TAXFORM_RECEIVED
   COLLECTIVE_VIRTUAL_CARD_ADDED
   COLLECTIVE_VIRTUAL_CARD_MISSING_RECEIPTS
   COLLECTIVE_VIRTUAL_CARD_RESUMED
@@ -14057,6 +14539,8 @@ enum ActivityAndClassesType {
   SUBSCRIPTION_ACTIVATED
   SUBSCRIPTION_CANCELED
   SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+  SUBSCRIPTION_READY_TO_BE_RESUMED
   TICKET_CONFIRMED
   ORDER_CANCELED_ARCHIVED_COLLECTIVE
   ORDER_PENDING
@@ -14263,6 +14747,16 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -14335,6 +14829,16 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -14454,13 +14958,23 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -14586,6 +15100,7 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -14931,6 +15446,16 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
 }
 
 """
@@ -15060,6 +15585,16 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     """
     role: [MemberRole]
   ): [MemberInvitation]
+
+  """
+  The legal documents associated with this account
+  """
+  legalDocuments(
+    """
+    Filter by type
+    """
+    type: [LegalDocumentType]
+  ): [LegalDocument]
   memberOf(
     limit: Int! = 150
     offset: Int! = 0
@@ -15132,6 +15667,16 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     The payment method types. Can include `null` for transactions without a payment method
     """
     paymentMethodType: [PaymentMethodType]
+
+    """
+    The payment method services.
+    """
+    paymentMethodService: [PaymentMethodService]
+
+    """
+    Reference of the account(s) assigned to the main side of the transaction you want to EXCLUDE from the results
+    """
+    excludeAccount: [AccountReferenceInput]
 
     """
     Reference of the account assigned to the other side of the transaction (CREDIT -> sender, DEBIT -> recipient). Avoid, favor account instead.
@@ -15251,13 +15796,23 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     """
     The transactions group to filter by
     """
-    group: String
+    group: [String]
     virtualCard: [VirtualCardReferenceInput]
 
     """
     Only return transactions that are refunds (or not refunds if false)
     """
     isRefund: Boolean
+
+    """
+    Only return transactions that are associated with these external merchant IDs
+    """
+    merchantId: [String]
+
+    """
+    Only return transactions that are associated with these accounting categories
+    """
+    accountingCategory: [String]
   ): TransactionCollection!
   orders(
     """
@@ -15383,6 +15938,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Use this field to filter expenses on their type (RECEIPT/INVOICE)
     """
     type: ExpenseType
+    types: [ExpenseType]
 
     """
     Only expenses that match these tags
@@ -15728,6 +16284,16 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   """
   platformContributionAvailable: Boolean!
   contributionPolicy: String
+
+  """
+  Returns true if the remote user can start the process to resume contributions for account
+  """
+  canStartResumeContributionsProcess: Boolean!
+
+  """
+  Returns true if the account has started the process to resume contributions
+  """
+  hasResumeContributionsProcessStarted: Boolean!
 
   """
   The Account parenting this account
@@ -16540,6 +17106,26 @@ type Mutation {
   ): SetPasswordResponse!
 
   """
+  Submit a legal document
+  """
+  submitLegalDocument(
+    """
+    The account the legal document is for
+    """
+    account: AccountReferenceInput!
+
+    """
+    The type of legal document
+    """
+    type: LegalDocumentType!
+
+    """
+    The form data for the legal document. Will be validated against the schema for the document type and encrypted.
+    """
+    formData: JSON!
+  ): LegalDocument!
+
+  """
   Invite a new member to the Collective. Scope: "account".
   """
   inviteMember(
@@ -16839,6 +17425,21 @@ type Mutation {
   To edit a pending order. Scope: "orders".
   """
   editPendingOrder(order: PendingOrderEditInput!): Order!
+
+  """
+  Starts or resumes the process of notifying contributors for their PAUSED contributions
+  """
+  startResumeOrdersProcess(
+    """
+    The account to start/resume the process for
+    """
+    account: AccountReferenceInput!
+
+    """
+    An optional message to send to contributors
+    """
+    message: String
+  ): Account!
 
   """
   Add a new payment method to be used with an Order. Scope: "orders".
@@ -18711,6 +19312,7 @@ Implemented Captcha Providers
 enum CaptchaProvider {
   HCAPTCHA
   RECAPTCHA
+  TURNSTILE
 }
 
 """
