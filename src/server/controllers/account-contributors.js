@@ -30,7 +30,7 @@ const contributorsQuery = gqlV2/* GraphQL */ `
               email
             }
             activeRecurringContributions: orders(
-              searchTerm: $slug
+              oppositeAccount: { slug: $slug }
               onlyActiveSubscriptions: true
               orderBy: { field: CREATED_AT, direction: DESC }
             ) {
@@ -49,7 +49,7 @@ const contributorsQuery = gqlV2/* GraphQL */ `
               }
             }
             pausedRecurringContributions: orders(
-              searchTerm: $slug
+              oppositeAccount: { slug: $slug }
               status: PAUSED
               orderBy: { field: CREATED_AT, direction: DESC }
             ) {
