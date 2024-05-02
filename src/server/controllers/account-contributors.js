@@ -36,6 +36,7 @@ const contributorsQuery = gqlV2/* GraphQL */ `
             ) {
               totalCount
               nodes {
+                status
                 frequency
                 amount {
                   value
@@ -48,13 +49,14 @@ const contributorsQuery = gqlV2/* GraphQL */ `
                 createdAt
               }
             }
-            pausedRecurringContributions: orders(
+            inactiveRecurringContributions: orders(
               oppositeAccount: { slug: $slug }
-              status: PAUSED
+              status: [PAUSED, CANCELLED]
               orderBy: { field: CREATED_AT, direction: DESC }
             ) {
               totalCount
               nodes {
+                status
                 frequency
                 amount {
                   value
@@ -98,27 +100,29 @@ const contributorsQuery = gqlV2/* GraphQL */ `
   }
 `;
 
-const activeRecurringContribution = (m) =>
-  get(m, 'account.activeRecurringContributions.nodes[0]') || get(m, 'account.pausedRecurringContributions.nodes[0]');
+const recurringContribution = (m) =>
+  get(m, 'account.activeRecurringContributions.nodes[0]') || get(m, 'account.inactiveRecurringContributions.nodes[0]');
 
 const csvMapping = {
   contributorUrl: (m) => `${process.env.WEBSITE_URL}/${m.account.slug}`,
   contributorName: 'account.name',
+  contributorEmail: 'account.email',
+  contributorWebsite: 'account.website',
   contributorType: 'account.type',
   totalContributions: 'totalDonations.value',
   currency: 'totalDonations.currency',
-  activeRecurringContribution: (m) => (activeRecurringContribution(m) ? 'yes' : 'no'),
-  activeRecurringContributionTier: (m) => get(activeRecurringContribution(m), 'tier.slug'),
-  activeRecurringContributionAmount: (m) => get(activeRecurringContribution(m), 'amount.value'), // Currency?
-  activeRecurringContributionFrequency: (m) => get(activeRecurringContribution(m), 'frequency'),
-  firstContributionDate: (m) =>
+  recurringContribution: (m) => (recurringContribution(m) ? 'yes' : 'no'),
+  recurringContributionStatus: (m) => get(recurringContribution(m), 'status'),
+  recurringContributionTier: (m) => get(recurringContribution(m), 'tier.name'),
+  recurringContributionAmount: (m) => get(recurringContribution(m), 'amount.value'),
+  recurringContributionCurrency: (m) => get(recurringContribution(m), 'amount.currency'),
+  recurringContributionFrequency: (m) => get(recurringContribution(m), 'frequency'),
+  contributorFirstContributionDate: (m) =>
     m.account.firstContributions.nodes[0] &&
     moment.utc(m.account.firstContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
-  latestContributionDate: (m) =>
+  contributorLatestContributionDate: (m) =>
     m.account.latestContributions.nodes[0] &&
     moment.utc(m.account.latestContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
-  email: 'account.email',
-  website: 'account.website',
 };
 
 const allFields = Object.keys(csvMapping);
@@ -126,17 +130,19 @@ const allFields = Object.keys(csvMapping);
 const defaultFields = [
   'contributorUrl',
   'contributorName',
+  'contributorEmail',
+  'contributorWebsite',
   'contributorType',
+  'contributorFirstContributionDate',
+  'contributorLatestContributionDate',
   'totalContributions',
   'currency',
-  'activeRecurringContribution',
-  'activeRecurringContributionTier',
-  'activeRecurringContributionAmount',
-  'activeRecurringContributionFrequency',
-  'firstContributionDate',
-  'latestContributionDate',
-  'email',
-  'website',
+  'recurringContribution',
+  'recurringContributionTier',
+  'recurringContributionStatus',
+  'recurringContributionAmount',
+  'recurringContributionCurrency',
+  'recurringContributionFrequency',
 ];
 
 const applyMapping = (mapping, row) => {
