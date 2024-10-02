@@ -4,8 +4,8 @@ import { intersection, pick } from 'lodash';
 import { graphqlRequest } from '../lib/graphql';
 import { logger } from '../logger';
 
-const query = gqlV2/* GraphQL */ `
-  query account(
+const query = gqlV2`
+  query AccountOrders(
     $slug: String!
     $filter: AccountOrdersFilter
     $status: [OrderStatus]

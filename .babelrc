@@ -4,9 +4,18 @@
       "@babel/preset-env",
       {
         "targets": {
-          "node": "current"
+          "node": true
         }
       }
     ]
+  ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-typescript",
+      {
+        "allowDeclareFields": true
+      }
+    ],
+    "add-module-exports"
   ]
 }

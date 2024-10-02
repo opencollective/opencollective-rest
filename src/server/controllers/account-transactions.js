@@ -15,7 +15,7 @@ function json2csv(data, opts) {
 const splitIds = (str) => str?.split(',').map(trim);
 const splitEnums = (str) => splitIds(str).map(toUpper);
 
-export const transactionsFragment = gqlV2/* GraphQL */ `
+export const transactionsFragment = gqlV2`
   fragment TransactionsFragment on TransactionCollection {
     __typename
     limit
@@ -159,8 +159,6 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
 
 /* $fetchHostFee seems not used but it is in fragment */
 
-/* eslint-disable graphql/template-strings */
-
 const transactionsQuery = gqlV2/* GraphQL */ `
   query AccountTransactions(
     $accountingCategory: [String]
@@ -296,8 +294,6 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
   }
   ${transactionsFragment}
 `;
-
-/* eslint-enable graphql/template-strings */
 
 const formatAmountAsString = (amount) => {
   const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
