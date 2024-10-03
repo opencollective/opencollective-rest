@@ -59,8 +59,13 @@ jobs:
 
   typescript:
     runs-on: ubuntu-latest
+
     timeout-minutes: 15
+
     steps:
+      - name: Update apt
+        run: sudo apt-get update || exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -68,9 +73,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: 'package.json'
-          cache: 'npm'
 
-     - name: Restore node_modules
+      # Npm cache
+      - name: Restore .npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ github.sha }}
+          restore-keys: |
+            - ${{ runner.os }}-npm-cache-${{ github.sha }}
+            - ${{ runner.os }}-npm-cache-
+
+      - name: Restore node_modules
         uses: actions/cache@v4
         id: node-modules
         with:
