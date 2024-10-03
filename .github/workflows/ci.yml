@@ -57,6 +57,32 @@ jobs:
 
       - run: npm run lint:quiet
 
+  typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+          cache: 'npm'
+
+     - name: Restore node_modules
+        uses: actions/cache@v4
+        id: node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
+
+      - run: npm run type:check
+
   prettier:
     runs-on: ubuntu-latest
 
