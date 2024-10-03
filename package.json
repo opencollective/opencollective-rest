@@ -12,8 +12,12 @@
   },
   "dependencies": {
     "@apollo/client": "3.10.1",
+    "@babel/core": "7.25.2",
+    "@babel/plugin-transform-typescript": "7.25.2",
+    "@babel/preset-env": "7.25.4",
     "@hyperwatch/hyperwatch": "4.0.0",
     "@json2csv/plainjs": "7.0.6",
+    "babel-plugin-add-module-exports": "1.0.4",
     "cloudflare-ip": "0.0.7",
     "cookie-parser": "^1.4.6",
     "cors": "2.8.5",
@@ -34,53 +38,54 @@
     "winston": "3.13.0"
   },
   "scripts": {
-    "build": "npm run build:clean && npm run build:updates && npm run build:server",
-    "build:clean": "rm -rf dist",
-    "build:server": "babel --copy-files ./src --out-dir ./dist",
+    "build:clean": "rm -rf dist && mkdir dist",
+    "build:server": "babel ./src --copy-files --extensions .js,.ts -d ./dist",
     "build:updates": "npm --prefix node_modules/cloudflare-ip run update-list",
+    "build": "npm run build:clean && npm run build:updates && npm run build:server",
     "commit": "git-cz",
+    "depcheck": "npx @opencollective/depcheck .",
     "deploy:production": "./scripts/pre-deploy.sh production && git push production main",
     "deploy:staging": "./scripts/pre-deploy.sh staging && git push -f staging main",
-    "dev": "nodemon --exec babel-node -- src/server",
+    "dev": "nodemon src/server/index.js -x \"babel-node --extensions .js,.ts\" . -e js,ts",
     "git:clean": "./scripts/git_clean.sh",
-    "graphql:update": "npm-run-all graphql:updateV1 graphql:updateV2",
     "graphql:update:local": "cp ../frontend/lib/graphql/*.graphql src/graphql/ && prettier src/graphql/*.graphql --write",
+    "graphql:update": "npm-run-all graphql:updateV1 graphql:updateV2",
     "graphql:updateV1": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schema.graphql --output src/graphql/schema.graphql && prettier src/graphql/schema.graphql --write",
     "graphql:updateV2": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schemaV2.graphql --output src/graphql/schemaV2.graphql && prettier src/graphql/schemaV2.graphql --write",
-    "lint": "eslint \"src/**/*.js\" \"test/**/*.js\"",
+    "lint-staged": "lint-staged",
     "lint:fix": "npm run lint -- --fix",
     "lint:quiet": "npm run lint -- --quiet",
-    "prettier": "prettier \"src/**/*.js\" \"test/**/*.js\"",
+    "lint": "eslint . --ext='js,ts,graphql'",
+    "prepare": "husky",
     "prettier:check": "npm run prettier -- --list-different",
     "prettier:write": "npm run prettier -- --write",
+    "prettier": "prettier \"**/*.@(js|ts|json|md)\" --ignore-path .eslintignore",
     "start": "node dist/server",
     "test:server": "TZ=UTC ./scripts/run_test.sh",
-    "prepare": "husky",
-    "lint-staged": "lint-staged",
-    "depcheck": "npx depcheck"
+    "type:check": "tsc"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.4",
-    "@babel/core": "^7.23.3",
-    "@babel/eslint-parser": "^7.23.3",
-    "@babel/node": "^7.22.19",
-    "@babel/preset-env": "^7.23.3",
+    "@graphql-eslint/eslint-plugin": "^3.20.1",
+    "@types/express": "^5.0.0",
+    "@types/lodash": "^4.17.9",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
     "commitizen": "^4.3.0",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^8.54.0",
-    "eslint-config-opencollective": "^3.0.3",
-    "eslint-plugin-babel": "^5.3.1",
-    "eslint-plugin-graphql": "^4.0.0",
-    "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-simple-import-sort": "^12.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-opencollective": "^4.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^17.7.0",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-simple-import-sort": "^12.1.0",
     "husky": "^9.0.7",
     "jest": "^29.7.0",
     "lint-staged": "^15.1.0",
     "nodemon": "^3.0.1",
     "npm-run-all2": "^6.0.0",
-    "prettier": "^3.1.0"
+    "prettier": "^3.1.0",
+    "typescript": "5.5.4"
   },
   "config": {
     "commitizen": {
@@ -100,9 +105,23 @@
   "cacheDirectories": [
     "node_modules"
   ],
-  "depcheck": {
-    "ignores": [
+  "@opencollective/depcheck": {
+    "ignoreDirs": [
+      "dist"
+    ],
+    "specials": [
+      "babel",
+      "bin",
+      "commitizen",
+      "eslint",
+      "husky",
+      "lint-staged",
+      "typescript",
       "jest"
+    ],
+    "ignores": [
+      "jest",
+      "typescript"
     ]
   },
   "heroku-run-build-script": true

@@ -1,4 +1,5 @@
 import { Parser } from '@json2csv/plainjs';
+import type { RequestHandler } from 'express';
 import gqlV2 from 'graphql-tag';
 import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
@@ -15,7 +16,7 @@ function json2csv(data, opts) {
 const splitIds = (str) => str?.split(',').map(trim);
 const splitEnums = (str) => splitIds(str).map(toUpper);
 
-export const transactionsFragment = gqlV2/* GraphQL */ `
+export const transactionsFragment = gqlV2`
   fragment TransactionsFragment on TransactionCollection {
     __typename
     limit
@@ -159,8 +160,6 @@ export const transactionsFragment = gqlV2/* GraphQL */ `
 
 /* $fetchHostFee seems not used but it is in fragment */
 
-/* eslint-disable graphql/template-strings */
-
 const transactionsQuery = gqlV2/* GraphQL */ `
   query AccountTransactions(
     $accountingCategory: [String]
@@ -296,8 +295,6 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
   }
   ${transactionsFragment}
 `;
-
-/* eslint-enable graphql/template-strings */
 
 const formatAmountAsString = (amount) => {
   const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
@@ -458,16 +455,21 @@ const applyMapping = (mapping, row) => {
   return res;
 };
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const accountTransactions = async (req, res) => {
+type Params = {
+  slug: string;
+  reportType: 'hostTransactions' | 'transactions';
+  type?: 'credit' | 'debit';
+  kind?: string;
+  format: 'json' | 'csv' | 'txt';
+};
+
+const accountTransactions: RequestHandler<Params> = async (req, res) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
-    return res.status(405).send({ error: { message: 'Method not allowed' } });
+    res.status(405).send({ error: { message: 'Method not allowed' } });
+    return;
   }
 
-  const variables = pick({ ...req.params, ...req.query }, [
+  const variables: any = pick({ ...req.params, ...req.query }, [
     'account',
     'accountingCategory',
     'dateFrom',
@@ -631,18 +633,18 @@ const accountTransactions = async (req, res) => {
     variables.fullDescription = req.params.reportType === 'hostTransactions' ? true : false;
   }
 
-  let fields = get(req.query, 'fields', '')
+  let fields = (get(req.query, 'fields', '') as string)
     .split(',')
     .map(trim)
     .filter((v) => !!v);
 
   if (fields.length === 0) {
-    const remove = get(req.query, 'remove', '')
+    const remove = (get(req.query, 'remove', '') as string)
       .split(',')
       .map(trim)
       .filter((v) => !!v);
 
-    const add = get(req.query, 'add', '')
+    const add = (get(req.query, 'add', '') as string)
       .split(',')
       .map(trim)
       .filter((v) => !!v);
@@ -718,7 +720,8 @@ const accountTransactions = async (req, res) => {
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.transactions.totalCount);
         if (req.method === 'HEAD') {
-          return res.status(200).end();
+          res.status(200).end();
+          return;
         }
 
         if (result.transactions.totalCount === 0) {
@@ -729,7 +732,7 @@ const accountTransactions = async (req, res) => {
         const mapping = pick(csvMapping, fields);
 
         const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
-        res.write(json2csv(mappedTransactions));
+        res.write(json2csv(mappedTransactions, {}));
         res.write(`\n`);
 
         if (result.transactions.totalCount > result.transactions.limit) {
