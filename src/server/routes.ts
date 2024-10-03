@@ -1,4 +1,5 @@
 import cors from 'cors';
+import type { Express } from 'express';
 
 import { idOrUuid } from './lib/utils';
 import controllers from './controllers';
@@ -8,7 +9,7 @@ const requireApiKey = (req, res, next) => {
   next();
 };
 
-export const loadRoutes = (app) => {
+export const loadRoutes = (app: Express) => {
   app.use(cors());
 
   app.get('/', (req, res) => {
