@@ -71,4 +71,6 @@ export const loadRoutes = (app: Express) => {
   );
 
   app.get('/v2/:slug/contributors.:format(json|csv)', controllers.accountContributors);
+
+  app.all('/v2/:slug/hosted-collectives.:format(json|csv)', controllers.hostedCollectives);
 };
