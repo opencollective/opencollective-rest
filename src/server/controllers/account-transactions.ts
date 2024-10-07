@@ -4,17 +4,21 @@ import gqlV2 from 'graphql-tag';
 import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
+import { accountNameAndLegalName, amountAsString } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
-import { parseToBooleanDefaultFalse, parseToBooleanDefaultTrue } from '../lib/utils';
+import {
+  applyMapping,
+  parseToBooleanDefaultFalse,
+  parseToBooleanDefaultTrue,
+  splitEnums,
+  splitIds,
+} from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
   const parser = new Parser(opts);
   return parser.parse(data);
 }
-
-const splitIds = (str) => str?.split(',').map(trim);
-const splitEnums = (str) => splitIds(str).map(toUpper);
 
 export const transactionsFragment = gqlV2`
   fragment TransactionsFragment on TransactionCollection {
@@ -296,26 +300,6 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
   ${transactionsFragment}
 `;
 
-const formatAmountAsString = (amount) => {
-  const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
-    amount.value,
-  );
-
-  return `${amountAsString} ${amount.currency}`;
-};
-
-const formatAccountName = (account) => {
-  const legalName = account?.legalName;
-  const name = account?.name;
-  if (!legalName && !name) {
-    return '';
-  } else if (legalName && name && legalName !== name) {
-    return `${legalName} (${name})`;
-  } else {
-    return legalName || name;
-  }
-};
-
 const getAccountingCategory = (transaction) => {
   return get(transaction, 'expense.accountingCategory') || get(transaction, 'order.accountingCategory');
 };
@@ -338,7 +322,7 @@ const csvMapping = {
   isRefunded: (t) => (t.isRefunded ? 'REFUNDED' : ''),
   refundId: (t) => get(t, 'refundTransaction.id', ''),
   shortRefundId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
-  displayAmount: (t) => formatAmountAsString(t.amount),
+  displayAmount: (t) => amountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   creditAmount: (t) => (t.type === 'CREDIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
   debitAmount: (t) => (t.type === 'DEBIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
@@ -349,15 +333,15 @@ const csvMapping = {
   balance: (t) => get(t, 'balanceInHostCurrency.value'),
   currency: (t) => get(t, 'amountInHostCurrency.currency'),
   accountSlug: (t) => get(t, 'account.slug'),
-  accountName: (t) => formatAccountName(t.account),
+  accountName: (t) => accountNameAndLegalName(t.account),
   accountType: (t) => get(t, 'account.type'),
   accountEmail: (t) => get(t, 'account.email'),
   oppositeAccountSlug: (t) => get(t, 'oppositeAccount.slug'),
-  oppositeAccountName: (t) => formatAccountName(t.oppositeAccount),
+  oppositeAccountName: (t) => accountNameAndLegalName(t.oppositeAccount),
   oppositeAccountType: (t) => get(t, 'oppositeAccount.type'),
   oppositeAccountEmail: (t) => get(t, 'oppositeAccount.email'),
   hostSlug: (t) => get(t, 'host.slug'),
-  hostName: (t) => formatAccountName(t.host),
+  hostName: (t) => accountNameAndLegalName(t.host),
   hostType: (t) => get(t, 'host.type'),
   orderId: (t) => get(t, 'order.id'),
   orderLegacyId: (t) => get(t, 'order.legacyId'),
@@ -441,19 +425,6 @@ const defaultFields = [
   'orderMemo',
   'orderProcessedDate',
 ];
-
-const applyMapping = (mapping, row) => {
-  const res = {};
-  Object.keys(mapping).map((key) => {
-    const val = mapping[key];
-    if (typeof val === 'function') {
-      return (res[key] = val(row));
-    } else {
-      return (res[key] = get(row, val));
-    }
-  });
-  return res;
-};
 
 type Params = {
   slug: string;
@@ -595,17 +566,17 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     variables.includeHost = parseToBooleanDefaultTrue(variables.includeHost);
   }
 
-  variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee);
+  variables.fetchHostFee = parseToBooleanDefaultFalse(req.query.flattenHostFee as string);
   if (variables.fetchHostFee) {
     variables.kind = difference(variables.kind || allKinds, ['HOST_FEE']);
   }
 
-  variables.fetchPaymentProcessorFee = parseToBooleanDefaultFalse(req.query.flattenPaymentProcessorFee);
+  variables.fetchPaymentProcessorFee = parseToBooleanDefaultFalse(req.query.flattenPaymentProcessorFee as string);
   if (variables.fetchPaymentProcessorFee) {
     variables.kind = difference(variables.kind || allKinds, ['PAYMENT_PROCESSOR_FEE']);
   }
 
-  variables.fetchTax = parseToBooleanDefaultFalse(req.query.flattenTax);
+  variables.fetchTax = parseToBooleanDefaultFalse(req.query.flattenTax as string);
   if (variables.fetchTax) {
     variables.kind = difference(variables.kind || allKinds, ['TAX']);
   }
@@ -628,7 +599,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   }
 
   if (req.query.fullDescription) {
-    variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription);
+    variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription as string);
   } else {
     variables.fullDescription = req.params.reportType === 'hostTransactions' ? true : false;
   }
@@ -671,7 +642,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     fields = difference(intersection(baseAllFields, [...baseDefaultFields, ...add]), remove);
   }
 
-  const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll);
+  const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
 
   // Add fields info to the query, to prevent fetching what's not needed
   variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));

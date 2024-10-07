@@ -1,10 +1,10 @@
-import { isNaN } from 'lodash';
+import { get, isNaN, toUpper, trim } from 'lodash';
 
 export const getBaseApiUrl = () => {
   return process.env.API_URL;
 };
 
-export const getGraphqlUrl = ({ apiKey, version } = {}) => {
+export const getGraphqlUrl = ({ apiKey, version }: { apiKey?: string; version?: string } = {}) => {
   if (apiKey) {
     return `${getBaseApiUrl()}/graphql/${version || 'v1'}?apiKey=${apiKey}`;
   } else {
@@ -72,7 +72,7 @@ export function idOrUuid(req, res, next, idOrUuid) {
     .catch(next);
 }
 
-export const parseToBooleanDefaultFalse = (value) => {
+export const parseToBooleanDefaultFalse = (value: null | undefined | string | boolean) => {
   if (value === null || value === undefined || value === '') {
     return false;
   }
@@ -80,10 +80,27 @@ export const parseToBooleanDefaultFalse = (value) => {
   return ['on', 'enabled', '1', 'true', 'yes', 1].includes(string);
 };
 
-export const parseToBooleanDefaultTrue = (value) => {
+export const parseToBooleanDefaultTrue = (value: null | undefined | string | boolean) => {
   if (value === null || value === undefined || value === '') {
     return true;
   }
   const string = value.toString().trim().toLowerCase();
   return !['off', 'disabled', '0', 'false', 'no', 0].includes(string);
+};
+
+export const splitIds = (str?: string) => str?.split(',').map(trim) || [];
+
+export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
+
+export const applyMapping = (mapping, row) => {
+  const res = {};
+  Object.keys(mapping).map((key) => {
+    const val = mapping[key];
+    if (typeof val === 'function') {
+      return (res[key] = val(row));
+    } else {
+      return (res[key] = get(row, val));
+    }
+  });
+  return res;
 };
