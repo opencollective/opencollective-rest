@@ -122,7 +122,8 @@
     ],
     "ignores": [
       "jest",
-      "typescript"
+      "typescript",
+      "@babel/node"
     ]
   },
   "heroku-run-build-script": true
