@@ -4876,6 +4876,7 @@ enum ConnectedAccountService {
   github
   twitter
   transferwise
+  plaid
   privacy @deprecated(reason: "Not using this service anymore")
   thegivingblock
   meetup @deprecated(reason: "Not using this service anymore")
@@ -6797,6 +6798,7 @@ Type of the import
 enum TransactionsImportType {
   CSV
   MANUAL
+  PLAID
 }
 
 """
@@ -14177,6 +14179,41 @@ type Query {
     """
     throwIfMissing: Boolean = true
   ): Project
+
+  """
+  [!] Warning: this query is currently in beta and the API might change
+  """
+  search(
+    """
+    The search term to search for
+    """
+    searchTerm: String!
+
+    """
+    Limit the scope of the search to this account and its children
+    """
+    account: AccountReferenceInput
+
+    """
+    Limit the scope of the search to this host and its hosted accounts
+    """
+    host: AccountReferenceInput
+
+    """
+    The maximum amount of time in millisecond to wait for a single entity type query to complete (for SQL search)
+    """
+    timeout: Int! = 10000
+
+    """
+    The default limit for each entity type
+    """
+    defaultLimit: Int! = 10
+
+    """
+    Whether to use ElasticSearch or not
+    """
+    useElasticSearch: Boolean! = true
+  ): SearchResponse!
   tagStats(
     """
     Return tags from collectives which includes this search term. Using this argument will ignore tagSearchTerm. Skipping this argument will use a more efficient query.
@@ -17808,6 +17845,98 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   parent: Account
 }
 
+type SearchResponse {
+  """
+  Search results
+  """
+  results: SearchResults!
+}
+
+"""
+Search results for all types
+"""
+type SearchResults {
+  """
+  Search results for Accounts
+  """
+  accounts: SearchResultsAccounts
+
+  """
+  Search results for Comments
+  """
+  comments: SearchResultsComments
+
+  """
+  Search results for Expenses
+  """
+  expenses: SearchResultsExpenses
+
+  """
+  Search results for HostApplications
+  """
+  hostApplications: SearchResultsHostApplications
+
+  """
+  Search results for Orders
+  """
+  orders: SearchResultsOrders
+
+  """
+  Search results for Tiers
+  """
+  tiers: SearchResultsTiers
+
+  """
+  Search results for Transactions
+  """
+  transactions: SearchResultsTransactions
+
+  """
+  Search results for Updates
+  """
+  updates: SearchResultsUpdates
+}
+
+type SearchResultsAccounts {
+  collection: AccountCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsComments {
+  collection: CommentCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsExpenses {
+  collection: ExpenseCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsHostApplications {
+  collection: HostApplicationCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsOrders {
+  collection: OrderCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsTiers {
+  collection: TierCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsTransactions {
+  collection: TransactionCollection!
+  highlights: JSONObject
+}
+
+type SearchResultsUpdates {
+  collection: UpdateCollection!
+  highlights: JSONObject
+}
+
 input TierReferenceInput {
   """
   The id assigned to the Tier
@@ -19186,6 +19315,36 @@ type Mutation {
   Remove the given payout method. Scope: "expenses".
   """
   removePayoutMethod(payoutMethodId: String!): PayoutMethod!
+
+  """
+  Generate a Plaid Link token
+  """
+  generatePlaidLinkToken: PlaidLinkTokenCreateResponse!
+
+  """
+  Connect a Plaid account
+  """
+  connectPlaidAccount(
+    """
+    The public token returned by the Plaid Link flow
+    """
+    publicToken: String!
+
+    """
+    The account to which the Plaid account should be connected
+    """
+    host: AccountReferenceInput!
+
+    """
+    The name of the bank
+    """
+    sourceName: String
+
+    """
+    The name of the bank account
+    """
+    name: String
+  ): PlaidConnectAccountResponse!
 
   """
   [Root only] Edits account flags (deleted, banned, archived, trusted host)
@@ -21464,6 +21623,40 @@ A Stripe setup intent
 input SetupIntentInput {
   id: String!
   stripeAccount: String!
+}
+
+type PlaidLinkTokenCreateResponse {
+  """
+  The link token that will be used to initialize the Plaid Link flow.
+  """
+  linkToken: String!
+
+  """
+  The expiration date for the link token in ISO 8601 format.
+  """
+  expiration: String!
+
+  """
+  A unique identifier for the request, which can be used for troubleshooting.
+  """
+  requestId: String!
+
+  """
+  A URL of a Plaid-hosted Link flow that will use the Link token returned by this request. Only present if the client is enabled for Host
+  """
+  hostedLinkUrl: String
+}
+
+type PlaidConnectAccountResponse {
+  """
+  The connected account that was created
+  """
+  connectedAccount: ConnectedAccount!
+
+  """
+  The transactions import that was created
+  """
+  transactionsImport: TransactionsImport!
 }
 
 enum AccountCacheType {
