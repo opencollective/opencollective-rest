@@ -3,12 +3,12 @@ import assert from 'assert';
 import { Parser } from '@json2csv/plainjs';
 import type { RequestHandler } from 'express';
 import gqlV2 from 'graphql-tag';
-import { get, pick, toNumber, trim } from 'lodash';
+import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
 import { amountAsString } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
-import { applyMapping, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
+import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -38,10 +38,6 @@ export const hostedCollectivesQuery = gqlV2`
       slug
       name
       currency
-      isHost
-      type
-      settings
-      hostFeePercent
       hostedAccounts(
         limit: $limit
         offset: $offset
@@ -119,7 +115,9 @@ export const hostedCollectivesQuery = gqlV2`
                 id
                 name
                 legalName
-                emails
+                ... on Individual {
+                  email
+                }
               }
             }
           }
@@ -173,9 +171,9 @@ const csvMapping = {
   website: 'website',
   currency: 'currency',
   approvedAt: 'approvedAt',
-  balance: (account) => amountAsString(account.stats.balance),
   hostFeePercent: 'hostFeePercent',
-  adminEmails: (account) => account.admins?.nodes.map((admin) => admin.account?.emails?.join(',')).join(','),
+  balance: (account) => amountAsString(account.stats.balance),
+  adminEmails: (account) => compact(account.admins?.nodes.map((member) => member.account?.email)).join(','),
   adminCount: (account) => account.admins?.totalCount,
   firstContributionDate: (account) => account.firstContributionReceived?.nodes[0]?.createdAt,
   lastContributionDate: (account) => account.lastContributionReceived?.nodes[0]?.createdAt,
@@ -225,6 +223,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
       isUnhosted: req.query.isUnhosted ? parseToBooleanDefaultTrue(req.query.isUnhosted as string) : undefined,
       currencies: splitEnums(req.query.currencies as string),
     };
+    const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', variables);
 
     const fields = (get(req.query, 'fields', '') as string)
@@ -265,16 +264,22 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         res.write(`\n`);
 
         if (result.host.hostedAccounts.totalCount > result.host.hostedAccounts.limit) {
-          do {
-            variables.offset += result.host.hostedAccounts.limit;
-            result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
-            const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
-            res.write(json2csv(mappedTransactions, { header: false }));
-            res.write(`\n`);
-          } while (
-            result.host.hostedAccounts.totalCount >
-            result.host.hostedAccounts.limit + result.host.hostedAccounts.offset
-          );
+          if (fetchAll) {
+            do {
+              variables.offset += result.host.hostedAccounts.limit;
+              result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
+              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
+              res.write(json2csv(mappedTransactions, { header: false }));
+              res.write(`\n`);
+            } while (
+              result.host.hostedAccounts.totalCount >
+              result.host.hostedAccounts.limit + result.host.hostedAccounts.offset
+            );
+          } else {
+            res.write(
+              `Warning: totalCount is ${result.host.hostedAccounts.totalCount} and limit was ${result.host.hostedAccounts.limit}`,
+            );
+          }
         }
 
         res.end();
