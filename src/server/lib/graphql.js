@@ -41,7 +41,16 @@ function getCustomAgent() {
 function getClient({ version = 'v1', apiKey } = {}) {
   return new ApolloClient({
     link: new HttpLink({ uri: getGraphqlUrl({ version, apiKey }), fetch }),
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({
+      possibleTypes: {
+        Transaction: ['Expense', 'Order', 'Debit', 'Credit'],
+        CollectiveInterface: ['Collective', 'Event', 'Project', 'Fund', 'Organization', 'User', 'Vendor'],
+        Account: ['Collective', 'Host', 'Individual', 'Fund', 'Project', 'Bot', 'Event', 'Organization', 'Vendor'],
+        AccountWithHost: ['Collective', 'Event', 'Fund', 'Project'],
+        AccountWithParent: ['Event', 'Project'],
+        AccountWithContributions: ['Collective', 'Organization', 'Event', 'Fund', 'Project', 'Host'],
+      },
+    }),
   });
 }
 
