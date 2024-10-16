@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const amountAsString = (amount: { currency: string; value: number }) => {
   const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
     amount.value,
@@ -17,3 +19,8 @@ export const accountNameAndLegalName = (account: { name?: string; legalName?: st
     return legalName || name;
   }
 };
+
+export const shortDate = (date: string) => moment.utc(date).format('YYYY-MM-DD');
+
+export const formatContact = (contact: { name?: string; email: string }) =>
+  `${contact.name ? `${contact.name} ` : ''}<${contact.email}>`;
