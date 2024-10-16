@@ -21,3 +21,6 @@ export const accountNameAndLegalName = (account: { name?: string; legalName?: st
 };
 
 export const shortDate = (date: string) => moment.utc(date).format('YYYY-MM-DD');
+
+export const formatContact = (contact: { name?: string; email: string }) =>
+  `${contact.name ? `${contact.name} ` : ''}<${contact.email}>`;

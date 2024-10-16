@@ -6,7 +6,7 @@ import gqlV2 from 'graphql-tag';
 import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
-import { amountAsString, shortDate } from '../lib/formatting';
+import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
 import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
 import { logger } from '../logger';
@@ -173,7 +173,7 @@ const csvMapping = {
   approvedAt: (account) => shortDate(account.approvedAt),
   hostFeePercent: 'hostFeePercent',
   balance: (account) => amountAsString(account.stats.balance),
-  adminEmails: (account) => compact(account.admins?.nodes.map((member) => member.account?.email)).join(','),
+  adminEmails: (account) => compact(account.admins?.nodes.map((member) => formatContact(member.account))).join(', '),
   adminCount: (account) => account.admins?.totalCount,
   firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes[0]?.createdAt),
   lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes[0]?.createdAt),
