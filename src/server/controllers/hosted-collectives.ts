@@ -6,7 +6,7 @@ import gqlV2 from 'graphql-tag';
 import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
-import { amountAsString } from '../lib/formatting';
+import { amountAsString, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
 import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
 import { logger } from '../logger';
@@ -170,18 +170,18 @@ const csvMapping = {
   description: 'description',
   website: 'website',
   currency: 'currency',
-  approvedAt: 'approvedAt',
+  approvedAt: (account) => shortDate(account.approvedAt),
   hostFeePercent: 'hostFeePercent',
   balance: (account) => amountAsString(account.stats.balance),
   adminEmails: (account) => compact(account.admins?.nodes.map((member) => member.account?.email)).join(','),
   adminCount: (account) => account.admins?.totalCount,
-  firstContributionDate: (account) => account.firstContributionReceived?.nodes[0]?.createdAt,
-  lastContributionDate: (account) => account.lastContributionReceived?.nodes[0]?.createdAt,
+  firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes[0]?.createdAt),
+  lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes[0]?.createdAt),
   totalAmountOfContributions: (account) =>
     account.stats.totalAmountReceived && amountAsString(account.stats.totalAmountReceived),
   totalNumberOfContributions: (account) => account.numberOfContributions?.totalCount,
-  firstExpenseDate: (account) => account.firstExpenseReceived?.nodes[0]?.createdAt,
-  lastExpenseDate: (account) => account.lastExpenseReceived?.nodes[0]?.createdAt,
+  firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes[0]?.createdAt),
+  lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes[0]?.createdAt),
   numberOfExpenses: (account) => account.numberOfExpenses?.totalCount,
 };
 
