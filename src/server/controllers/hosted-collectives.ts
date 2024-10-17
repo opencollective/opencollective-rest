@@ -70,6 +70,7 @@ export const hostedCollectivesQuery = gqlV2`
           tags
           settings
           createdAt
+          unhostedAt(host: { slug: $hostSlug })
           stats {
             id
             balance {
@@ -90,9 +91,19 @@ export const hostedCollectivesQuery = gqlV2`
             COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS
           }
           ... on AccountWithHost {
+            host {
+              id
+              legacyId
+              slug
+            }
             hostFeesStructure
             hostFeePercent
             approvedAt
+            unfrozenAt
+            hostApplication {
+              id
+              createdAt
+            }
             hostAgreements {
               totalCount
               nodes {
@@ -183,6 +194,19 @@ const csvMapping = {
   firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes[0]?.createdAt),
   lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes[0]?.createdAt),
   numberOfExpenses: (account) => account.numberOfExpenses?.totalCount,
+  status: (account, host) => {
+    if (account.host?.id !== host.id) {
+      return 'UNHOSTED';
+    } else if (account.isFrozen) {
+      return 'FROZEN';
+    } else {
+      return 'ACTIVE';
+    }
+  },
+  // New fields
+  dateApplied: (account) => shortDate(account.hostApplication?.createdAt),
+  unhostedAt: (account) => shortDate(account.unhostedAt),
+  unfrozenAt: (account) => shortDate(account.unfrozenAt),
 };
 
 const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
@@ -259,7 +283,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         }
 
         const mapping = pick(csvMapping, fields);
-        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
+        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t, result.host));
         res.write(json2csv(mappedTransactions, null));
         res.write(`\n`);
 
@@ -268,7 +292,9 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
             do {
               variables.offset += result.host.hostedAccounts.limit;
               result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
-              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
+              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) =>
+                applyMapping(mapping, t, result.host),
+              );
               res.write(json2csv(mappedTransactions, { header: false }));
               res.write(`\n`);
             } while (
