@@ -31,6 +31,10 @@ export const hostedCollectivesQuery = gqlV2`
     $balance: AmountRangeInput
     $consolidatedBalance: AmountRangeInput
     $currencies: [String]
+    $includeYearSummary: Boolean!
+    $lastYear: DateTime!
+    $includeQuarterSummary: Boolean!
+    $lastQuarter: DateTime!
   ) {
     host(slug: $hostSlug) {
       id
@@ -70,6 +74,7 @@ export const hostedCollectivesQuery = gqlV2`
           tags
           settings
           createdAt
+          unhostedAt(host: { slug: $hostSlug })
           stats {
             id
             balance {
@@ -84,15 +89,26 @@ export const hostedCollectivesQuery = gqlV2`
               value
               currency
             }
+            
           }
           policies {
             id
             COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS
           }
           ... on AccountWithHost {
+            host {
+              id
+              legacyId
+              slug
+            }
             hostFeesStructure
             hostFeePercent
             approvedAt
+            unfrozenAt
+            hostApplication {
+              id
+              createdAt
+            }
             hostAgreements {
               totalCount
               nodes {
@@ -105,6 +121,24 @@ export const hostedCollectivesQuery = gqlV2`
                   type
                 }
               }
+            }
+            yearSummary: summary(dateFrom: $lastYear) @include(if: $includeYearSummary) {
+              expenseTotal { valueInCents, value, currency }
+              expenseCount
+              expenseMaxValue { valueInCents, value, currency }
+              expenseDistinctPayee
+              contributionCount
+              contributionTotal { valueInCents, value, currency }
+              hostFeeTotal { valueInCents, value, currency }
+            }
+            quarterSummary: summary(dateFrom: $lastQuarter) @include(if: $includeQuarterSummary) {
+              expenseTotal { valueInCents, value, currency }
+              expenseCount
+              expenseMaxValue { valueInCents, value, currency }
+              expenseDistinctPayee
+              contributionCount
+              contributionTotal { valueInCents, value, currency }
+              hostFeeTotal { valueInCents, value, currency }
             }
           }
           admins: members(role: [ADMIN]) {
@@ -183,6 +217,42 @@ const csvMapping = {
   firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes[0]?.createdAt),
   lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes[0]?.createdAt),
   numberOfExpenses: (account) => account.numberOfExpenses?.totalCount,
+  status: (account, host) => {
+    if (account.host?.id !== host.id) {
+      return 'UNHOSTED';
+    } else if (account.isFrozen) {
+      return 'FROZEN';
+    } else {
+      return 'ACTIVE';
+    }
+  },
+  // Added fields
+  totalAmountSpent: (account) => account.stats.totalAmountSpent && amountAsString(account.stats.totalAmountSpent),
+  dateApplied: (account) => shortDate(account.hostApplication?.createdAt),
+  unhostedAt: (account) => account.unhostedAt && shortDate(account.unhostedAt),
+  unfrozenAt: (account) => account.unfrozenAtd && shortDate(account.unfrozenAt),
+  numberOfExpensesYear: (account) => account.yearSummary?.expenseCount,
+  valueOfExpensesYear: (account) =>
+    account.yearSummary?.expenseTotal && amountAsString(account.yearSummary.expenseTotal),
+  maxExpenseValueYear: (account) =>
+    account.yearSummary?.expenseMaxValue && amountAsString(account.yearSummary.expenseMaxValue),
+  numberOfPayeesYear: (account) => account.yearSummary?.expenseDistinctPayee,
+  numberOfContributionsYear: (account) => account.yearSummary?.contributionCount,
+  valueOfContributionsYear: (account) =>
+    account.yearSummary?.contributionTotal && amountAsString(account.yearSummary.contributionTotal),
+  valueOfHostFeeYear: (account) =>
+    account.yearSummary?.hostFeeTotal && amountAsString(account.yearSummary.hostFeeTotal),
+  numberOfExpensesQuarter: (account) => account.quarterSummary?.expenseCount,
+  valueOfExpensesQuarter: (account) =>
+    account.quarterSummary?.expenseTotal && amountAsString(account.quarterSummary.expenseTotal),
+  maxExpenseValueQuarter: (account) =>
+    account.quarterSummary?.expenseMaxValue && amountAsString(account.quarterSummary.expenseMaxValue),
+  numberOfPayeesQuarter: (account) => account.quarterSummary?.expenseDistinctPayee,
+  numberOfContributionsQuarter: (account) => account.quarterSummary?.contributionCount,
+  valueOfContributionsQuarter: (account) =>
+    account.quarterSummary?.contributionTotal && amountAsString(account.quarterSummary.contributionTotal),
+  valueOfHostFeeQuarter: (account) =>
+    account.quarterSummary?.hostFeeTotal && amountAsString(account.quarterSummary.hostFeeTotal),
 };
 
 const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
@@ -210,11 +280,17 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
+    const fields = (get(req.query, 'fields', '') as string)
+      .split(',')
+      .map(trim)
+      .filter((v) => !!v);
+
     const variables = {
       hostSlug,
       limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 1000,
       offset: req.query.offset ? toNumber(req.query.offset) : 0,
-      sort: req.query.sort,
+      sort: req.query.sort && JSON.parse(req.query.sort as string),
+      consolidatedBalance: req.query.consolidatedBalance && JSON.parse(req.query.consolidatedBalance as string),
       hostFeesStructure: req.query.hostFeesStructure,
       searchTerm: req.query.searchTerm,
       type: splitEnums(req.query.type as string),
@@ -222,14 +298,33 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
       isFrozen: req.query.isFrozen ? parseToBooleanDefaultTrue(req.query.isFrozen as string) : undefined,
       isUnhosted: req.query.isUnhosted ? parseToBooleanDefaultTrue(req.query.isUnhosted as string) : undefined,
       currencies: splitEnums(req.query.currencies as string),
+      lastYear: moment().subtract(1, 'year').toISOString(),
+      includeYearSummary: fields.some((field) =>
+        [
+          'numberOfExpensesYear',
+          'valueOfExpensesYear',
+          'maxExpenseValueYear',
+          'numberOfPayeesYear',
+          'numberOfContributionsYear',
+          'valueOfContributionsYear',
+          'valueOfHostFeeYear',
+        ].includes(field),
+      ),
+      lastQuarter: moment().subtract(3, 'month').toISOString(),
+      includeQuarterSummary: fields.some((field) =>
+        [
+          'numberOfExpensesQuarter',
+          'valueOfExpensesQuarter',
+          'maxExpenseValueQuarter',
+          'numberOfPayeesQuarter',
+          'numberOfContributionsQuarter',
+          'valueOfContributionsQuarter',
+          'valueOfHostFeeQuarter',
+        ].includes(field),
+      ),
     };
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
-    logger.debug('hostedCollectives:query', variables);
-
-    const fields = (get(req.query, 'fields', '') as string)
-      .split(',')
-      .map(trim)
-      .filter((v) => !!v);
+    logger.debug('hostedCollectives:query', { variables, headers });
 
     let result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
 
@@ -259,7 +354,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         }
 
         const mapping = pick(csvMapping, fields);
-        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
+        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t, result.host));
         res.write(json2csv(mappedTransactions, null));
         res.write(`\n`);
 
@@ -268,7 +363,9 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
             do {
               variables.offset += result.host.hostedAccounts.limit;
               result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
-              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t));
+              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) =>
+                applyMapping(mapping, t, result.host),
+              );
               res.write(json2csv(mappedTransactions, { header: false }));
               res.write(`\n`);
             } while (
