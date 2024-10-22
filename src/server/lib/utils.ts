@@ -92,12 +92,12 @@ export const splitIds = (str?: string) => str?.split(',').map(trim) || [];
 
 export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 
-export const applyMapping = (mapping, row) => {
+export const applyMapping = (mapping, row, meta?) => {
   const res = {};
   Object.keys(mapping).map((key) => {
     const val = mapping[key];
     if (typeof val === 'function') {
-      return (res[key] = val(row));
+      return (res[key] = val(row, meta));
     } else {
       return (res[key] = get(row, val));
     }
