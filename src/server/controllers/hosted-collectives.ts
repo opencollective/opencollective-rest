@@ -45,6 +45,7 @@ type Fields =
   | 'valueOfContributionsYear'
   | 'valueOfHostFeeYear'
   | 'spentTotalYear'
+  | 'receivedTotalYear'
   | 'numberOfExpensesAllTime'
   | 'valueOfExpensesAllTime'
   | 'maxExpenseValueAllTime'
@@ -52,7 +53,14 @@ type Fields =
   | 'numberOfContributionsAllTime'
   | 'valueOfContributionsAllTime'
   | 'valueOfHostFeeAllTime'
-  | 'spentTotalAllTime';
+  | 'spentTotalAllTime'
+  | 'receivedTotalAllTime'
+  | 'expenseMonthlyAverageCount'
+  | 'expenseMonthlyAverageTotal'
+  | 'contributionMonthlyAverageCount'
+  | 'contributionMonthlyAverageTotal'
+  | 'spentTotalMonthlyAverage'
+  | 'receivedTotalMonthlyAverage';
 
 export const hostedCollectivesQuery = gqlV2`
   query HostedCollectives(
@@ -118,15 +126,6 @@ export const hostedCollectivesQuery = gqlV2`
               value
               currency
             }
-            totalAmountSpent {
-              value
-              currency
-            }
-            totalAmountReceived(net: true) {
-              value
-              currency
-            }
-            
           }
           policies {
             id
@@ -167,7 +166,8 @@ export const hostedCollectivesQuery = gqlV2`
               contributionCount
               contributionTotal { valueInCents, value, currency }
               hostFeeTotal { valueInCents, value, currency }
-              spentTotal { valueInCents, value, currency}
+              spentTotal { valueInCents, value, currency }
+              receivedTotal { valueInCents, value, currency }
             }
             allTimeSummary: summary @include(if: $includeAllTimeSummary) {
               expenseTotal { valueInCents, value, currency }
@@ -177,7 +177,14 @@ export const hostedCollectivesQuery = gqlV2`
               contributionCount
               contributionTotal { valueInCents, value, currency }
               hostFeeTotal { valueInCents, value, currency }
-              spentTotal { valueInCents, value, currency}
+              spentTotal { valueInCents, value, currency }
+              receivedTotal { valueInCents, value, currency }
+              expenseMonthlyAverageCount
+              expenseMonthlyAverageTotal { valueInCents, value, currency } 
+              contributionMonthlyAverageCount
+              contributionMonthlyAverageTotal { valueInCents, value, currency } 
+              spentTotalMonthlyAverage { valueInCents, value, currency } 
+              receivedTotalMonthlyAverage { valueInCents, value, currency } 
             }
           }
           admins: members(role: [ADMIN]) {
@@ -277,6 +284,8 @@ const csvMapping: Record<Fields, string | Function> = {
   valueOfHostFeeYear: (account) =>
     account.yearSummary?.hostFeeTotal && amountAsString(account.yearSummary.hostFeeTotal),
   spentTotalYear: (account) => account.yearSummary?.spentTotal && amountAsString(account.yearSummary.spentTotal),
+  receivedTotalYear: (account) =>
+    account.yearSummary?.receivedTotal && amountAsString(account.yearSummary.receivedTotal),
   numberOfExpensesAllTime: (account) => account.allTimeSummary?.expenseCount,
   valueOfExpensesAllTime: (account) =>
     account.allTimeSummary?.expenseTotal && amountAsString(account.allTimeSummary.expenseTotal),
@@ -290,6 +299,21 @@ const csvMapping: Record<Fields, string | Function> = {
     account.allTimeSummary?.hostFeeTotal && amountAsString(account.allTimeSummary.hostFeeTotal),
   spentTotalAllTime: (account) =>
     account.allTimeSummary?.spentTotal && amountAsString(account.allTimeSummary.spentTotal),
+  receivedTotalAllTime: (account) =>
+    account.allTimeSummary?.receivedTotal && amountAsString(account.allTimeSummary.receivedTotal),
+  expenseMonthlyAverageCount: (account) => account.allTimeSummary?.expenseMonthlyAverageCount,
+  expenseMonthlyAverageTotal: (account) =>
+    account.allTimeSummary?.expenseMonthlyAverageTotal &&
+    amountAsString(account.allTimeSummary.expenseMonthlyAverageTotal),
+  contributionMonthlyAverageCount: (account) => account.allTimeSummary?.contributionMonthlyAverageCount,
+  contributionMonthlyAverageTotal: (account) =>
+    account.allTimeSummary?.contributionMonthlyAverageTotal &&
+    amountAsString(account.allTimeSummary.contributionMonthlyAverageTotal),
+  spentTotalMonthlyAverage: (account) =>
+    account.allTimeSummary?.spentTotalMonthlyAverage && amountAsString(account.allTimeSummary.spentTotalMonthlyAverage),
+  receivedTotalMonthlyAverage: (account) =>
+    account.allTimeSummary?.receivedTotalMonthlyAverage &&
+    amountAsString(account.allTimeSummary.receivedTotalMonthlyAverage),
 };
 
 const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
@@ -297,7 +321,6 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
   }
-
   try {
     // Forward Api Key or Authorization header
     const headers = {};
@@ -345,6 +368,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           'numberOfContributionsYear',
           'valueOfContributionsYear',
           'valueOfHostFeeYear',
+          'spentTotalYear',
+          'receivedTotalYear',
         ].includes(field),
       ),
       includeAllTimeSummary: fields.some((field) =>
@@ -356,6 +381,12 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           'numberOfContributionsAllTime',
           'valueOfContributionsAllTime',
           'valueOfHostFeeAllTime',
+          'spentTotalAllTime',
+          'receivedTotalAllTime',
+          'expenseMonthlyAverageCount',
+          'expenseMonthlyAverageTotal',
+          'contributionMonthlyAverageCount',
+          'contributionMonthlyAverageTotal',
         ].includes(field),
       ),
     };
