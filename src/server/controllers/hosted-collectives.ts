@@ -43,6 +43,7 @@ type Fields =
   | 'numberOfPayeesYear'
   | 'numberOfContributionsYear'
   | 'valueOfContributionsYear'
+  | 'valueOfRefundedContributionsYear'
   | 'valueOfHostFeeYear'
   | 'spentTotalYear'
   | 'receivedTotalYear'
@@ -52,6 +53,7 @@ type Fields =
   | 'numberOfPayeesAllTime'
   | 'numberOfContributionsAllTime'
   | 'valueOfContributionsAllTime'
+  | 'valueOfRefundedContributionsAllTime'
   | 'valueOfHostFeeAllTime'
   | 'spentTotalAllTime'
   | 'receivedTotalAllTime'
@@ -60,11 +62,28 @@ type Fields =
   | 'contributionMonthlyAverageCount'
   | 'contributionMonthlyAverageTotal'
   | 'spentTotalMonthlyAverage'
-  | 'receivedTotalMonthlyAverage';
+  | 'receivedTotalMonthlyAverage'
+  | 'spentTotalYearlyAverage'
+  | 'receivedTotalYearlyAverage';
+
+const hostQuery = gqlV2`
+  query HostedCollectives(
+    $hostSlug: String!
+  ) {
+    host(slug: $hostSlug) {
+      id
+      legacyId
+      slug
+      name
+      currency
+    }
+  }
+`;
 
 export const hostedCollectivesQuery = gqlV2`
   query HostedCollectives(
     $hostSlug: String!
+    $hostCurrency: Currency!
     $limit: Int!
     $offset: Int!
     $sort: OrderByInput
@@ -122,7 +141,7 @@ export const hostedCollectivesQuery = gqlV2`
           unhostedAt(host: { slug: $hostSlug })
           stats {
             id
-            balance {
+            balance(currency: $hostCurrency) {
               value
               currency
             }
@@ -159,32 +178,36 @@ export const hostedCollectivesQuery = gqlV2`
               }
             }
             yearSummary: summary(dateFrom: $lastYear) @include(if: $includeYearSummary) {
-              expenseTotal { valueInCents, value, currency }
+              expenseTotal { value, currency }
               expenseCount
-              expenseMaxValue { valueInCents, value, currency }
+              expenseMaxValue { value, currency }
               expenseDistinctPayee
               contributionCount
-              contributionTotal { valueInCents, value, currency }
-              hostFeeTotal { valueInCents, value, currency }
-              spentTotal { valueInCents, value, currency }
-              receivedTotal { valueInCents, value, currency }
+              contributionTotal { value, currency }
+              contributionRefundedTotal { value, currency }
+              hostFeeTotal { value, currency }
+              spentTotal { value, currency }
+              receivedTotal { value, currency }
             }
             allTimeSummary: summary @include(if: $includeAllTimeSummary) {
-              expenseTotal { valueInCents, value, currency }
+              expenseTotal { value, currency }
               expenseCount
-              expenseMaxValue { valueInCents, value, currency }
+              expenseMaxValue { value, currency }
               expenseDistinctPayee
               contributionCount
-              contributionTotal { valueInCents, value, currency }
-              hostFeeTotal { valueInCents, value, currency }
-              spentTotal { valueInCents, value, currency }
-              receivedTotal { valueInCents, value, currency }
-              expenseMonthlyAverageCount
-              expenseMonthlyAverageTotal { valueInCents, value, currency } 
-              contributionMonthlyAverageCount
-              contributionMonthlyAverageTotal { valueInCents, value, currency } 
-              spentTotalMonthlyAverage { valueInCents, value, currency } 
-              receivedTotalMonthlyAverage { valueInCents, value, currency } 
+              contributionTotal { value, currency }
+              contributionRefundedTotal { value, currency }
+              hostFeeTotal { value, currency }
+              spentTotal { value, currency }
+              receivedTotal { value, currency }
+              expenseMonthlyAverageCount: expenseAverageCount(period: MONTH) 
+              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency } 
+              contributionMonthlyAverageCount: contributionAverageCount(period: MONTH) 
+              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency } 
+              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency } 
+              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency } 
+              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency } 
+              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency } 
             }
           }
           admins: members(role: [ADMIN]) {
@@ -281,6 +304,8 @@ const csvMapping: Record<Fields, string | Function> = {
   numberOfContributionsYear: (account) => account.yearSummary?.contributionCount,
   valueOfContributionsYear: (account) =>
     account.yearSummary?.contributionTotal && amountAsString(account.yearSummary.contributionTotal),
+  valueOfRefundedContributionsYear: (account) =>
+    account.yearSummary?.contributionRefundedTotal && amountAsString(account.yearSummary.contributionRefundedTotal),
   valueOfHostFeeYear: (account) =>
     account.yearSummary?.hostFeeTotal && amountAsString(account.yearSummary.hostFeeTotal),
   spentTotalYear: (account) => account.yearSummary?.spentTotal && amountAsString(account.yearSummary.spentTotal),
@@ -295,6 +320,9 @@ const csvMapping: Record<Fields, string | Function> = {
   numberOfContributionsAllTime: (account) => account.allTimeSummary?.contributionCount,
   valueOfContributionsAllTime: (account) =>
     account.allTimeSummary?.contributionTotal && amountAsString(account.allTimeSummary.contributionTotal),
+  valueOfRefundedContributionsAllTime: (account) =>
+    account.allTimeSummary?.contributionRefundedTotal &&
+    amountAsString(account.allTimeSummary.contributionRefundedTotal),
   valueOfHostFeeAllTime: (account) =>
     account.allTimeSummary?.hostFeeTotal && amountAsString(account.allTimeSummary.hostFeeTotal),
   spentTotalAllTime: (account) =>
@@ -314,6 +342,11 @@ const csvMapping: Record<Fields, string | Function> = {
   receivedTotalMonthlyAverage: (account) =>
     account.allTimeSummary?.receivedTotalMonthlyAverage &&
     amountAsString(account.allTimeSummary.receivedTotalMonthlyAverage),
+  spentTotalYearlyAverage: (account) =>
+    account.allTimeSummary?.spentTotalYearlyAverage && amountAsString(account.allTimeSummary.spentTotalYearlyAverage),
+  receivedTotalYearlyAverage: (account) =>
+    account.allTimeSummary?.receivedTotalYearlyAverage &&
+    amountAsString(account.allTimeSummary.receivedTotalYearlyAverage),
 };
 
 const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
@@ -340,6 +373,10 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
+    const hostResult = await graphqlRequest(hostQuery, { hostSlug }, { version: 'v2', headers });
+    const host = hostResult.host;
+    assert(host, 'Could not find Host');
+
     const fields = (get(req.query, 'fields', '') as string)
       .split(',')
       .map(trim)
@@ -347,6 +384,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
     const variables = {
       hostSlug,
+      hostCurrency: host.currency,
       limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 1000,
       offset: req.query.offset ? toNumber(req.query.offset) : 0,
       sort: req.query.sort && JSON.parse(req.query.sort as string),
@@ -367,6 +405,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           'numberOfPayeesYear',
           'numberOfContributionsYear',
           'valueOfContributionsYear',
+          'valueOfRefundedContributionsYear',
           'valueOfHostFeeYear',
           'spentTotalYear',
           'receivedTotalYear',
@@ -380,6 +419,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           'numberOfPayeesAllTime',
           'numberOfContributionsAllTime',
           'valueOfContributionsAllTime',
+          'valueOfRefundedContributionsAllTime',
           'valueOfHostFeeAllTime',
           'spentTotalAllTime',
           'receivedTotalAllTime',
@@ -387,6 +427,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           'expenseMonthlyAverageTotal',
           'contributionMonthlyAverageCount',
           'contributionMonthlyAverageTotal',
+          'spentTotalYearlyAverage',
+          'receivedTotalYearlyAverage',
         ].includes(field),
       ),
     };
