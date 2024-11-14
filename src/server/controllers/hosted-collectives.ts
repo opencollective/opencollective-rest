@@ -60,11 +60,24 @@ type Fields =
   | 'contributionMonthlyAverageCount'
   | 'contributionMonthlyAverageTotal'
   | 'spentTotalMonthlyAverage'
-  | 'receivedTotalMonthlyAverage';
+const hostQuery = gqlV2`
+  query HostedCollectives(
+    $hostSlug: String!
+  ) {
+    host(slug: $hostSlug) {
+      id
+      legacyId
+      slug
+      name
+      currency
+    }
+  }
+`;
 
 export const hostedCollectivesQuery = gqlV2`
   query HostedCollectives(
     $hostSlug: String!
+    $hostCurrency: Currency!
     $limit: Int!
     $offset: Int!
     $sort: OrderByInput
@@ -122,7 +135,7 @@ export const hostedCollectivesQuery = gqlV2`
           unhostedAt(host: { slug: $hostSlug })
           stats {
             id
-            balance {
+            balance(currency: $hostCurrency) {
               value
               currency
             }
@@ -340,6 +353,10 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
+    const hostResult = await graphqlRequest(hostQuery, { hostSlug }, { version: 'v2', headers });
+    const host = hostResult.host;
+    assert(host, 'Could not find Host');
+
     const fields = (get(req.query, 'fields', '') as string)
       .split(',')
       .map(trim)
@@ -347,6 +364,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
     const variables = {
       hostSlug,
+      hostCurrency: host.currency,
       limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 1000,
       offset: req.query.offset ? toNumber(req.query.offset) : 0,
       sort: req.query.sort && JSON.parse(req.query.sort as string),
