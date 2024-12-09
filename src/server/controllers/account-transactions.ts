@@ -129,6 +129,8 @@ export const transactionsFragment = gqlV2`
         type
         tags
         createdAt
+        reference
+        transferReference 
         amount: amountV2 {
           value
           currency
@@ -370,6 +372,8 @@ const csvMapping = {
       ?.map((a) => a.slug)
       .join(' '),
   expensePaidByHandle: (t) => get(t, 'expense.paidBy.slug'),
+  expenseReference: (t) => get(t, 'expense.reference'),
+  expenseTransferReference: (t) => get(t, 'expense.transferReference'),
 };
 
 const allKinds = [
