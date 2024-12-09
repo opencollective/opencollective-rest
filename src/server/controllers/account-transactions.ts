@@ -253,6 +253,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $includeChildrenTransactions: Boolean
     $includeHost: Boolean
     $isRefund: Boolean
+    $hasDebt: Boolean
     $kind: [TransactionKind]
     $limit: Int
     $maxAmount: Int
@@ -282,6 +283,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
       includeDebts: true
       includeHost: $includeHost
       isRefund: $isRefund
+      hasDebt: $hasDebt
       kind: $kind
       limit: $limit
       maxAmount: $maxAmount
@@ -449,6 +451,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'expenseId',
     'expenseType',
     'group',
+    'hasDebt',
     'includeChildrenTransactions',
     'includeGiftCardTransactions',
     'includeHost',
@@ -596,6 +599,11 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   // isRefund can be false but default should be undefined
   if (!isNil(variables.isRefund)) {
     variables.isRefund = parseToBooleanDefaultFalse(variables.isRefund);
+  }
+
+  // hasDebt can be false but default should be undefined
+  if (!isNil(variables.hasDebt)) {
+    variables.hasDebt = parseToBooleanDefaultFalse(variables.hasDebt);
   }
 
   if (req.query.fullDescription) {
