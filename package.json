@@ -22,7 +22,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "2.8.5",
     "debug": "4.4.0",
-    "dotenv": "16.4.5",
+    "dotenv": "16.4.7",
     "express": "4.20.0",
     "express-basic-auth": "1.2.1",
     "express-winston": "4.2.0",
