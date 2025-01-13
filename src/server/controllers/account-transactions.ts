@@ -451,6 +451,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'accountingCategory',
     'dateFrom',
     'dateTo',
+    'clearedFrom',
+    'clearedTo',
     'excludeAccount',
     'expenseId',
     'expenseType',
