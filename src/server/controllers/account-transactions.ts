@@ -118,6 +118,17 @@ export const transactionsFragment = gqlV2`
           code
           name
         }
+        transactionImportRow @include(if: $hasTransactionImportRowField) {
+          id
+          sourceId
+          description
+          date
+          rawValue
+          amount {
+            value
+            currency
+          }
+        }
       }
       paymentMethod {
         service
@@ -142,6 +153,17 @@ export const transactionsFragment = gqlV2`
           id
           code
           name
+        }
+        transactionImportRow @include(if: $hasTransactionImportRowField) {
+          id
+          sourceId
+          description
+          date
+          rawValue
+          amount {
+            value
+            currency
+          }
         }
         approvedBy {
           slug
@@ -182,6 +204,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeGiftCardTransactions: Boolean
     $includeIncognitoTransactions: Boolean
@@ -252,6 +275,7 @@ const hostTransactionsQuery = gqlV2/* GraphQL */ `
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeHost: Boolean
     $isRefund: Boolean
@@ -376,6 +400,16 @@ const csvMapping = {
   expensePaidByHandle: (t) => get(t, 'expense.paidBy.slug'),
   expenseReference: (t) => get(t, 'expense.reference'),
   expenseTransferReference: (t) => get(t, 'expense.transferReference'),
+  // Transactions import
+  importSourceId: (t) => get(getTransactionImportRowFromTransaction(t), 'sourceId'),
+  importSourceDescription: (t) => get(getTransactionImportRowFromTransaction(t), 'description'),
+  importSourceAmount: (t) => get(getTransactionImportRowFromTransaction(t), 'amount.value'),
+  importSourceDate: (t) => get(getTransactionImportRowFromTransaction(t), 'date'),
+  importSourceData: (t) => get(getTransactionImportRowFromTransaction(t), 'rawValue'),
+};
+
+const getTransactionImportRowFromTransaction = (transaction) => {
+  return get(transaction, 'expense.transactionImportRow') || get(transaction, 'order.transactionImportRow');
 };
 
 const allKinds = [
@@ -660,6 +694,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
   // Add fields info to the query, to prevent fetching what's not needed
   variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));
+  variables.hasTransactionImportRowField = fields.some((field) => field.startsWith('importSource'));
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};
@@ -717,6 +753,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         const mapping = pick(csvMapping, fields);
 
         const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
+        console.log(result.transactions.nodes[0], mappedTransactions[0]);
         res.write(json2csv(mappedTransactions, {}));
         res.write(`\n`);
 
