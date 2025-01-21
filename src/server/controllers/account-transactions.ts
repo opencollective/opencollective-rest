@@ -753,7 +753,6 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         const mapping = pick(csvMapping, fields);
 
         const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
-        console.log(result.transactions.nodes[0], mappedTransactions[0]);
         res.write(json2csv(mappedTransactions, {}));
         res.write(`\n`);
 
