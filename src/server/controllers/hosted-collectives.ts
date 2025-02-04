@@ -23,6 +23,7 @@ type Fields =
   | 'legalName'
   | 'description'
   | 'website'
+  | 'tags'
   | 'currency'
   | 'approvedAt'
   | 'balance'
@@ -273,6 +274,7 @@ const csvMapping: Record<Fields, string | Function> = {
   description: 'description',
   website: 'website',
   currency: 'currency',
+  tags: (account) => account.tags?.join(', '),
   approvedAt: (account) => shortDate(account.approvedAt),
   hostFeePercent: 'hostFeePercent',
   balance: (account) => amountAsString(account.stats.balance),
