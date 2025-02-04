@@ -26,6 +26,10 @@ const contributorsQuery = gqlV2/* GraphQL */ `
             slug
             type
             website
+            location {
+              address
+              country
+            }
             ... on Individual {
               email
             }
@@ -111,6 +115,8 @@ const csvMapping = {
   contributorType: 'account.type',
   totalContributions: 'totalDonations.value',
   currency: 'totalDonations.currency',
+  address: (t) => get(t, 'account.location.address'),
+  country: (t) => get(t, 'account.location.country'),
   recurringContribution: (m) => (recurringContribution(m) ? 'yes' : 'no'),
   recurringContributionStatus: (m) => get(recurringContribution(m), 'status'),
   recurringContributionTier: (m) => get(recurringContribution(m), 'tier.name'),
@@ -133,6 +139,8 @@ const defaultFields = [
   'contributorEmail',
   'contributorWebsite',
   'contributorType',
+  'address',
+  'country',
   'contributorFirstContributionDate',
   'contributorLatestContributionDate',
   'totalContributions',
