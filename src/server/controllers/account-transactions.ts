@@ -113,6 +113,14 @@ export const transactionsFragment = gqlV2`
         memo
         processedAt
         customData
+        fromAccount {
+          id
+          name
+          location {
+            address
+            country
+          }
+        }
         accountingCategory @include(if: $hasAccountingCategoryField) {
           id
           code
@@ -142,6 +150,10 @@ export const transactionsFragment = gqlV2`
         createdAt
         reference
         transferReference 
+        payeeLocation {
+          address
+          country
+        }
         amount: amountV2 {
           value
           currency
@@ -374,12 +386,16 @@ const csvMapping = {
   orderId: (t) => get(t, 'order.id'),
   orderLegacyId: (t) => get(t, 'order.legacyId'),
   orderFrequency: (t) => get(t, 'order.frequency'),
+  orderContributorAddress: (t) => get(t, 'order.fromAccount.location.address'),
+  orderContributorCountry: (t) => get(t, 'order.fromAccount.location.country'),
   paymentMethodService: (t) => get(t, 'paymentMethod.service'),
   paymentMethodType: (t) => get(t, 'paymentMethod.type'),
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
   expenseType: (t) => get(t, 'expense.type'),
   expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
+  expensePayeeAddress: (t) => get(t, 'expense.payeeLocation.address'),
+  expensePayeeCountry: (t) => get(t, 'expense.payeeLocation.country'),
   payoutMethodType: (t) => get(t, 'expense.payoutMethod.type'),
   merchantId: (t) => get(t, 'merchantId'),
   orderMemo: (t) => get(t, 'order.memo'),
