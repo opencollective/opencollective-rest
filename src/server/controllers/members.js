@@ -2,7 +2,7 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 import { simpleGraphqlRequest } from '../lib/graphql';
-import { days, json2csv } from '../lib/utils';
+import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
 // Emulate gql from graphql-tag
@@ -73,6 +73,7 @@ export async function list(req, res, next) {
             type
             name
             company
+            isActive
             description
             image
             website
@@ -135,29 +136,13 @@ export async function list(req, res, next) {
 
   const members = result.Collective.members;
 
-  const isActive = (r) => {
-    if (!r.tier || !r.tier.interval) {
-      return true;
-    }
-    if (!r.transactions[0] || !r.transactions[0].createdAt) {
-      return false;
-    }
-    if (r.tier.interval === 'month' && days(new Date(r.transactions[0].createdAt)) <= 60) {
-      return true;
-    }
-    if (r.tier.interval === 'year' && days(new Date(r.transactions[0].createdAt)) <= 365) {
-      return true;
-    }
-    return false;
-  };
-
   const mapping = {
     MemberId: 'id',
     createdAt: (r) => moment(new Date(r.createdAt)).format('YYYY-MM-DD HH:mm'),
     type: 'member.type',
     role: 'role',
     tier: 'tier.name',
-    isActive: isActive,
+    isActive: 'member.isActive',
     totalAmountDonated: (r) => (get(r, 'stats.totalDonations') || 0) / 100,
     currency: 'transactions[0].currency',
     lastTransactionAt: (r) => {
