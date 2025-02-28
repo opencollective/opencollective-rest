@@ -460,8 +460,10 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         }
 
         if (result.host.hostedAccounts.totalCount === 0) {
-          res.status(404).send('No transaction found.');
-          break;
+          res.write(json2csv([], { fields }));
+          res.write(`\n`);
+          res.end();
+          return;
         }
 
         const mapping = pick(csvMapping, fields);

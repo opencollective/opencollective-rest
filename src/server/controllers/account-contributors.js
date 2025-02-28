@@ -243,8 +243,10 @@ const accountContributors = async (req, res) => {
         }
 
         if (result.account.members.totalCount === 0) {
-          res.status(404).send('No members found.');
-          break;
+          res.write(json2csv([], { fields }));
+          res.write(`\n`);
+          res.end();
+          return;
         }
 
         const mapping = pick(csvMapping, fields);
