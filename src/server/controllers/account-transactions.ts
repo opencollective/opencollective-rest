@@ -762,8 +762,10 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         }
 
         if (result.transactions.totalCount === 0) {
-          res.status(404).send('No transaction found.');
-          break;
+          res.write(json2csv([], { fields }));
+          res.write(`\n`);
+          res.end();
+          return;
         }
 
         const mapping = pick(csvMapping, fields);
