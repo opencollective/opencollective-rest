@@ -813,7 +813,7 @@ interface Account {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...)
+  The list of connected accounts (Stripe, PayPal, etc ...)
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -909,6 +909,11 @@ interface Account {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -3338,7 +3343,7 @@ type Host implements Account & AccountWithContributions {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -3430,6 +3435,11 @@ type Host implements Account & AccountWithContributions {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -4431,6 +4441,16 @@ enum OrderByFieldType {
   MEMBER_COUNT
   TOTAL_CONTRIBUTED
   NAME
+
+  """
+  Order by start date
+  """
+  STARTS_AT
+
+  """
+  Order by end date
+  """
+  ENDS_AT
 }
 
 """
@@ -5258,9 +5278,9 @@ enum ConnectedAccountService {
   stripe
   stripe_customer
   github
-  twitter
   transferwise
   plaid
+  twitter
   privacy @deprecated(reason: "Not using this service anymore")
   thegivingblock
   meetup @deprecated(reason: "Not using this service anymore")
@@ -6040,6 +6060,11 @@ type Policies {
   EXPENSE_CATEGORIZATION: EXPENSE_CATEGORIZATION
   EXPENSE_PUBLIC_VENDORS: Boolean
   COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS: Boolean
+
+  """
+  Contribution threshold to enforce contributor info. This resolver can be called from the collective or the host, when resolved through the collective the thresholds are returned in the collective currency
+  """
+  CONTRIBUTOR_INFO_THRESHOLDS: CONTRIBUTOR_INFO_THRESHOLDS
 }
 
 type EXPENSE_POLICIES {
@@ -6081,6 +6106,11 @@ type MAXIMUM_VIRTUAL_CARD_LIMIT_AMOUNT_FOR_INTERVAL {
 type EXPENSE_CATEGORIZATION {
   requiredForExpenseSubmitters: Boolean
   requiredForCollectiveAdmins: Boolean
+}
+
+type CONTRIBUTOR_INFO_THRESHOLDS {
+  legalName: Int
+  address: Int
 }
 
 type ActivitySubscription {
@@ -6126,9 +6156,9 @@ All supported Activity channels we can broadcast to
 """
 enum ActivityChannel {
   slack
-  twitter
   webhook
   email
+  twitter
 }
 
 """
@@ -7179,9 +7209,9 @@ type TransactionsImportRow {
   sourceId: NonEmptyString!
 
   """
-  Whether the row has been dismissed
+  The status of the row
   """
-  isDismissed: Boolean!
+  status: TransactionsImportRowStatus!
 
   """
   The description of the row
@@ -7199,6 +7229,11 @@ type TransactionsImportRow {
   amount: Amount!
 
   """
+  Optional note for the row
+  """
+  note: String
+
+  """
   The expense associated with the row
   """
   expense: Expense
@@ -7213,11 +7248,6 @@ type TransactionsImportRow {
   """
   order: Order
 }
-
-"""
-The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSONObject
 
 """
 The status of a row in a transactions import
@@ -7237,7 +7267,17 @@ enum TransactionsImportRowStatus {
   The row has been ignored
   """
   IGNORED
+
+  """
+  The row is on hold
+  """
+  ON_HOLD
 }
+
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
 
 type TransactionsImportStats {
   """
@@ -7264,6 +7304,21 @@ type TransactionsImportStats {
   Number of rows that have been processed (either dismissed or converted to expenses or orders)
   """
   processed: Int!
+
+  """
+  Number of rows that are on hold
+  """
+  onHold: Int!
+
+  """
+  Number of rows that are pending
+  """
+  pending: Int!
+
+  """
+  Number of rows that are invalid (e.g. linked but without an expense or order)
+  """
+  invalid: Int!
 }
 
 enum AccountingCategoryAppliesTo {
@@ -8528,7 +8583,7 @@ type Bot implements Account {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -8620,6 +8675,11 @@ type Bot implements Account {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -9401,7 +9461,7 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -9493,6 +9553,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -10823,7 +10888,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -10915,6 +10980,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -11965,7 +12035,7 @@ type Individual implements Account {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -12055,6 +12125,11 @@ type Individual implements Account {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -12225,6 +12300,7 @@ type Individual implements Account {
   User two factor methods
   """
   twoFactorMethods: [UserTwoFactorMethod]
+  contributorProfiles(forAccount: AccountReferenceInput!): [ContributorProfile]!
 }
 
 """
@@ -12316,6 +12392,36 @@ enum TwoFactorMethod {
   TOTP
   YUBIKEY_OTP
   WEBAUTHN
+}
+
+"""
+This represents a profile that can be use to create a contribution
+"""
+type ContributorProfile {
+  """
+  The account that will be used to create the contribution
+  """
+  account: Account
+
+  """
+  The account that will receive the contribution
+  """
+  forAccount: Account
+
+  """
+  The total amount contributed to the host by this contributor
+  """
+  totalContributedToHost(
+    """
+    When true, the amount is converted to the currency of the collective
+    """
+    inCollectiveCurrency: Boolean = false
+
+    """
+    The date since when to calculate the total. Defaults to the start of the current year.
+    """
+    since: DateTime
+  ): Amount
 }
 
 """
@@ -13044,7 +13150,7 @@ type Organization implements Account & AccountWithContributions {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -13134,6 +13240,11 @@ type Organization implements Account & AccountWithContributions {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -14030,7 +14141,7 @@ type Vendor implements Account & AccountWithContributions {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -14122,6 +14233,11 @@ type Vendor implements Account & AccountWithContributions {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -17661,7 +17777,7 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -17753,6 +17869,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -18681,7 +18802,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   paymentMethodsWithPendingConfirmation: [PaymentMethod]
 
   """
-  The list of connected accounts (Stripe, Twitter, etc ...). Admin only. Scope: "connectedAccounts".
+  The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
   connectedAccounts: [ConnectedAccount]
 
@@ -18773,6 +18894,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     isActive: Boolean
     accountType: [AccountType]
     searchTerm: String
+
+    """
+    Order of the results. Defaults to createdAt DESC.
+    """
+    orderBy: OrderByInput! = { field: CREATED_AT, direction: DESC }
   ): AccountCollection!
 
   """
@@ -20826,7 +20952,7 @@ type Mutation {
   ): TransactionsImport!
 
   """
-  Update transactions import rows to set new values or mark them as dismissed
+  Update transactions import rows to set new values or perform actions on them
   """
   updateTransactionsImportRows(
     """
@@ -20840,15 +20966,10 @@ type Mutation {
     rows: [TransactionsImportRowUpdateInput!]
 
     """
-    Whether to ignore all non-processed rows
+    Action to perform on all non-processed rows
     """
-    dismissAll: Boolean
-
-    """
-    Whether to restore all dismissed rows
-    """
-    restoreAll: Boolean
-  ): TransactionsImport!
+    action: TransactionsImportRowAction!
+  ): TransactionsImportEditResponse!
 
   """
   Delete an import and all its associated rows
@@ -21503,6 +21624,7 @@ input PoliciesInput {
   EXPENSE_CATEGORIZATION: PoliciesExpenseCategorizationInput
   EXPENSE_PUBLIC_VENDORS: Boolean
   COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS: Boolean
+  CONTRIBUTOR_INFO_THRESHOLDS: PoliciesContributorInfoThresholdsInput
 }
 
 input PoliciesExpensePolicies {
@@ -21527,6 +21649,11 @@ input PoliciesCollectiveMinimumAdminsInput {
 input PoliciesExpenseCategorizationInput {
   requiredForExpenseSubmitters: Boolean
   requiredForCollectiveAdmins: Boolean
+}
+
+input PoliciesContributorInfoThresholdsInput {
+  legalName: Int
+  address: Int
 }
 
 type SendMessageResult {
@@ -23090,11 +23217,18 @@ input TransactionsImportRowCreateInput {
   The raw value of the row
   """
   rawValue: JSONObject
+}
+
+type TransactionsImportEditResponse {
+  """
+  Updated import
+  """
+  import: TransactionsImport!
 
   """
-  Whether the row is dismissed
+  The rows updated by the mutation
   """
-  isDismissed: Boolean! = false
+  rows: [TransactionsImportRow]!
 }
 
 input TransactionsImportRowUpdateInput {
@@ -23124,14 +23258,34 @@ input TransactionsImportRowUpdateInput {
   amount: AmountInput
 
   """
-  Whether the row is dismissed
+  To update the status of the row. Will be ignored if the status is not applicable (e.g. trying to ignore a row that is already linked)
   """
-  isDismissed: Boolean = false
+  status: TransactionsImportRowStatus
 
   """
   The order associated with the row
   """
   order: OrderReferenceInput
+
+  """
+  The expense associated with the row
+  """
+  expense: ExpenseReferenceInput
+
+  """
+  Optional note for the row
+  """
+  note: String
+}
+
+"""
+Action to perform on transactions import rows
+"""
+enum TransactionsImportRowAction {
+  DISMISS_ALL
+  RESTORE_ALL
+  PUT_ON_HOLD_ALL
+  UPDATE_ROWS
 }
 
 """

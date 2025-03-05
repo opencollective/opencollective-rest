@@ -98,5 +98,4 @@ URL: https://rest.opencollective.com/
 
 ## Discussion
 
-If you have any questions, ping us on [Discord](https://discord.opencollective.com) or Twitter
-([@opencollect](https://twitter.com/opencollect)).
+If you have any questions, ping us on [Discord](https://discord.opencollective.com).
