@@ -67,13 +67,13 @@ export async function list(req, res, next) {
             amount
             currency
           }
+          isActive
           member {
             type
             slug
             type
             name
             company
-            isActive
             description
             image
             website
@@ -142,7 +142,7 @@ export async function list(req, res, next) {
     type: 'member.type',
     role: 'role',
     tier: 'tier.name',
-    isActive: 'member.isActive',
+    isActive: 'isActive',
     totalAmountDonated: (r) => (get(r, 'stats.totalDonations') || 0) / 100,
     currency: 'transactions[0].currency',
     lastTransactionAt: (r) => {
