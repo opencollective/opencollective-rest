@@ -132,6 +132,10 @@ export const transactionsFragment = gqlV2`
           description
           date
           rawValue
+          transactionsImport {
+            id
+            name
+          }
           amount {
             value
             currency
@@ -417,6 +421,7 @@ const csvMapping = {
   expenseReference: (t) => get(t, 'expense.reference'),
   expenseTransferReference: (t) => get(t, 'expense.transferReference'),
   // Transactions import
+  importSourceName: (t) => get(getTransactionImportRowFromTransaction(t), 'transactionsImport.name'),
   importSourceId: (t) => get(getTransactionImportRowFromTransaction(t), 'sourceId'),
   importSourceDescription: (t) => get(getTransactionImportRowFromTransaction(t), 'description'),
   importSourceAmount: (t) => get(getTransactionImportRowFromTransaction(t), 'amount.value'),
