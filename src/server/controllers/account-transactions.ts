@@ -196,7 +196,9 @@ export const transactionsFragment = gqlV2`
       refundTransaction {
         id
         legacyId
+        refundKind
       }
+      refundKind
       merchantId
     }
   }
@@ -366,6 +368,7 @@ const csvMapping = {
   isRefunded: (t) => (t.isRefunded ? 'REFUNDED' : ''),
   refundId: (t) => get(t, 'refundTransaction.id', ''),
   shortRefundId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
+  refundKind: 'refundKind',
   displayAmount: (t) => amountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   creditAmount: (t) => (t.type === 'CREDIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
@@ -485,6 +488,7 @@ const defaultFields = [
   'merchantId',
   'orderMemo',
   'orderProcessedDate',
+  'refundKind',
 ];
 
 type Params = {
