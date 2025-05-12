@@ -2169,6 +2169,7 @@ interface Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
+  refundKind: RefundKind
   description(
     """
     Wether to generate the description dynamically.
@@ -2320,6 +2321,33 @@ enum TransactionKind {
   PLATFORM_TIP_DEBT
   PREPAID_PAYMENT_METHOD
   TAX
+}
+
+enum RefundKind {
+  """
+  Refund issued by the host
+  """
+  REFUND
+
+  """
+  Rejection issued by the host or collective admin
+  """
+  REJECT
+
+  """
+  Transaction reversed due to an edit
+  """
+  EDIT
+
+  """
+  Transaction was refunded by the platform to fix a duplicated transaction
+  """
+  DUPLICATE
+
+  """
+  Transaction was refunded due to a dispute
+  """
+  DISPUTE
 }
 
 """
@@ -5149,9 +5177,14 @@ type PayoutMethod {
   data: JSON
 
   """
-  Whether this payout method can be edit or deleted
+  Whether this payout method can be edited
   """
-  canBeEditedOrDeleted: Boolean
+  canBeEdited: Boolean
+
+  """
+  Whether this payout method can be deleted or only archived
+  """
+  canBeDeleted: Boolean
 }
 
 """
@@ -7475,6 +7508,11 @@ type TransactionsImportStats {
   Number of rows that have been processed (either dismissed or converted to expenses or orders)
   """
   processed: Int!
+
+  """
+  Number of rows that have been imported (converted to expenses or orders)
+  """
+  imported: Int!
 
   """
   Number of rows that are on hold
@@ -10189,6 +10227,7 @@ type Credit implements Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
+  refundKind: RefundKind
   description(
     """
     Wether to generate the description dynamically.
@@ -10334,6 +10373,7 @@ type Debit implements Transaction {
   group: String!
   type: TransactionType!
   kind: TransactionKind
+  refundKind: RefundKind
   description(
     """
     Wether to generate the description dynamically.
