@@ -1,4 +1,4 @@
-import { Parser } from '@json2csv/plainjs';
+import { Parser, type ParserOptions } from '@json2csv/plainjs';
 import type { RequestHandler } from 'express';
 import gqlV2 from 'graphql-tag';
 import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
@@ -15,7 +15,7 @@ import {
 } from '../lib/utils';
 import { logger } from '../logger';
 
-function json2csv(data, opts) {
+function json2csv(data: object, opts: ParserOptions) {
   const parser = new Parser(opts);
   return parser.parse(data);
 }
@@ -350,6 +350,86 @@ const getAccountingCategory = (transaction) => {
   return get(transaction, 'expense.accountingCategory') || get(transaction, 'order.accountingCategory');
 };
 
+const columnNames = {
+  datetime: 'Date & Time',
+  effectiveDate: 'Effective Date & Time',
+  legacyId: 'Transaction ID',
+  group: 'Group ID',
+  description: 'Description',
+  type: 'Credit/Debit',
+  kind: 'Kind',
+  netAmount: 'Amount Single Column',
+  debitAndCreditAmounts: 'Amount Debit/Credit Columns',
+  currency: 'Currency',
+  displayAmount: 'Original Currency Amount',
+  isReverse: 'Is Reverse',
+  isReversed: 'Is Reversed',
+  accountingCategoryCode: 'Accounting Category Code',
+  accountingCategoryName: 'Accounting Category Name',
+  merchantId: 'Merchant ID',
+  paymentMethodService: 'Payment Processor',
+  paymentMethodType: 'Payment Method',
+  accountSlug: 'Account Handle',
+  accountName: 'Account Name',
+  accountType: 'Account Type',
+  accountEmail: 'Account Email',
+  oppositeAccountSlug: 'Opposite Account Handle',
+  oppositeAccountName: 'Opposite Account Name',
+  oppositeAccountType: 'Opposite Account Type',
+  oppositeAccountEmail: 'Opposite Account Email',
+  orderLegacyId: 'Contribution ID',
+  orderMemo: 'Contribution Memo',
+  orderFrequency: 'Contribution Frequency',
+  orderCustomData: 'Contribution Custom Data',
+  orderContributorAddress: 'Contributor Address',
+  orderContributorCountry: 'Contributor Country',
+  expenseLegacyId: 'Expense ID',
+  expenseType: 'Expense Type',
+  expenseTags: 'Expense Tags',
+  taxType: 'Tax Type',
+  taxRate: 'Tax Rate',
+  taxIdNumber: 'Tax ID Number',
+  date: 'Date',
+  id: 'Transaction GraphQL ID',
+  shortId: 'Short Transaction ID',
+  shortGroup: 'Short Group ID',
+  amount: 'Gross Amount',
+  paymentProcessorFee: 'Payment Processor Fee',
+  expenseId: 'Expense GraphQL ID',
+  payoutMethodType: 'Expense Payout Method Type',
+  platformFee: 'Platform Fee',
+  hostFee: 'Host Fee',
+  orderId: 'Contribution GraphQL ID',
+  reverseLegacyId: 'Reverse Transaction ID',
+  reverseKind: 'Reverse Kind',
+  expenseTotalAmount: 'Expense Total Amount',
+  expenseCurrency: 'Expense Currency',
+  expenseSubmittedByHandle: 'Expense Submitted By Handle',
+  expenseApprovedByHandle: 'Expense Approved By Handle',
+  expensePaidByHandle: 'Expense Paid By Handle',
+  expenseReference: 'Expense Reference Number',
+  expenseTransferReference: 'Expense Transfer Reference',
+  expensePayeeAddress: 'Payee Address',
+  expensePayeeCountry: 'Payee Country',
+  importSourceName: 'Import Source Name',
+  importSourceId: 'Import Source ID',
+  importSourceDescription: 'Import Source Description',
+  importSourceAmount: 'Import Source Amount',
+  importSourceDate: 'Import Source Date',
+  importSourceData: 'Import Source Data',
+  shortRefundId: 'Short Refund Transaction ID',
+  refundLegacyId: 'Refund Transaction ID',
+  refundId: 'Refund ID',
+  isRefund: 'Is Refund',
+  isRefunded: 'Is Refunded',
+  balance: 'Balance',
+  hostSlug: 'Host Handle',
+  hostName: 'Host Name',
+  hostType: 'Host Type',
+  orderProcessedDate: 'Contribution Processed Date',
+  taxAmount: 'Tax Amount',
+};
+
 const csvMapping = {
   accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
@@ -368,7 +448,13 @@ const csvMapping = {
   isRefunded: (t) => (t.isRefunded ? 'REFUNDED' : ''),
   refundId: (t) => get(t, 'refundTransaction.id', ''),
   shortRefundId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
+  refundLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
   refundKind: 'refundKind',
+  isReverse: (t) => (t.isRefund ? 'REVERSE' : ''),
+  isReversed: (t) => (t.isRefunded ? 'REVERSED' : ''),
+  reverseId: (t) => get(t, 'refundTransaction.id', ''),
+  reverseLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
+  reverseKind: 'refundKind',
   displayAmount: (t) => amountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
   creditAmount: (t) => (t.type === 'CREDIT' ? get(t, 'amountInHostCurrency.value', 0) : ''),
@@ -412,7 +498,6 @@ const csvMapping = {
   taxType: (t) => get(t, 'taxInfo.type'),
   taxRate: (t) => get(t, 'taxInfo.rate'),
   taxIdNumber: (t) => get(t, 'taxInfo.idNumber'),
-  refundLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
   expenseTotalAmount: (t) => get(t, 'expense.amount.value'),
   expenseCurrency: (t) => get(t, 'expense.amount.currency'),
   expenseSubmittedByHandle: (t) => get(t, 'expense.createdByAccount.slug'),
@@ -535,7 +620,12 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'searchTerm',
     'slug',
     'type',
+    'useFieldNames',
   ]);
+
+  const useFieldNames =
+    variables.useFieldNames === '1' || variables.useFieldNames === true || variables.useFieldNames === 'true';
+
   variables.limit =
     // If HEAD, we only want count, so we set limit to 0
     req.method === 'HEAD'
@@ -770,8 +860,12 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
           return;
         }
 
+        const exportFields = useFieldNames
+          ? fields.map((field) => ({ label: columnNames[field] || field, value: field }))
+          : fields;
+
         if (result.transactions.totalCount === 0) {
-          res.write(json2csv([], { fields }));
+          res.write(json2csv([], { fields: exportFields }));
           res.write(`\n`);
           res.end();
           return;
@@ -780,7 +874,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         const mapping = pick(csvMapping, fields);
 
         const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
-        res.write(json2csv(mappedTransactions, {}));
+        res.write(json2csv(mappedTransactions, { fields: exportFields }));
         res.write(`\n`);
 
         if (result.transactions.totalCount > result.transactions.limit) {
