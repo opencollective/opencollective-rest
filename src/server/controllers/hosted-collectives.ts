@@ -356,6 +356,9 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
   }
+
+  req.setTimeout(10 * 60 * 1000); // 10 minutes
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};
