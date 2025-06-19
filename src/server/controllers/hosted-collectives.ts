@@ -387,7 +387,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const variables = {
       hostSlug,
       hostCurrency: host.currency,
-      limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 1000,
+      limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 100,
       offset: req.query.offset ? toNumber(req.query.offset) : 0,
       sort: req.query.sort && JSON.parse(req.query.sort as string),
       consolidatedBalance: req.query.consolidatedBalance && JSON.parse(req.query.consolidatedBalance as string),
