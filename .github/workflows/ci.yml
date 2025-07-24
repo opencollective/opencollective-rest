@@ -106,9 +106,6 @@ jobs:
       - name: Update apt
         run: sudo apt-get update || exit 0
 
-      - name: Install graphicsmagick
-        run: sudo apt-get install -y graphicsmagick
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -148,9 +145,6 @@ jobs:
     steps:
       - name: Update apt
         run: sudo apt-get update || exit 0
-
-      - name: Install graphicsmagick
-        run: sudo apt-get install -y graphicsmagick
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -281,4 +275,16 @@ jobs:
 
       # Run test
       - name: Run test
-        run: ./scripts/run_test.sh
+        run: npm run test:server:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: opencollective/opencollective-rest
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

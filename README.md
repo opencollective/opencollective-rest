@@ -47,7 +47,7 @@ TL;DR: we use [Prettier](https://prettier.io/) and [ESLint](https://eslint.org/)
 
 ## Tests
 
-You can run the tests using `npm test` or more specifically:
+After starting the API and REST services locally, you can run the tests using `npm test` or more specifically:
 
 - `npm run test:server`
 
