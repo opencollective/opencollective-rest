@@ -834,10 +834,6 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     switch (req.params.format) {
       case 'txt':
       case 'csv': {
-        // don't cache at CDN level as the result may contain private information
-        if (authorization || apiKey || personalToken) {
-          res.append('Cache-Control', 'no-cache');
-        }
         if (req.params.format === 'csv') {
           res.append('Content-Type', `text/csv;charset=utf-8`);
         } else {

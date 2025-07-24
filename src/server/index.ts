@@ -23,6 +23,30 @@ hyperwatch(app);
 app.use(loggerMiddleware.logger);
 app.use(loggerMiddleware.errorLogger);
 
+// Global caching strategy
+app.use((req, res, next) => {
+  console.log('cache');
+
+  // Set cache control headers
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Vary', 'Accept-Encoding, Authorization, Personal-Token, Api-Key');
+
+  // Make sure authenticated requests are never cached
+  if (
+    req.get('Authorization') ||
+    req.query.apiKey ||
+    req.get('Personal-Token') ||
+    req.query.personalToken ||
+    req.get('Authorization')
+  ) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+
+  next();
+});
+
 loadRoutes(app);
 
 app.listen(port, () => {

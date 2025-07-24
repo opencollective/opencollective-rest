@@ -38,11 +38,6 @@ export async function list(req, res, next) {
     headers['Personal-Token'] = personalToken;
   }
 
-  // don't cache at CDN level as the result may contain private information
-  if (authorization || apiKey || personalToken) {
-    res.setHeader('cache-control', 'no-cache');
-  }
-
   const query = gql`
     query collectiveMembers(
       $collectiveSlug: String
