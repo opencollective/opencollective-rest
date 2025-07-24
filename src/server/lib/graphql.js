@@ -99,6 +99,12 @@ export async function fetchCollective(collectiveSlug) {
   return result.Collective;
 }
 
+/**
+ * Fetches an event by its slug.
+ * /!\ Do not include any private fields, as the result is cached at the CDN level.
+ * @param {string} eventSlug - The slug of the event to fetch.
+ * @returns {Promise<Object>} The event data.
+ */
 export async function fetchEvent(eventSlug) {
   const query = gql`
     query Collective($slug: String) {
