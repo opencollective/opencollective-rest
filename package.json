@@ -84,7 +84,7 @@
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-simple-import-sort": "^12.1.0",
     "husky": "^9.0.7",
-    "jest": "^29.7.0",
+    "jest": "^30.0.0",
     "jest-junit": "^16.0.0",
     "jsonwebtoken": "^9.0.2",
     "light-my-request": "^6.6.0",
