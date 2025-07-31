@@ -18,6 +18,7 @@ export async function info(req, res, next) {
     return next(e);
   }
 
+  // /!\ Do not return any private date in there, or update the cache policy
   const response = {
     ...pick(collective, ['slug', 'currency', 'image']),
     balance: collective.stats.balance,

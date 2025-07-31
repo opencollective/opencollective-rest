@@ -441,10 +441,6 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
     switch (req.params.format) {
       case 'csv': {
-        // don't cache at CDN level as the result may contain private information
-        if (authorization || apiKey || personalToken) {
-          res.append('Cache-Control', 'no-cache');
-        }
         if (req.params.format === 'csv') {
           res.append('Content-Type', `text/csv;charset=utf-8`);
         } else {

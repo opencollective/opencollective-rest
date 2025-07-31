@@ -10,16 +10,6 @@ npm start &
 API_PID=$!
 cd -
 
-echo "> Starting rest server"
-if [ -z "$REST_FOLDER" ]; then
-  cd ~/rest
-else
-  cd $REST_FOLDER
-fi
-npm start &
-REST_PID=$!
-cd -
-
 # Wait for a service to be up
 function wait_for_service() {
   echo "> Waiting for $1 to be ready... "
@@ -36,12 +26,10 @@ function wait_for_service() {
 
 echo ""
 wait_for_service API 127.0.0.1 3060
-echo ""
-wait_for_service REST 127.0.0.1 3003
 
 echo ""
 echo "> Starting server jest tests"
-TZ=UTC npx jest test/server/*
+TZ=UTC npx jest test/server/* $@
 RETURN_CODE=$?
 if [ $RETURN_CODE -ne 0 ]; then
   echo "Error with jest tests, exiting"
