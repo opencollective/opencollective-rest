@@ -266,7 +266,7 @@ export const hostedCollectivesQuery = gqlV2`
   }
 `;
 
-const csvMapping: Record<Fields, string | Function> = {
+const csvMapping: Record<Fields, string | ((account: any, host: any) => string)> = {
   name: 'name',
   slug: 'slug',
   type: 'type',
