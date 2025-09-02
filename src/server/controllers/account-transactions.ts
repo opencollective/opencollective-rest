@@ -86,6 +86,16 @@ export const transactionsFragment = gqlV2`
         ... on Individual {
           email
         }
+        ... on AccountWithParent {
+          parent {
+            id
+            slug
+            name
+            legalName
+            type
+            ... on Individual { email }
+          }
+        }
       }
       oppositeAccount {
         id
@@ -95,6 +105,16 @@ export const transactionsFragment = gqlV2`
         type
         ... on Individual {
           email
+        }
+        ... on AccountWithParent {
+          parent {
+            id
+            slug
+            name
+            legalName
+            type
+            ... on Individual { email }
+          }
         }
       }
       host {
@@ -377,6 +397,14 @@ const columnNames = {
   oppositeAccountName: 'Opposite Account Name',
   oppositeAccountType: 'Opposite Account Type',
   oppositeAccountEmail: 'Opposite Account Email',
+  parentAccountSlug: 'Parent Account Handle',
+  parentAccountName: 'Parent Account Name',
+  parentAccountType: 'Parent Account Type',
+  parentAccountEmail: 'Parent Account Email',
+  oppositeParentAccountSlug: 'Opposite Parent Account Handle',
+  oppositeParentAccountName: 'Opposite Parent Account Name',
+  oppositeParentAccountType: 'Opposite Parent Account Type',
+  oppositeParentAccountEmail: 'Opposite Parent Account Email',
   orderLegacyId: 'Contribution ID',
   orderMemo: 'Contribution Memo',
   orderFrequency: 'Contribution Frequency',
@@ -473,6 +501,14 @@ const csvMapping = {
   oppositeAccountName: (t) => accountNameAndLegalName(t.oppositeAccount),
   oppositeAccountType: (t) => get(t, 'oppositeAccount.type'),
   oppositeAccountEmail: (t) => get(t, 'oppositeAccount.email'),
+  parentAccountSlug: (t) => get(t, 'account.parent.slug'),
+  parentAccountName: (t) => accountNameAndLegalName(t.account?.parent),
+  parentAccountType: (t) => get(t, 'account.parent.type'),
+  parentAccountEmail: (t) => get(t, 'account.parent.email'),
+  oppositeParentAccountSlug: (t) => get(t, 'oppositeAccount.parent.slug'),
+  oppositeParentAccountName: (t) => accountNameAndLegalName(t.oppositeAccount?.parent),
+  oppositeParentAccountType: (t) => get(t, 'oppositeAccount.parent.type'),
+  oppositeParentAccountEmail: (t) => get(t, 'oppositeAccount.parent.email'),
   hostSlug: (t) => get(t, 'host.slug'),
   hostName: (t) => accountNameAndLegalName(t.host),
   hostType: (t) => get(t, 'host.type'),
