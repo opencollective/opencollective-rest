@@ -295,8 +295,8 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
   },
   // Added fields
   dateApplied: (account) => shortDate(account.hostApplication?.createdAt),
-  unhostedAt: (account) => account.unhostedAt && shortDate(account.unhostedAt),
-  unfrozenAt: (account) => account.unfrozenAtd && shortDate(account.unfrozenAt),
+  unhostedAt: (account) => shortDate(account.unhostedAt),
+  unfrozenAt: (account) => shortDate(account.unfrozenAt),
   numberOfExpensesYear: (account) => account.yearSummary?.expenseCount,
   valueOfExpensesYear: (account) =>
     account.yearSummary?.expenseTotal && amountAsString(account.yearSummary.expenseTotal),
