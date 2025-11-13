@@ -35,7 +35,7 @@
     "node-fetch": "2.7.0",
     "omit-deep-lodash": "1.1.7",
     "react": "18.3.1",
-    "winston": "3.17.0"
+    "winston": "3.18.3"
   },
   "scripts": {
     "build:clean": "rm -rf dist && mkdir dist",
