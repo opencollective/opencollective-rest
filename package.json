@@ -70,7 +70,7 @@
   "devDependencies": {
     "@babel/cli": "^7.23.4",
     "@babel/node": "^7.25.7",
-    "@eslint/compat": "^1.2.8",
+    "@eslint/compat": "^2.0.0",
     "@eslint/js": "^9.23.0",
     "@graphql-eslint/eslint-plugin": "^4.0.0",
     "@types/express": "^5.0.0",
