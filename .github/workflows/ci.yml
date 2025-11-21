@@ -27,7 +27,7 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup node
         uses: actions/setup-node@v6
@@ -67,7 +67,7 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup node
         uses: actions/setup-node@v6
@@ -107,7 +107,7 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup node
         uses: actions/setup-node@v6
@@ -147,7 +147,7 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup node
         uses: actions/setup-node@v6
@@ -208,7 +208,7 @@ jobs:
 
         # Checkouts
       - name: Checkout (rest)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup node
         uses: actions/setup-node@v6
@@ -227,7 +227,7 @@ jobs:
 
       # Prepare API
       - name: Checkout (api)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: opencollective/opencollective-api
           path: opencollective-api
