@@ -226,7 +226,7 @@ export const transactionsFragment = gqlV2`
 
 /* $fetchHostFee seems not used but it is in fragment */
 
-const transactionsQuery = gqlV2/* GraphQL */ `
+const transactionsQuery = gqlV2 /* GraphQL */ `
   query AccountTransactions(
     $accountingCategory: [String]
     $clearedFrom: DateTime
@@ -296,7 +296,7 @@ const transactionsQuery = gqlV2/* GraphQL */ `
   ${transactionsFragment}
 `;
 
-const hostTransactionsQuery = gqlV2/* GraphQL */ `
+const hostTransactionsQuery = gqlV2 /* GraphQL */ `
   query HostTransactions(
     $account: [AccountReferenceInput!]
     $accountingCategory: [String]

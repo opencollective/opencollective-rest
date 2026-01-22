@@ -12,7 +12,7 @@ function json2csv(data, opts) {
   return parser.parse(data);
 }
 
-const contributorsQuery = gqlV2/* GraphQL */ `
+const contributorsQuery = gqlV2 /* GraphQL */ `
   query Contributors($slug: String, $limit: Int, $offset: Int) {
     account(slug: $slug) {
       id
