@@ -7,7 +7,7 @@
   },
   "private": true,
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "npm": "10.x"
   },
   "dependencies": {
