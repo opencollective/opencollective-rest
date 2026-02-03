@@ -15,6 +15,26 @@ import {
 } from '../lib/utils';
 import { logger } from '../logger';
 
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 500;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt >= MAX_RETRIES) {
+        throw err;
+      }
+      const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+      logger.warn(`fetchWithRetry: attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${delay}ms: ${err.message}`);
+      await sleep(delay);
+    }
+  }
+}
+
 function json2csv(data: object, opts: ParserOptions) {
   const parser = new Parser(opts);
   return parser.parse(data);
@@ -914,7 +934,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
             do {
               variables.offset += result.transactions.limit;
 
-              result = await graphqlRequest(query, variables, { version: 'v2', headers });
+              result = await fetchWithRetry(() => graphqlRequest(query, variables, { version: 'v2', headers }));
 
               const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
               res.write(json2csv(mappedTransactions, { header: false }));
