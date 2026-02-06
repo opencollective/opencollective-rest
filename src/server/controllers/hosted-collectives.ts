@@ -38,6 +38,8 @@ type Fields =
   | 'dateApplied'
   | 'unhostedAt'
   | 'unfrozenAt'
+  | 'startsAt'
+  | 'endsAt'
   | 'numberOfExpensesYear'
   | 'valueOfExpensesYear'
   | 'maxExpenseValueYear'
@@ -151,6 +153,10 @@ export const hostedCollectivesQuery = gqlV2`
             id
             COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS
           }
+          ... on Event {
+            startsAt
+            endsAt
+          }
           ... on AccountWithHost {
             host {
               id
@@ -201,14 +207,14 @@ export const hostedCollectivesQuery = gqlV2`
               hostFeeTotal { value, currency }
               spentTotal { value, currency }
               receivedTotal { value, currency }
-              expenseMonthlyAverageCount: expenseAverageCount(period: MONTH) 
-              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency } 
-              contributionMonthlyAverageCount: contributionAverageCount(period: MONTH) 
-              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency } 
-              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency } 
-              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency } 
-              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency } 
-              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency } 
+              expenseMonthlyAverageCount: expenseAverageCount(period: MONTH)
+              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency }
+              contributionMonthlyAverageCount: contributionAverageCount(period: MONTH)
+              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency }
+              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency }
+              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency }
+              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency }
+              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency }
             }
           }
           admins: members(role: [ADMIN]) {
@@ -297,6 +303,8 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
   dateApplied: (account) => shortDate(account.hostApplication?.createdAt),
   unhostedAt: (account) => shortDate(account.unhostedAt),
   unfrozenAt: (account) => shortDate(account.unfrozenAt),
+  startsAt: (account) => shortDate(account.startsAt),
+  endsAt: (account) => shortDate(account.endsAt),
   numberOfExpensesYear: (account) => account.yearSummary?.expenseCount,
   valueOfExpensesYear: (account) =>
     account.yearSummary?.expenseTotal && amountAsString(account.yearSummary.expenseTotal),
