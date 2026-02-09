@@ -66,6 +66,28 @@ export function graphqlRequest(query, variables, clientParameters) {
     .then((result) => omitDeep(result.data, ['__typename']));
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function graphqlRequestWithRetry(
+  query,
+  variables,
+  clientParameters,
+  { maxRetries = 4, baseDelayMs = 1000 } = {},
+) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await graphqlRequest(query, variables, clientParameters);
+    } catch (err) {
+      if (attempt >= maxRetries) {
+        throw err;
+      }
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      console.warn(`graphqlRequestWithRetry: attempt ${attempt}/${maxRetries} failed, retrying in ${delay}ms`);
+      await sleep(delay);
+    }
+  }
+}
+
 export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey, headers = {} } = {}) {
   headers['oc-env'] = process.env.OC_ENV;
   headers['oc-secret'] = process.env.OC_SECRET;
