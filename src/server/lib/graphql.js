@@ -72,17 +72,17 @@ export async function graphqlRequestWithRetry(
   query,
   variables,
   clientParameters,
-  { maxRetries = 4, baseDelayMs = 1000 } = {},
+  { maxAttempts = 5, baseDelayMs = 1000 } = {},
 ) {
   for (let attempt = 1; ; attempt++) {
     try {
       return await graphqlRequest(query, variables, clientParameters);
     } catch (err) {
-      if (attempt >= maxRetries) {
+      if (attempt >= maxAttempts) {
         throw err;
       }
       const delay = baseDelayMs * Math.pow(2, attempt);
-      console.warn(`graphqlRequestWithRetry: attempt ${attempt}/${maxRetries} failed, retrying in ${delay}ms`);
+      console.warn(`graphqlRequestWithRetry: attempt ${attempt}/${maxAttempts} failed, retrying in ${delay}ms`);
       await sleep(delay);
     }
   }
