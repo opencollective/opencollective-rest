@@ -102,6 +102,8 @@ export const hostedCollectivesQuery = gqlV2`
     $includeYearSummary: Boolean!
     $lastYear: DateTime!
     $includeAllTimeSummary: Boolean!
+    $startsAtFrom: DateTime
+    $startsAtTo: DateTime
   ) {
     host(slug: $hostSlug) {
       id
@@ -122,6 +124,8 @@ export const hostedCollectivesQuery = gqlV2`
         balance: $balance
         consolidatedBalance: $consolidatedBalance
         currencies: $currencies
+        startsAtFrom: $startsAtFrom
+        startsAtTo: $startsAtTo
       ) {
         offset
         limit
@@ -442,6 +446,21 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         ].includes(field),
       ),
     };
+
+    if (req.query.startsAtFrom) {
+      variables['startsAtFrom'] = moment.utc(req.query.startsAtFrom as string).toISOString();
+    }
+    if (req.query.startsAtTo) {
+      // Detect short form (e.g: 2021-08-30)
+      const shortDate = (req.query.startsAtTo as string).match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
+      variables['startsAtTo'] = moment.utc(req.query.startsAtTo as string);
+      // Extend to end of the day, 1 sec before midnight
+      if (shortDate) {
+        variables['startsAtTo'].set('hour', 23).set('minute', 59).set('second', 59);
+      }
+      variables['startsAtTo'] = variables['startsAtTo'].toISOString();
+    }
+
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', { variables, headers });
 
