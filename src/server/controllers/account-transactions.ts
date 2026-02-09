@@ -20,7 +20,7 @@ function json2csv(data: object, opts: ParserOptions) {
   return parser.parse(data);
 }
 
-export const transactionsFragment = gqlV2`
+export const transactionsFragment = gqlV2 /* GraphQL */ `
   fragment TransactionsFragment on TransactionCollection {
     __typename
     limit
@@ -93,7 +93,9 @@ export const transactionsFragment = gqlV2`
             name
             legalName
             type
-            ... on Individual { email }
+            ... on Individual {
+              email
+            }
           }
         }
       }
@@ -113,7 +115,9 @@ export const transactionsFragment = gqlV2`
             name
             legalName
             type
-            ... on Individual { email }
+            ... on Individual {
+              email
+            }
           }
         }
       }
@@ -177,7 +181,7 @@ export const transactionsFragment = gqlV2`
         tags
         createdAt
         reference
-        transferReference 
+        transferReference
         payeeLocation {
           address
           country

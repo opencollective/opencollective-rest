@@ -69,10 +69,8 @@ type Fields =
   | 'spentTotalYearlyAverage'
   | 'receivedTotalYearlyAverage';
 
-const hostQuery = gqlV2`
-  query HostedCollectives(
-    $hostSlug: String!
-  ) {
+const hostQuery = gqlV2 /* GraphQL */ `
+  query HostedCollectives($hostSlug: String!) {
     host(slug: $hostSlug) {
       id
       legacyId
@@ -83,7 +81,7 @@ const hostQuery = gqlV2`
   }
 `;
 
-export const hostedCollectivesQuery = gqlV2`
+export const hostedCollectivesQuery = gqlV2 /* GraphQL */ `
   query HostedCollectives(
     $hostSlug: String!
     $hostCurrency: Currency!
@@ -189,36 +187,96 @@ export const hostedCollectivesQuery = gqlV2`
               }
             }
             yearSummary: summary(dateFrom: $lastYear) @include(if: $includeYearSummary) {
-              expenseTotal { value, currency }
+              expenseTotal {
+                value
+                currency
+              }
               expenseCount
-              expenseMaxValue { value, currency }
+              expenseMaxValue {
+                value
+                currency
+              }
               expenseDistinctPayee
               contributionCount
-              contributionTotal { value, currency }
-              contributionRefundedTotal { value, currency }
-              hostFeeTotal { value, currency }
-              spentTotal { value, currency }
-              receivedTotal { value, currency }
+              contributionTotal {
+                value
+                currency
+              }
+              contributionRefundedTotal {
+                value
+                currency
+              }
+              hostFeeTotal {
+                value
+                currency
+              }
+              spentTotal {
+                value
+                currency
+              }
+              receivedTotal {
+                value
+                currency
+              }
             }
             allTimeSummary: summary @include(if: $includeAllTimeSummary) {
-              expenseTotal { value, currency }
+              expenseTotal {
+                value
+                currency
+              }
               expenseCount
-              expenseMaxValue { value, currency }
+              expenseMaxValue {
+                value
+                currency
+              }
               expenseDistinctPayee
               contributionCount
-              contributionTotal { value, currency }
-              contributionRefundedTotal { value, currency }
-              hostFeeTotal { value, currency }
-              spentTotal { value, currency }
-              receivedTotal { value, currency }
+              contributionTotal {
+                value
+                currency
+              }
+              contributionRefundedTotal {
+                value
+                currency
+              }
+              hostFeeTotal {
+                value
+                currency
+              }
+              spentTotal {
+                value
+                currency
+              }
+              receivedTotal {
+                value
+                currency
+              }
               expenseMonthlyAverageCount: expenseAverageCount(period: MONTH)
-              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency }
+              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH) {
+                value
+                currency
+              }
               contributionMonthlyAverageCount: contributionAverageCount(period: MONTH)
-              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency }
-              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency }
-              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency }
-              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency }
-              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency }
+              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH) {
+                value
+                currency
+              }
+              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH) {
+                value
+                currency
+              }
+              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH) {
+                value
+                currency
+              }
+              spentTotalYearlyAverage: spentTotalAverage(period: YEAR) {
+                value
+                currency
+              }
+              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR) {
+                value
+                currency
+              }
             }
           }
           admins: members(role: [ADMIN]) {
@@ -242,13 +300,21 @@ export const hostedCollectivesQuery = gqlV2`
               name
             }
           }
-          lastExpenseReceived: expenses(limit: 1, direction: RECEIVED, orderBy: { field: CREATED_AT, direction: DESC }) {
+          lastExpenseReceived: expenses(
+            limit: 1
+            direction: RECEIVED
+            orderBy: { field: CREATED_AT, direction: DESC }
+          ) {
             nodes {
               id
               createdAt
             }
           }
-          firstExpenseReceived: expenses(limit: 1, direction: RECEIVED, orderBy: { field: CREATED_AT, direction: ASC }) {
+          firstExpenseReceived: expenses(
+            limit: 1
+            direction: RECEIVED
+            orderBy: { field: CREATED_AT, direction: ASC }
+          ) {
             nodes {
               id
               createdAt
@@ -257,12 +323,20 @@ export const hostedCollectivesQuery = gqlV2`
           numberOfExpenses: expenses(direction: RECEIVED) {
             totalCount
           }
-          firstContributionReceived: orders(limit: 1, status: [PAID, ACTIVE], orderBy: { field: CREATED_AT, direction: ASC }) {
+          firstContributionReceived: orders(
+            limit: 1
+            status: [PAID, ACTIVE]
+            orderBy: { field: CREATED_AT, direction: ASC }
+          ) {
             nodes {
               createdAt
             }
           }
-          lastContributionReceived: orders(limit: 1, status: [PAID, ACTIVE], orderBy: { field: CREATED_AT, direction: DESC }) {
+          lastContributionReceived: orders(
+            limit: 1
+            status: [PAID, ACTIVE]
+            orderBy: { field: CREATED_AT, direction: DESC }
+          ) {
             nodes {
               createdAt
             }
