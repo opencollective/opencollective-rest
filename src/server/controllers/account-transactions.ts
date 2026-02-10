@@ -161,6 +161,10 @@ export const transactionsFragment = gqlV2`
             currency
           }
         }
+        manualPaymentProvider {
+          id
+          name
+        }
       }
       paymentMethod {
         service
@@ -255,6 +259,7 @@ const transactionsQuery = gqlV2 /* GraphQL */ `
     $minAmount: Int
     $offset: Int
     $order: OrderReferenceInput
+    $manualPaymentProvider: [ManualPaymentProviderReferenceInput!]
     $paymentMethodService: [PaymentMethodService]
     $paymentMethodType: [PaymentMethodType]
     $searchTerm: String
@@ -280,6 +285,7 @@ const transactionsQuery = gqlV2 /* GraphQL */ `
       isRefund: $isRefund
       kind: $kind
       limit: $limit
+      manualPaymentProvider: $manualPaymentProvider
       maxAmount: $maxAmount
       merchantId: $merchantId
       minAmount: $minAmount
@@ -325,6 +331,7 @@ const hostTransactionsQuery = gqlV2 /* GraphQL */ `
     $minAmount: Int
     $offset: Int
     $order: OrderReferenceInput
+    $manualPaymentProvider: [ManualPaymentProviderReferenceInput!]
     $paymentMethodService: [PaymentMethodService]
     $paymentMethodType: [PaymentMethodType]
     $searchTerm: String
@@ -350,6 +357,7 @@ const hostTransactionsQuery = gqlV2 /* GraphQL */ `
       hasDebt: $hasDebt
       kind: $kind
       limit: $limit
+      manualPaymentProvider: $manualPaymentProvider
       maxAmount: $maxAmount
       merchantId: $merchantId
       minAmount: $minAmount
@@ -517,8 +525,25 @@ const csvMapping = {
   orderFrequency: (t) => get(t, 'order.frequency'),
   orderContributorAddress: (t) => get(t, 'order.fromAccount.location.address'),
   orderContributorCountry: (t) => get(t, 'order.fromAccount.location.country'),
-  paymentMethodService: (t) => get(t, 'paymentMethod.service'),
-  paymentMethodType: (t) => get(t, 'paymentMethod.type'),
+  paymentMethodService: (t) => {
+    const pmService = get(t, 'paymentMethod.service');
+    if (pmService) {
+      return pmService;
+    }
+
+    const manualProvider = get(t, 'order.manualPaymentProvider');
+    return manualProvider ? 'opencollective' : undefined;
+  },
+  paymentMethodType: (t) => {
+    const pmType = get(t, 'paymentMethod.type');
+    if (pmType) {
+      return pmType;
+    }
+
+    const manualProvider = get(t, 'order.manualPaymentProvider');
+    const providerShortId = manualProvider ? `mp-${manualProvider.id.split('-')[0]}` : undefined;
+    return manualProvider ? `Manual: ${manualProvider.name} (#${providerShortId})` : undefined;
+  },
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
   expenseType: (t) => get(t, 'expense.type'),
@@ -651,6 +676,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'minAmount',
     'offset',
     'orderId',
+    'manualPaymentProvider',
     'paymentMethodService',
     'paymentMethodType',
     'searchTerm',
@@ -728,6 +754,9 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   }
   if (variables.paymentMethodType) {
     variables.paymentMethodType = splitEnums(variables.paymentMethodType);
+  }
+  if (variables.manualPaymentProvider && typeof variables.manualPaymentProvider === 'string') {
+    variables.manualPaymentProvider = splitIds(variables.manualPaymentProvider).map((id) => ({ id }));
   }
 
   if (variables.group) {
@@ -939,6 +968,10 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
       res.status(404).send('Not account found.');
     } else {
       logger.error(`Error while fetching collective transactions: ${err.message}`);
+      if (err.networkError?.result?.errors?.length) {
+        logger.debug(JSON.stringify(err.networkError.result.errors, null, 2));
+      }
+
       if (res.headersSent) {
         res.end(`\nError while fetching account transactions.`);
       } else {
