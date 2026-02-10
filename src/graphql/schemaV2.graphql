@@ -249,14 +249,20 @@ interface Account {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -283,6 +289,11 @@ interface Account {
     """
     accountType: [AccountType]
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
@@ -313,6 +324,11 @@ interface Account {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Type of accounts (BOT/COLLECTIVE/EVENT/ORGANIZATION/INDIVIDUAL)
@@ -385,6 +401,11 @@ interface Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -529,12 +550,22 @@ interface Account {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -582,6 +613,11 @@ interface Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -650,6 +686,16 @@ interface Account {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -670,6 +716,11 @@ interface Account {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -683,6 +734,11 @@ interface Account {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -714,6 +770,11 @@ interface Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -779,6 +840,11 @@ interface Account {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -850,7 +916,12 @@ interface Account {
   """
   The list of connected accounts (Stripe, PayPal, etc ...)
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -1056,6 +1127,36 @@ interface Account {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
 }
 
 """
@@ -1840,6 +1941,7 @@ enum MemberRole {
   HOST
   ATTENDEE
   MEMBER
+  COMMUNITY_MANAGER
   FUNDRAISER @deprecated(reason: "2022-09-12: This role does not exist anymore")
   FOLLOWER
   ACCOUNTANT
@@ -1884,6 +1986,11 @@ enum DateTimeField {
   Orders only: The date when an order was last charged, defaults to createdAt if never charged
   """
   LAST_CHARGED_AT
+
+  """
+  Expenses only: The date when an expense was paid (based on the related transaction clearedAt)
+  """
+  PAID_AT
 }
 
 """
@@ -1892,6 +1999,23 @@ Possible directions in which to order a list of items
 enum OrderDirection {
   ASC
   DESC
+}
+
+input TierReferenceInput {
+  """
+  The id assigned to the Tier
+  """
+  id: String
+
+  """
+  The DB id assigned to the Tier
+  """
+  legacyId: Int
+
+  """
+  Pass this flag to reference the custom tier (/donate)
+  """
+  isCustom: Boolean
 }
 
 """
@@ -1985,6 +2109,26 @@ type OrderCollection implements Collection {
   limit: Int
   totalCount: Int
   nodes: [Order]
+
+  """
+  The accounts that created the orders in this collection (only scoped to the `account`, `hostContext`, `includeChildrenAccounts`, `expectedFundsFilter` and `status` arguments), regardless of pagination. Returns a paginated and searchable collection.
+  """
+  createdByUsers(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    Search term to filter by name, slug, or email
+    """
+    searchTerm: String
+  ): AccountCollection!
 }
 
 """
@@ -2035,6 +2179,7 @@ type Order {
   """
   totalContributed: Amount!
   paymentMethod: PaymentMethod
+  manualPaymentProvider: ManualPaymentProvider
   paymentProcessorUrl: String
 
   """
@@ -2220,6 +2365,7 @@ interface Transaction {
     """
     fetchTax: Boolean = false
   ): Amount!
+  netAmountInPayeeCurrency: Amount
   taxAmount(
     """
     Fetch TAX transaction for retro-compatiblity.
@@ -2462,6 +2608,11 @@ type Expense {
   createdAt: DateTime!
 
   """
+  Date of the expense
+  """
+  incurredAt: DateTime!
+
+  """
   Currency that should be used for the payout
   """
   currency: Currency!
@@ -2485,6 +2636,11 @@ type Expense {
   The account who paid this expense
   """
   paidBy: Account
+
+  """
+  The date on which the expense was paid
+  """
+  paidAt: DateTime
 
   """
   Whether this expense is on hold
@@ -2667,6 +2823,7 @@ type Expense {
   [Host admins only] If the expense associated with a transactions import row, this field will reference it
   """
   transactionImportRow: TransactionsImportRow
+  platformBillingData: JSON
 }
 
 """
@@ -2754,7 +2911,7 @@ type AccountingCategory {
 """
 This represents an Host account
 """
-type Host implements Account & AccountWithContributions {
+type Host implements Account & AccountWithContributions & AccountWithPlatformSubscription {
   id: String!
   legacyId: Int!
 
@@ -2827,14 +2984,20 @@ type Host implements Account & AccountWithContributions {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -2861,10 +3024,15 @@ type Host implements Account & AccountWithContributions {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -2903,6 +3071,7 @@ type Host implements Account & AccountWithContributions {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -2913,6 +3082,11 @@ type Host implements Account & AccountWithContributions {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -2938,6 +3112,11 @@ type Host implements Account & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -2994,6 +3173,11 @@ type Host implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -3138,12 +3322,22 @@ type Host implements Account & AccountWithContributions {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -3191,6 +3385,11 @@ type Host implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -3259,6 +3458,16 @@ type Host implements Account & AccountWithContributions {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -3279,6 +3488,11 @@ type Host implements Account & AccountWithContributions {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -3292,6 +3506,11 @@ type Host implements Account & AccountWithContributions {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -3323,6 +3542,11 @@ type Host implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -3388,6 +3612,11 @@ type Host implements Account & AccountWithContributions {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -3448,7 +3677,12 @@ type Host implements Account & AccountWithContributions {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -3650,6 +3884,36 @@ type Host implements Account & AccountWithContributions {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -3740,6 +4004,13 @@ type Host implements Account & AccountWithContributions {
   hasResumeContributionsProcessStarted: Boolean!
 
   """
+  Returns the current platform subscription
+  """
+  platformSubscription: PlatformSubscription
+  platformBilling(billingPeriod: PlatformBillingPeriodInput): PlatformBilling!
+  legacyPlan: HostPlan!
+
+  """
   List of accounting categories for this host
   """
   accountingCategories(
@@ -3764,6 +4035,7 @@ type Host implements Account & AccountWithContributions {
   EXPERIMENTAL (this may change or be removed)
   """
   hostTransactionsReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): HostTransactionReports
+  hostStats(hostContext: HostContext = ALL): HostStats!
   hostMetrics(
     """
     A collection of accounts for which the metrics should be returned.
@@ -3779,7 +4051,7 @@ type Host implements Account & AccountWithContributions {
     The end date of the time series
     """
     dateTo: DateTime
-  ): HostMetrics!
+  ): HostMetrics! @deprecated(reason: "2025-06-24: Low performance query, see if `hostStats` is sufficient")
   hostMetricsTimeSeries(
     """
     A collection of accounts for which the metrics should be returned.
@@ -3811,7 +4083,22 @@ type Host implements Account & AccountWithContributions {
   The list of payment methods (Stripe, Paypal, manual bank transfer, etc ...) the Host can accept for its Collectives
   """
   supportedPaymentMethods: [PaymentMethodLegacyType]
-  bankAccount: PayoutMethod
+
+  """
+  Manual payment providers configured for this host
+  """
+  manualPaymentProviders(
+    """
+    Filter by provider type
+    """
+    type: ManualPaymentProviderType
+
+    """
+    Whether to include archived providers
+    """
+    includeArchived: Boolean! = false
+  ): [ManualPaymentProvider!]!
+  bankAccount: PayoutMethod @deprecated(reason: "2026-01-23: Deprecated in favour of custom payment providers")
 
   """
   Paypal preapproval info. Returns null if PayPal account is not connected.
@@ -4036,6 +4323,11 @@ type Host implements Account & AccountWithContributions {
     forAccount: AccountReferenceInput
 
     """
+    Only returns vendors that are visible to the given accounts
+    """
+    visibleToAccounts: [AccountReferenceInput]
+
+    """
     Filter on archived vendors
     """
     isArchived: Boolean
@@ -4044,6 +4336,16 @@ type Host implements Account & AccountWithContributions {
     Search vendors related to this term based on name, description, tags, slug, and location
     """
     searchTerm: String
+
+    """
+    Only return accounts that contributed within this amount range
+    """
+    totalContributed: AmountRangeInput
+
+    """
+    Only return accounts that expended within this amount range
+    """
+    totalExpended: AmountRangeInput
   ): VendorCollection!
 
   """
@@ -4120,6 +4422,16 @@ type Host implements Account & AccountWithContributions {
     Filter by specific Account currencies
     """
     currencies: [String]
+
+    """
+    Filter for accounts (Events) that started at a specific date range
+    """
+    startsAtFrom: DateTime
+
+    """
+    Filter for accounts (Events) that started at a specific date range
+    """
+    startsAtTo: DateTime
   ): HostedAccountCollection!
 
   """
@@ -4192,15 +4504,76 @@ type Host implements Account & AccountWithContributions {
     offset: Int! = 0
 
     """
+    Filter by status of transactions import
+    """
+    status: TransactionsImportStatus
+
+    """
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Filter by type of transactions import
+    """
+    type: [TransactionsImportType]
   ): TransactionsImportsCollection!
 
   """
   Returns a list of transactions imports sources for this host
   """
-  transactionsImportsSources: [NonEmptyString]!
+  transactionsImportsSources(
+    """
+    Filter by type of transactions import
+    """
+    type: [TransactionsImportType]
+  ): [NonEmptyString]!
+  offPlatformTransactions(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 100
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    Filter rows by status
+    """
+    status: TransactionsImportRowStatus
+
+    """
+    Search by text
+    """
+    searchTerm: String
+
+    """
+    Filter rows by plaid account id
+    """
+    accountId: [NonEmptyString]
+
+    """
+    The transactions import id(s)
+    """
+    importId: [NonEmptyString!]
+
+    """
+    Filter rows by import type
+    """
+    importType: [TransactionsImportType!]
+
+    """
+    The order of results
+    """
+    orderBy: TransactionsImportRowOrderInput! = { field: DATE, direction: DESC }
+  ): TransactionsImportRowCollection!
+
+  """
+  Returns stats for off platform transactions
+  """
+  offPlatformTransactionsStats: TransactionsImportStats!
 }
 
 """
@@ -4394,6 +4767,261 @@ type AccountCollection implements Collection {
 }
 
 """
+An account that can have a Platform Subscription
+"""
+interface AccountWithPlatformSubscription {
+  """
+  Returns the current platform subscription
+  """
+  platformSubscription: PlatformSubscription
+  platformBilling(billingPeriod: PlatformBillingPeriodInput): PlatformBilling!
+  legacyPlan: HostPlan!
+}
+
+type PlatformSubscription {
+  """
+  Start date (inclusive)
+  """
+  startDate: DateTime!
+
+  """
+  End date (inclusive), null if not set
+  """
+  endDate: DateTime
+  isCurrent: Boolean!
+  plan: PlatformSubscriptionTier!
+}
+
+"""
+Type for Platform Subscription Tier
+"""
+type PlatformSubscriptionTier {
+  """
+  The title of the subscription tier
+  """
+  id: String
+
+  """
+  The title of the subscription tier
+  """
+  title: String!
+
+  """
+  The type of the subscription tier (e.g., "basic", "premium")
+  """
+  type: String!
+
+  """
+  The ID of the base plan for this subscription tier
+  """
+  basePlanId: String
+  pricing: PlatformSubscriptionTierPricing!
+  features: PlatformSubscriptionFeatures!
+}
+
+type PlatformSubscriptionTierPricing {
+  """
+  The price of the subscription tier per month
+  """
+  pricePerMonth: Amount!
+
+  """
+  Price for each additional collective beyond the included limit
+  """
+  pricePerAdditionalCollective: Amount!
+
+  """
+  Price for each additional expense beyond the included limit
+  """
+  pricePerAdditionalExpense: Amount!
+
+  """
+  Number of collectives included in this subscription tier
+  """
+  includedCollectives: Int!
+
+  """
+  Number of expenses included in this subscription tier per month
+  """
+  includedExpensesPerMonth: Int!
+}
+
+type PlatformSubscriptionFeatures {
+  TRANSFERWISE: Boolean!
+  PAYPAL_PAYOUTS: Boolean!
+  RECEIVE_HOST_APPLICATIONS: Boolean!
+  CHART_OF_ACCOUNTS: Boolean!
+  EXPENSE_SECURITY_CHECKS: Boolean!
+  EXPECTED_FUNDS: Boolean!
+  CHARGE_HOSTING_FEES: Boolean!
+  AGREEMENTS: Boolean!
+  TAX_FORMS: Boolean!
+  FUNDS_GRANTS_MANAGEMENT: Boolean!
+  VENDORS: Boolean!
+  USE_EXPENSES: Boolean!
+  UPDATES: Boolean!
+  RECEIVE_FINANCIAL_CONTRIBUTIONS: Boolean!
+  RECEIVE_EXPENSES: Boolean!
+  ACCOUNT_MANAGEMENT: Boolean!
+  OFF_PLATFORM_TRANSACTIONS: Boolean!
+}
+
+type PlatformBilling {
+  billingPeriod: PlatformBillingPeriod!
+  subscriptions: [PlatformSubscription!]!
+  utilization: PlatformUtilization!
+  dueDate: DateTime!
+  base: PlatformBillingBase!
+  additional: PlatformBillingAdditional!
+  totalAmount: Amount!
+  expenses: [Expense!]!
+}
+
+type PlatformBillingPeriod {
+  year: Int!
+  month: PlatformBillingMonth!
+  startDate: DateTime!
+  endDate: DateTime!
+  isCurrent: Boolean!
+}
+
+enum PlatformBillingMonth {
+  JANUARY
+  FEBRUARY
+  MARCH
+  APRIL
+  MAY
+  JUNE
+  JULY
+  AUGUST
+  SEPTEMBER
+  OCTOBER
+  NOVEMBER
+  DECEMBER
+}
+
+type PlatformUtilization {
+  activeCollectives: Int!
+  expensesPaid: Int!
+}
+
+type PlatformBillingBase {
+  total: Amount!
+  subscriptions: [PlatformBillingBaseCharges]!
+}
+
+type PlatformBillingBaseCharges {
+  title: String!
+  amount: Amount!
+
+  """
+  Start date (inclusive)
+  """
+  startDate: DateTime!
+
+  """
+  End date (inclusive)
+  """
+  endDate: DateTime!
+}
+
+type PlatformBillingAdditional {
+  total: Amount!
+  amounts: PlatformBillingAdditionalUtilizationCharges
+  utilization: PlatformUtilization!
+}
+
+type PlatformBillingAdditionalUtilizationCharges {
+  activeCollectives: Amount!
+  expensesPaid: Amount!
+}
+
+input PlatformBillingPeriodInput {
+  year: Int!
+  month: PlatformBillingMonth!
+}
+
+"""
+The name of the current plan and its characteristics.
+"""
+type HostPlan {
+  """
+  The public id identifying the account (ie: 5v08jk63-w4g9nbpz-j7qmyder-p7ozax5g)
+  """
+  id: String
+
+  """
+  The name of the plan
+  """
+  name: String
+
+  """
+  Number of collectives hosted
+  """
+  hostedCollectives: Int
+
+  """
+  Max number of collectives than can be hosted
+  """
+  hostedCollectivesLimit: Int
+
+  """
+  Whether this plan allows to use the added funds feature
+  """
+  addedFunds: Int
+
+  """
+  Amount limit for the added funds feature under this plan
+  """
+  addedFundsLimit: Int
+
+  """
+  Whether this plan allows to use the host dashboard
+  """
+  hostDashboard: Boolean
+
+  """
+  Whether this plan allows to use the manual payments feature
+  """
+  manualPayments: Boolean
+
+  """
+  Whether this plan allows to use the bank transfers feature
+  """
+  bankTransfers: Int
+
+  """
+  Amount limit for the bank transfers feature under this plan
+  """
+  bankTransfersLimit: Int
+
+  """
+  Whether this plan allows to use the transferwise payouts feature
+  """
+  transferwisePayouts: Int
+
+  """
+  Amount limit for the transferwise payouts feature under this plan
+  """
+  transferwisePayoutsLimit: Int
+
+  """
+  Ability to charge Host Fees.
+  """
+  hostFees: Boolean
+
+  """
+  Charge on revenues made through Host Fees.
+  """
+  hostFeeSharePercent: Float
+
+  """
+  Ability to collect Platform Tips.
+  """
+  platformTips: Boolean
+}
+
+"""
 A legal document (e.g. W9, W8BEN, W8BEN-E)
 """
 type LegalDocument {
@@ -4425,7 +5053,7 @@ type LegalDocument {
   """
   Whether this legal document is expired
   """
-  isExpired: Boolean!
+  isExpired: Boolean! @deprecated(reason: "2025-05-27: Use \"status\" = \"EXPIRED\" instead")
 
   """
   The date and time the request for this legal document was created
@@ -4467,6 +5095,7 @@ enum LegalDocumentRequestStatus {
   RECEIVED
   ERROR
   INVALID
+  EXPIRED
 }
 
 """
@@ -4559,6 +5188,21 @@ enum OrderByFieldType {
   Order by end date
   """
   ENDS_AT
+
+  """
+  Order by the date the collective was unhosted
+  """
+  UNHOSTED_AT
+
+  """
+  Order by the total amount managed by the Organization on the platform
+  """
+  MONEY_MANAGED
+
+  """
+  Order by the date of the last transaction. Using CollectiveTransactionStats.LatestTransactionCreatedAt.
+  """
+  LAST_TRANSACTION_CREATED_AT
 }
 
 """
@@ -4632,6 +5276,93 @@ enum PaymentMethodService {
   WISE
 }
 
+"""
+Input type for an amount range with the value and currency
+"""
+input AmountRangeInput {
+  """
+  The minimum amount (inclusive)
+  """
+  gte: AmountInput
+
+  """
+  The maximum amount (inclusive)
+  """
+  lte: AmountInput
+}
+
+"""
+Input type for an amount with the value and currency
+"""
+input AmountInput {
+  """
+  The value in plain
+  """
+  value: Float
+
+  """
+  The currency string
+  """
+  currency: Currency
+
+  """
+  The value in cents
+  """
+  valueInCents: Int
+
+  """
+  If the amount was generated from a currency conversion, this field can be used to provide details about the conversion
+  """
+  exchangeRate: CurrencyExchangeRateInput
+}
+
+"""
+Fields for a currency exchange rate
+"""
+input CurrencyExchangeRateInput {
+  """
+  Where does the FX rate comes from
+  """
+  source: CurrencyExchangeRateSourceType!
+  fromCurrency: Currency!
+  toCurrency: Currency!
+
+  """
+  Date of the FX rate
+  """
+  date: DateTime!
+
+  """
+  Exchange rate value as a float (e.g 1.15 or 0.86)
+  """
+  value: Float!
+}
+
+"""
+Where does the FX rate come from
+"""
+enum CurrencyExchangeRateSourceType {
+  """
+  Open Collective internal system, relying on caching and 3rd party APIs
+  """
+  OPENCOLLECTIVE
+
+  """
+  PayPal API
+  """
+  PAYPAL
+
+  """
+  Wise API
+  """
+  WISE
+
+  """
+  User-provided exchange rate
+  """
+  USER
+}
+
 input ExpenseReferenceInput {
   """
   The public id identifying the expense (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
@@ -4682,6 +5413,11 @@ enum ExpenseType {
   Settlement: expense generated by Open Collective to collect money owed by Fiscal Hosts.
   """
   SETTLEMENT
+
+  """
+  Platform billing: expense generated by Open Collective to charge for platform subscriptions
+  """
+  PLATFORM_BILLING
 }
 
 input OrderReferenceInput {
@@ -4712,6 +5448,23 @@ input PayoutMethodReferenceInput {
   The id assigned to the payout method
   """
   id: String
+}
+
+enum HostContext {
+  """
+  Both the Host Organizations internal accounts and Hosted Collectives
+  """
+  ALL
+
+  """
+  Only the Host Organization (including its projects/events)
+  """
+  INTERNAL
+
+  """
+  Only Hosted Collectives (including their projects/events)
+  """
+  HOSTED
 }
 
 """
@@ -4745,23 +5498,6 @@ Account orders filter (INCOMING or OUTGOING)
 enum AccountOrdersFilter {
   INCOMING
   OUTGOING
-}
-
-input TierReferenceInput {
-  """
-  The id assigned to the Tier
-  """
-  id: String
-
-  """
-  The DB id assigned to the Tier
-  """
-  legacyId: Int
-
-  """
-  Pass this flag to reference the custom tier (/donate)
-  """
-  isCustom: Boolean
 }
 
 """
@@ -4839,6 +5575,7 @@ enum PayoutMethodType {
   BANK_ACCOUNT
   ACCOUNT_BALANCE
   CREDIT_CARD
+  STRIPE
 }
 
 """
@@ -4869,6 +5606,172 @@ enum LastCommentBy {
   Collective Admin
   """
   COLLECTIVE_ADMIN
+}
+
+input ExpenseActivityFilter {
+  """
+  Activities triggered by this individual
+  """
+  individual: AccountReferenceInput
+
+  """
+  The type(s) of activities to filter by
+  """
+  type: [ActivityType!]
+}
+
+enum ActivityType {
+  ACTIVITY_ALL
+  ACCOUNTING_CATEGORIES_EDITED
+  CONNECTED_ACCOUNT_CREATED
+  CONNECTED_ACCOUNT_ERROR
+  CONNECTED_ACCOUNT_REMOVED
+  COLLECTIVE_CREATED_GITHUB
+  COLLECTIVE_APPLY
+  COLLECTIVE_APPROVED
+  COLLECTIVE_REJECTED
+  COLLECTIVE_CREATED
+  COLLECTIVE_EDITED
+  COLLECTIVE_DELETED
+  COLLECTIVE_UNHOSTED
+  COLLECTIVE_CONVERTED_TO_ORGANIZATION
+  ORGANIZATION_COLLECTIVE_CREATED
+  ORGANIZATION_CONVERTED_TO_COLLECTIVE
+  COLLECTIVE_FROZEN
+  COLLECTIVE_UNFROZEN
+  COLLECTIVE_CONVERSATION_CREATED
+  UPDATE_COMMENT_CREATED
+  EXPENSE_COMMENT_CREATED
+  CONVERSATION_COMMENT_CREATED
+  ORDER_COMMENT_CREATED
+  COLLECTIVE_EXPENSE_CREATED
+  COLLECTIVE_EXPENSE_DELETED
+  COLLECTIVE_EXPENSE_UPDATED
+  COLLECTIVE_EXPENSE_REJECTED
+  COLLECTIVE_EXPENSE_APPROVED
+  COLLECTIVE_EXPENSE_RE_APPROVAL_REQUESTED
+  COLLECTIVE_EXPENSE_UNAPPROVED
+  COLLECTIVE_EXPENSE_MOVED
+  COLLECTIVE_EXPENSE_PAID
+  COLLECTIVE_EXPENSE_MARKED_AS_UNPAID
+  COLLECTIVE_EXPENSE_MARKED_AS_SPAM
+  COLLECTIVE_EXPENSE_MARKED_AS_INCOMPLETE
+  COLLECTIVE_EXPENSE_PROCESSING
+  COLLECTIVE_EXPENSE_PUT_ON_HOLD
+  COLLECTIVE_EXPENSE_RELEASED_FROM_HOLD
+  COLLECTIVE_EXPENSE_SCHEDULED_FOR_PAYMENT
+  COLLECTIVE_EXPENSE_UNSCHEDULED_FOR_PAYMENT
+  COLLECTIVE_EXPENSE_ERROR
+  COLLECTIVE_EXPENSE_INVITE_DRAFTED
+  COLLECTIVE_EXPENSE_INVITE_DECLINED
+  COLLECTIVE_EXPENSE_RECURRING_DRAFTED
+  COLLECTIVE_EXPENSE_MISSING_RECEIPT
+  TAXFORM_REQUEST
+  TAXFORM_RECEIVED
+  TAXFORM_INVALIDATED
+  COLLECTIVE_VIRTUAL_CARD_ADDED
+  COLLECTIVE_VIRTUAL_CARD_MISSING_RECEIPTS
+  COLLECTIVE_VIRTUAL_CARD_RESUMED
+  COLLECTIVE_VIRTUAL_CARD_SUSPENDED
+  COLLECTIVE_VIRTUAL_CARD_SUSPENDED_DUE_TO_INACTIVITY
+  COLLECTIVE_VIRTUAL_CARD_DELETED
+  COLLECTIVE_VIRTUAL_CARD_REQUEST_APPROVED
+  COLLECTIVE_VIRTUAL_CARD_REQUEST_REJECTED
+  VIRTUAL_CARD_REQUESTED
+  VIRTUAL_CARD_CHARGE_DECLINED
+  VIRTUAL_CARD_PURCHASE
+  COLLECTIVE_MEMBER_INVITED
+  COLLECTIVE_MEMBER_CREATED
+  COLLECTIVE_CORE_MEMBER_ADDED
+  COLLECTIVE_CORE_MEMBER_INVITED
+  COLLECTIVE_CORE_MEMBER_INVITATION_DECLINED
+  COLLECTIVE_CORE_MEMBER_REMOVED
+  COLLECTIVE_CORE_MEMBER_EDITED
+  COLLECTIVE_TRANSACTION_CREATED
+  TRANSACTIONS_IMPORT_CREATED
+  TRANSACTIONS_IMPORT_ROW_UPDATED
+  COLLECTIVE_UPDATE_CREATED
+  COLLECTIVE_UPDATE_PUBLISHED
+  COLLECTIVE_CONTACT
+  HOST_APPLICATION_CONTACT
+  HOST_APPLICATION_COMMENT_CREATED
+  CONTRIBUTION_REJECTED
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_CANCELED
+  SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+  SUBSCRIPTION_READY_TO_BE_RESUMED
+  TICKET_CONFIRMED
+  ORDER_CANCELED_ARCHIVED_COLLECTIVE
+  ORDER_PENDING
+  ORDER_PENDING_CONTRIBUTION_NEW
+  ORDER_PENDING_CONTRIBUTION_REMINDER
+  ORDER_PROCESSING
+  ORDER_PROCESSED
+  ORDER_PAYMENT_FAILED
+  ORDER_REVIEW_OPENED
+  ORDER_REVIEW_CLOSED
+  ORDER_DISPUTE_CREATED
+  ORDER_DISPUTE_CLOSED
+  ORDER_UPDATED
+  ADDED_FUNDS_EDITED
+  VENDOR_CREATED
+  VENDOR_EDITED
+  VENDOR_DELETED
+  MANUAL_PAYMENT_PROVIDER_CREATED
+  MANUAL_PAYMENT_PROVIDER_UPDATED
+  MANUAL_PAYMENT_PROVIDER_DELETED
+  MANUAL_PAYMENT_PROVIDER_ARCHIVED
+  ORDER_PENDING_CREATED
+  ORDER_PENDING_FOLLOWUP
+  ORDER_PENDING_RECEIVED
+  ORDER_PENDING_EXPIRED
+  ORDERS_SUSPICIOUS
+  PAYMENT_FAILED
+  PAYMENT_CREDITCARD_CONFIRMATION
+  PAYMENT_CREDITCARD_EXPIRING
+  USER_CREATED
+  USER_NEW_TOKEN
+  USER_SIGNIN
+  USER_RESET_PASSWORD
+  USER_OTP_REQUESTED
+  OAUTH_APPLICATION_AUTHORIZED
+  TWO_FACTOR_METHOD_ADDED
+  TWO_FACTOR_METHOD_DELETED
+  TWO_FACTOR_CODE_REQUESTED
+  USER_CHANGE_EMAIL
+  USER_PAYMENT_METHOD_CREATED
+  USER_PASSWORD_SET
+  USER_CARD_CLAIMED
+  USER_CARD_INVITED
+  WEBHOOK_STRIPE_RECEIVED
+  WEBHOOK_PAYPAL_RECEIVED
+  COLLECTIVE_MONTHLY_REPORT
+  ACTIVATED_COLLECTIVE_AS_HOST
+  ACTIVATED_COLLECTIVE_AS_INDEPENDENT
+  DEACTIVATED_COLLECTIVE_AS_HOST
+  ACTIVATED_MONEY_MANAGEMENT
+  DEACTIVATED_MONEY_MANAGEMENT
+  ACTIVATED_HOSTING
+  DEACTIVATED_HOSTING
+  AGREEMENT_CREATED
+  AGREEMENT_EDITED
+  AGREEMENT_DELETED
+  PLATFORM_SUBSCRIPTION_UPDATED
+  PLATFORM_BILLING_OVERDUE_REMINDER
+  PLATFORM_BILLING_ADDITIONAL_CHARGES_NOTIFICATION
+  ADDED_FUND_TO_ORG
+  COLLECTIVE_TRANSACTION_PAID
+  COLLECTIVE_USER_ADDED
+  COLLECTIVE_VIRTUAL_CARD_ASSIGNED
+  COLLECTIVE_VIRTUAL_CARD_CREATED
+  SUBSCRIPTION_CONFIRMED
+  COLLECTIVE_COMMENT_CREATED
+  ORDER_PENDING_CRYPTO
+  BACKYOURSTACK_DISPATCH_CONFIRMED
+  KYC_REQUESTED
+  KYC_REVOKED
+  KYC_VERIFIED
 }
 
 """
@@ -5185,6 +6088,11 @@ type PayoutMethod {
   Whether this payout method can be deleted or only archived
   """
   canBeDeleted: Boolean
+
+  """
+  Whether this payout method can be archived
+  """
+  canBeArchived: Boolean
 }
 
 """
@@ -5237,12 +6145,22 @@ type PaymentMethod {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -5285,6 +6203,11 @@ type PaymentMethod {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -5353,6 +6276,16 @@ type PaymentMethod {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection
 }
 
@@ -5398,6 +6331,17 @@ type ConnectedAccount {
   updatedAt: DateTime!
   settings: JSON
   service: ConnectedAccountService!
+
+  """
+  The accounts that are mirroring this connected account
+  """
+  accountsMirrored: [Account]!
+  hash: String
+
+  """
+  The account who connected this account
+  """
+  createdByAccount: Account
 }
 
 """
@@ -5410,6 +6354,7 @@ enum ConnectedAccountService {
   github
   transferwise
   plaid
+  gocardless
   twitter
   privacy @deprecated(reason: "Not using this service anymore")
   thegivingblock
@@ -5974,6 +6919,11 @@ type AccountStats {
     """
     kind: [TransactionKind]
   ): TimeSeriesAmount!
+
+  """
+  The total amount managed by the account, including all its children accounts (events and projects), calculated using existing balance checkpoint. This is not a real-time value and may not reflect the current state of the account.
+  """
+  managedAmount: Amount
 }
 
 """
@@ -6113,7 +7063,6 @@ type CollectiveFeatures {
   USE_EXPENSES: CollectiveFeatureStatus
   RECEIVE_EXPENSES: CollectiveFeatureStatus
   MULTI_CURRENCY_EXPENSES: CollectiveFeatureStatus
-  RECEIVE_HOST_APPLICATIONS: CollectiveFeatureStatus
   COLLECTIVE_GOALS: CollectiveFeatureStatus
   TOP_FINANCIAL_CONTRIBUTORS: CollectiveFeatureStatus
   CONVERSATIONS: CollectiveFeatureStatus
@@ -6124,8 +7073,6 @@ type CollectiveFeatures {
   CONTACT_COLLECTIVE: CollectiveFeatureStatus
   CONTACT_FORM: CollectiveFeatureStatus
   CREATE_COLLECTIVE: CollectiveFeatureStatus
-  TRANSFERWISE: CollectiveFeatureStatus
-  PAYPAL_PAYOUTS: CollectiveFeatureStatus
   PAYPAL_DONATIONS: CollectiveFeatureStatus
   HOST_DASHBOARD: CollectiveFeatureStatus
   CONNECTED_ACCOUNTS: CollectiveFeatureStatus
@@ -6136,6 +7083,20 @@ type CollectiveFeatures {
   EMAIL_NOTIFICATIONS_PANEL: CollectiveFeatureStatus
   VIRTUAL_CARDS: CollectiveFeatureStatus
   REQUEST_VIRTUAL_CARDS: CollectiveFeatureStatus
+  OFF_PLATFORM_TRANSACTIONS: CollectiveFeatureStatus
+  TRANSFERWISE: CollectiveFeatureStatus
+  PAYPAL_PAYOUTS: CollectiveFeatureStatus
+  RECEIVE_HOST_APPLICATIONS: CollectiveFeatureStatus
+  CHART_OF_ACCOUNTS: CollectiveFeatureStatus
+  EXPENSE_SECURITY_CHECKS: CollectiveFeatureStatus
+  EXPECTED_FUNDS: CollectiveFeatureStatus
+  CHARGE_HOSTING_FEES: CollectiveFeatureStatus
+  AGREEMENTS: CollectiveFeatureStatus
+  TAX_FORMS: CollectiveFeatureStatus
+  FUNDS_GRANTS_MANAGEMENT: CollectiveFeatureStatus
+  VENDORS: CollectiveFeatureStatus
+  ACCOUNT_MANAGEMENT: CollectiveFeatureStatus
+  KYC: CollectiveFeatureStatus
 }
 
 enum CollectiveFeatureStatus {
@@ -6405,143 +7366,6 @@ type Activity {
   isSystem: Boolean!
 }
 
-enum ActivityType {
-  ACTIVITY_ALL
-  ACCOUNTING_CATEGORIES_EDITED
-  CONNECTED_ACCOUNT_CREATED
-  CONNECTED_ACCOUNT_ERROR
-  CONNECTED_ACCOUNT_REMOVED
-  COLLECTIVE_CREATED_GITHUB
-  COLLECTIVE_APPLY
-  COLLECTIVE_APPROVED
-  COLLECTIVE_REJECTED
-  COLLECTIVE_CREATED
-  COLLECTIVE_EDITED
-  COLLECTIVE_DELETED
-  COLLECTIVE_UNHOSTED
-  ORGANIZATION_COLLECTIVE_CREATED
-  COLLECTIVE_FROZEN
-  COLLECTIVE_UNFROZEN
-  COLLECTIVE_CONVERSATION_CREATED
-  UPDATE_COMMENT_CREATED
-  EXPENSE_COMMENT_CREATED
-  CONVERSATION_COMMENT_CREATED
-  ORDER_COMMENT_CREATED
-  COLLECTIVE_EXPENSE_CREATED
-  COLLECTIVE_EXPENSE_DELETED
-  COLLECTIVE_EXPENSE_UPDATED
-  COLLECTIVE_EXPENSE_REJECTED
-  COLLECTIVE_EXPENSE_APPROVED
-  COLLECTIVE_EXPENSE_RE_APPROVAL_REQUESTED
-  COLLECTIVE_EXPENSE_UNAPPROVED
-  COLLECTIVE_EXPENSE_MOVED
-  COLLECTIVE_EXPENSE_PAID
-  COLLECTIVE_EXPENSE_MARKED_AS_UNPAID
-  COLLECTIVE_EXPENSE_MARKED_AS_SPAM
-  COLLECTIVE_EXPENSE_MARKED_AS_INCOMPLETE
-  COLLECTIVE_EXPENSE_PROCESSING
-  COLLECTIVE_EXPENSE_PUT_ON_HOLD
-  COLLECTIVE_EXPENSE_RELEASED_FROM_HOLD
-  COLLECTIVE_EXPENSE_SCHEDULED_FOR_PAYMENT
-  COLLECTIVE_EXPENSE_UNSCHEDULED_FOR_PAYMENT
-  COLLECTIVE_EXPENSE_ERROR
-  COLLECTIVE_EXPENSE_INVITE_DRAFTED
-  COLLECTIVE_EXPENSE_INVITE_DECLINED
-  COLLECTIVE_EXPENSE_RECURRING_DRAFTED
-  COLLECTIVE_EXPENSE_MISSING_RECEIPT
-  TAXFORM_REQUEST
-  TAXFORM_RECEIVED
-  TAXFORM_INVALIDATED
-  COLLECTIVE_VIRTUAL_CARD_ADDED
-  COLLECTIVE_VIRTUAL_CARD_MISSING_RECEIPTS
-  COLLECTIVE_VIRTUAL_CARD_RESUMED
-  COLLECTIVE_VIRTUAL_CARD_SUSPENDED
-  COLLECTIVE_VIRTUAL_CARD_SUSPENDED_DUE_TO_INACTIVITY
-  COLLECTIVE_VIRTUAL_CARD_DELETED
-  COLLECTIVE_VIRTUAL_CARD_REQUEST_APPROVED
-  COLLECTIVE_VIRTUAL_CARD_REQUEST_REJECTED
-  VIRTUAL_CARD_REQUESTED
-  VIRTUAL_CARD_CHARGE_DECLINED
-  VIRTUAL_CARD_PURCHASE
-  COLLECTIVE_MEMBER_INVITED
-  COLLECTIVE_MEMBER_CREATED
-  COLLECTIVE_CORE_MEMBER_ADDED
-  COLLECTIVE_CORE_MEMBER_INVITED
-  COLLECTIVE_CORE_MEMBER_INVITATION_DECLINED
-  COLLECTIVE_CORE_MEMBER_REMOVED
-  COLLECTIVE_CORE_MEMBER_EDITED
-  COLLECTIVE_TRANSACTION_CREATED
-  TRANSACTIONS_IMPORT_CREATED
-  TRANSACTIONS_IMPORT_ROW_UPDATED
-  COLLECTIVE_UPDATE_CREATED
-  COLLECTIVE_UPDATE_PUBLISHED
-  COLLECTIVE_CONTACT
-  HOST_APPLICATION_CONTACT
-  HOST_APPLICATION_COMMENT_CREATED
-  CONTRIBUTION_REJECTED
-  SUBSCRIPTION_ACTIVATED
-  SUBSCRIPTION_CANCELED
-  SUBSCRIPTION_PAUSED
-  SUBSCRIPTION_RESUMED
-  SUBSCRIPTION_READY_TO_BE_RESUMED
-  TICKET_CONFIRMED
-  ORDER_CANCELED_ARCHIVED_COLLECTIVE
-  ORDER_PENDING
-  ORDER_PENDING_CONTRIBUTION_NEW
-  ORDER_PENDING_CONTRIBUTION_REMINDER
-  ORDER_PROCESSING
-  ORDER_PROCESSED
-  ORDER_PAYMENT_FAILED
-  ORDER_REVIEW_OPENED
-  ORDER_REVIEW_CLOSED
-  ORDER_DISPUTE_CREATED
-  ORDER_DISPUTE_CLOSED
-  ORDER_UPDATED
-  ADDED_FUNDS_EDITED
-  VENDOR_CREATED
-  VENDOR_EDITED
-  VENDOR_DELETED
-  ORDER_PENDING_CREATED
-  ORDER_PENDING_FOLLOWUP
-  ORDER_PENDING_RECEIVED
-  ORDER_PENDING_EXPIRED
-  ORDERS_SUSPICIOUS
-  PAYMENT_FAILED
-  PAYMENT_CREDITCARD_CONFIRMATION
-  PAYMENT_CREDITCARD_EXPIRING
-  USER_CREATED
-  USER_NEW_TOKEN
-  USER_SIGNIN
-  USER_RESET_PASSWORD
-  OAUTH_APPLICATION_AUTHORIZED
-  TWO_FACTOR_METHOD_ADDED
-  TWO_FACTOR_METHOD_DELETED
-  TWO_FACTOR_CODE_REQUESTED
-  USER_CHANGE_EMAIL
-  USER_PAYMENT_METHOD_CREATED
-  USER_PASSWORD_SET
-  USER_CARD_CLAIMED
-  USER_CARD_INVITED
-  WEBHOOK_STRIPE_RECEIVED
-  WEBHOOK_PAYPAL_RECEIVED
-  COLLECTIVE_MONTHLY_REPORT
-  ACTIVATED_COLLECTIVE_AS_HOST
-  ACTIVATED_COLLECTIVE_AS_INDEPENDENT
-  DEACTIVATED_COLLECTIVE_AS_HOST
-  AGREEMENT_CREATED
-  AGREEMENT_EDITED
-  AGREEMENT_DELETED
-  ADDED_FUND_TO_ORG
-  COLLECTIVE_TRANSACTION_PAID
-  COLLECTIVE_USER_ADDED
-  COLLECTIVE_VIRTUAL_CARD_ASSIGNED
-  COLLECTIVE_VIRTUAL_CARD_CREATED
-  SUBSCRIPTION_CONFIRMED
-  COLLECTIVE_COMMENT_CREATED
-  ORDER_PENDING_CRYPTO
-  BACKYOURSTACK_DISPATCH_CONFIRMED
-}
-
 enum ActivityClassType {
   COLLECTIVE
   EXPENSES
@@ -6636,6 +7460,169 @@ type TransactionsAmountGroup {
   expenseType: ExpenseType
 }
 
+type CommunityStats {
+  associatedCollectives: [CommunityAssociatedAccount]
+  associatedOrganizations: [CommunityAssociatedAccount]
+  relations: [CommunityRelationType]!
+  transactionSummary: [CommunityTransactionSummary!]!
+  lastInteractionAt: DateTime
+  firstInteractionAt: DateTime
+  activities(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): ActivityCollection
+}
+
+type CommunityAssociatedAccount {
+  account: Account
+  relations: [CommunityRelationType]
+  lastInteractionAt: DateTime
+  firstInteractionAt: DateTime
+  transactionSummary: CommunityTransactionSummary!
+}
+
+enum CommunityRelationType {
+  ADMIN
+  ATTENDEE
+  PAYEE
+  GRANTEE
+  CONTRIBUTOR
+  EXPENSE_SUBMITTER
+  EXPENSE_APPROVER
+}
+
+type CommunityTransactionSummary {
+  year: Int
+  expenseTotal: Amount!
+  expenseCount: Int!
+  contributionTotal: Amount!
+  contributionCount: Int!
+  expenseTotalAcc: Amount!
+  expenseCountAcc: Int!
+  contributionTotalAcc: Amount!
+  contributionCountAcc: Int!
+  orderCount: Int!
+  orderCountAcc: Int!
+}
+
+"""
+A collection of "Activities"
+"""
+type ActivityCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [Activity!]
+}
+
+type KYCVerificationCollection implements Collection {
+  offset: Int
+  limit: Int
+  totalCount: Int
+  nodes: [KYCVerification!]
+}
+
+"""
+A KYC Verification
+"""
+type KYCVerification {
+  """
+  Unique identifier for this KYC verification
+  """
+  id: String!
+
+  """
+  Provider used to make this KYC verification
+  """
+  provider: KYCProvider!
+
+  """
+  The account that requested the KYC verification
+  """
+  requestedByAccount: Account!
+
+  """
+  The account that is verified
+  """
+  account: Account!
+
+  """
+  The user who added this account to the KYC verification list
+  """
+  createdByUser: Account
+
+  """
+  Provider specific data
+  """
+  providerData: KYCProviderData!
+
+  """
+  Verified KYC data
+  """
+  verifiedData: KYCVerifiedData!
+  status: KYCVerificationStatus!
+  requestedAt: DateTime!
+  revokedAt: DateTime
+  verifiedAt: DateTime
+  permissions: KYCVerificationPermissions!
+}
+
+enum KYCProvider {
+  MANUAL
+}
+
+union KYCProviderData = ManualKYCProviderData
+
+"""
+Manual KYC data
+"""
+type ManualKYCProviderData {
+  """
+  Notes added during manual verification
+  """
+  notes: String!
+}
+
+"""
+Verified KYC data
+"""
+type KYCVerifiedData {
+  """
+  Account legal name as verified by KYC
+  """
+  legalName: String
+
+  """
+  Account legal address as verified by KYC
+  """
+  legalAddress: String
+}
+
+enum KYCVerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  REVOKED
+  EXPIRED
+}
+
+"""
+KYC Verification permissions
+"""
+type KYCVerificationPermissions {
+  """
+  Whether this KYC Verification can be revoked by the logged in user
+  """
+  canRevokeKYCVerification: Boolean!
+}
+
 """
 A collection of webhooks
 """
@@ -6678,86 +7665,6 @@ enum AccountingCategoryKind {
 }
 
 """
-The name of the current plan and its characteristics.
-"""
-type HostPlan {
-  """
-  The public id identifying the account (ie: 5v08jk63-w4g9nbpz-j7qmyder-p7ozax5g)
-  """
-  id: String
-
-  """
-  The name of the plan
-  """
-  name: String
-
-  """
-  Number of collectives hosted
-  """
-  hostedCollectives: Int
-
-  """
-  Max number of collectives than can be hosted
-  """
-  hostedCollectivesLimit: Int
-
-  """
-  Whether this plan allows to use the added funds feature
-  """
-  addedFunds: Int
-
-  """
-  Amount limit for the added funds feature under this plan
-  """
-  addedFundsLimit: Int
-
-  """
-  Whether this plan allows to use the host dashboard
-  """
-  hostDashboard: Boolean
-
-  """
-  Whether this plan allows to use the manual payments feature
-  """
-  manualPayments: Boolean
-
-  """
-  Whether this plan allows to use the bank transfers feature
-  """
-  bankTransfers: Int
-
-  """
-  Amount limit for the bank transfers feature under this plan
-  """
-  bankTransfersLimit: Int
-
-  """
-  Whether this plan allows to use the transferwise payouts feature
-  """
-  transferwisePayouts: Int
-
-  """
-  Amount limit for the transferwise payouts feature under this plan
-  """
-  transferwisePayoutsLimit: Int
-
-  """
-  Ability to charge Host Fees.
-  """
-  hostFees: Boolean
-
-  """
-  Charge on revenues made through Host Fees.
-  """
-  hostFeeSharePercent: Float
-
-  """
-  Ability to collect Platform Tips.
-  """
-  platformTips: Boolean
-}
-
-"""
 EXPERIMENTAL (this may change or be deleted): Host transaction report
 """
 type HostTransactionReports {
@@ -6782,6 +7689,52 @@ type HostTransactionReportNode {
   date: DateTime!
   managedFunds: TransactionReport!
   operationalFunds: TransactionReport!
+}
+
+type HostStats {
+  balance(
+    """
+    Calculate amount before this date
+    """
+    dateTo: DateTime
+  ): Amount
+  totalAmountSpent(
+    """
+    Calculate amount before this date
+    """
+    dateTo: DateTime
+
+    """
+    Calculate amount after this date
+    """
+    dateFrom: DateTime
+
+    """
+    Return the net amount (with payment processor fees removed)
+    """
+    net: Boolean = false
+
+    """
+    Include transactions using Gift Cards
+    """
+    includeGiftCards: Boolean = false
+  ): Amount
+  totalAmountReceived(
+    """
+    Calculate amount before this date
+    """
+    dateTo: DateTime
+
+    """
+    Calculate amount after this date
+    """
+    dateFrom: DateTime
+
+    """
+    Return the net amount (with payment processor fees removed)
+    """
+    net: Boolean = false
+  ): Amount
 }
 
 """
@@ -6987,83 +7940,74 @@ type HostExpensesReportNode {
 }
 
 """
+A manual payment provider configured by a host for contributors to use
+"""
+type ManualPaymentProvider {
+  """
+  Unique identifier for this provider
+  """
+  id: String!
+
+  """
+  The type of manual payment provider
+  """
+  type: ManualPaymentProviderType!
+
+  """
+  Display name for this payment provider
+  """
+  name: NonEmptyString!
+
+  """
+  Payment instructions to show contributors (HTML)
+  """
+  instructions: String
+
+  """
+  Icon name for this payment provider
+  """
+  icon: String
+
+  """
+  Bank account details for BANK_TRANSFER type providers
+  """
+  accountDetails: JSON
+
+  """
+  Whether this provider has been archived
+  """
+  isArchived: Boolean!
+
+  """
+  When this provider was created
+  """
+  createdAt: DateTime!
+
+  """
+  When this provider was last updated
+  """
+  updatedAt: DateTime!
+}
+
+"""
+The type of manual payment provider
+"""
+enum ManualPaymentProviderType {
+  BANK_TRANSFER
+  OTHER
+}
+
+"""
+A string that cannot be passed as an empty value
+"""
+scalar NonEmptyString
+
+"""
 Stripe connected account properties
 """
 type StripeConnectedAccount {
   username: String
   issuingBalance: Amount
-}
-
-"""
-Input type for an amount with the value and currency
-"""
-input AmountInput {
-  """
-  The value in plain
-  """
-  value: Float
-
-  """
-  The currency string
-  """
-  currency: Currency
-
-  """
-  The value in cents
-  """
-  valueInCents: Int
-
-  """
-  If the amount was generated from a currency conversion, this field can be used to provide details about the conversion
-  """
-  exchangeRate: CurrencyExchangeRateInput
-}
-
-"""
-Fields for a currency exchange rate
-"""
-input CurrencyExchangeRateInput {
-  """
-  Where does the FX rate comes from
-  """
-  source: CurrencyExchangeRateSourceType!
-  fromCurrency: Currency!
-  toCurrency: Currency!
-
-  """
-  Date of the FX rate
-  """
-  date: DateTime!
-
-  """
-  Exchange rate value as a float (e.g 1.15 or 0.86)
-  """
-  value: Float!
-}
-
-"""
-Where does the FX rate come from
-"""
-enum CurrencyExchangeRateSourceType {
-  """
-  Open Collective internal system, relying on caching and 3rd party APIs
-  """
-  OPENCOLLECTIVE
-
-  """
-  PayPal API
-  """
-  PAYPAL
-
-  """
-  Wise API
-  """
-  WISE
-
-  """
-  User-provided exchange rate
-  """
-  USER
 }
 
 """
@@ -7176,21 +8120,6 @@ type HostedAccountCollection implements Collection {
 }
 
 """
-Input type for an amount range with the value and currency
-"""
-input AmountRangeInput {
-  """
-  The minimum amount (inclusive)
-  """
-  gte: AmountInput
-
-  """
-  The maximum amount (inclusive)
-  """
-  lte: AmountInput
-}
-
-"""
 A collection of "LegalDocument"
 """
 type LegalDocumentCollection implements Collection {
@@ -7274,7 +8203,17 @@ type TransactionsImport {
   """
   List of available accounts for the import
   """
-  plaidAccounts: [PlaidAccount]
+  plaidAccounts: [PlaidAccount] @deprecated(reason: "2025-07-02: Please use the generic accounts field instead.")
+
+  """
+  Institution ID (for Gocardless only)
+  """
+  institutionId: String
+
+  """
+  List of available accounts for the import
+  """
+  institutionAccounts: [TransactionsImportAccount]
 
   """
   Assignments for the import, as a map of account id to legacy collective IDs. The `__default__` key can be use to set the default assignment.
@@ -7315,13 +8254,8 @@ type TransactionsImport {
     """
     accountId: [NonEmptyString]
   ): TransactionsImportRowCollection!
-  stats: TransactionsImportStats
+  stats: TransactionsImportStats!
 }
-
-"""
-A string that cannot be passed as an empty value
-"""
-scalar NonEmptyString
 
 """
 Type of the import
@@ -7330,6 +8264,7 @@ enum TransactionsImportType {
   CSV
   MANUAL
   PLAID
+  GOCARDLESS
 }
 
 type PlaidAccount {
@@ -7371,6 +8306,36 @@ enum PlaidAccountType {
   Other
   """
   other
+}
+
+"""
+An account available in a transactions import (Plaid or GoCardless)
+"""
+type TransactionsImportAccount {
+  """
+  The unique identifier for the account
+  """
+  id: NonEmptyString!
+
+  """
+  The name of the account
+  """
+  name: NonEmptyString!
+
+  """
+  The subtype of the account (Plaid only)
+  """
+  subtype: String
+
+  """
+  The type of the account (Plaid only)
+  """
+  type: String
+
+  """
+  The mask of the account (Plaid only)
+  """
+  mask: String
 }
 
 type TransactionsImportAssignment {
@@ -7436,6 +8401,21 @@ type TransactionsImportRow {
   If an account ID is available in the imported row, it will be stored here. Returns the default account ID otherwise.
   """
   accountId: String
+
+  """
+  If the row was imported from plaid, this is the account it was imported from
+  """
+  plaidAccount: PlaidAccount @deprecated(reason: "2025-07-02: Please use the generic institutionAccount field instead.")
+
+  """
+  Corresponding account for the row, based on its account ID
+  """
+  institutionAccount: TransactionsImportAccount
+
+  """
+  The accounts assigned to the row, based on its account ID
+  """
+  assignedAccounts: [Account]!
 
   """
   The raw data of the row
@@ -7530,6 +8510,40 @@ type TransactionsImportStats {
   invalid: Int!
 }
 
+"""
+Status of the import
+"""
+enum TransactionsImportStatus {
+  """
+  The import is connected and ready to sync
+  """
+  ACTIVE
+
+  """
+  The import is disconnected / archived
+  """
+  DISCONNECTED
+}
+
+"""
+Input to order off platform transactions chronologically
+"""
+input TransactionsImportRowOrderInput {
+  """
+  Field to order by
+  """
+  field: TransactionsImportRowOrderInputField! = DATE
+
+  """
+  Ordering direction.
+  """
+  direction: OrderDirection! = DESC
+}
+
+enum TransactionsImportRowOrderInputField {
+  DATE
+}
+
 enum AccountingCategoryAppliesTo {
   HOST
   HOSTED_COLLECTIVES
@@ -7552,6 +8566,11 @@ type ExpenseValuesByRole {
   The values provided by the host admin(s)
   """
   hostAdmin: ExpenseValuesRoleDetails
+
+  """
+  The values provided by the prediction service
+  """
+  prediction: ExpenseValuesRoleDetails
 }
 
 type ExpenseValuesRoleDetails {
@@ -7700,6 +8719,46 @@ type ExpensePermissions {
   canEdit: Boolean!
 
   """
+  Whether the current user can edit the expense title
+  """
+  canEditTitle: Boolean!
+
+  """
+  Whether the current user can edit the expense type
+  """
+  canEditType: Boolean!
+
+  """
+  Whether the current user can edit the paid by account
+  """
+  canEditPaidBy: Boolean!
+
+  """
+  Whether the current user can edit the payee
+  """
+  canEditPayee: Boolean!
+
+  """
+  Whether the current user can edit the payout method
+  """
+  canEditPayoutMethod: Boolean!
+
+  """
+  Whether the current user can edit the expense items and attachments
+  """
+  canEditItems: Boolean!
+
+  """
+  Whether the current user can attach receipts
+  """
+  canAttachReceipts: Boolean!
+
+  """
+  Whether the current user can edit the expense item descriptions
+  """
+  canEditItemDescription: Boolean!
+
+  """
   Whether the current user can edit the expense accounting category
   """
   canEditAccountingCategory: Boolean!
@@ -7723,6 +8782,11 @@ type ExpensePermissions {
   Whether the current user can trigger the payment for this expense
   """
   canPay: Boolean!
+
+  """
+  Whether the current user can mark this expense as paid
+  """
+  canMarkAsPaid: Boolean!
 
   """
   Whether the current user can approve this expense
@@ -7788,15 +8852,24 @@ type ExpensePermissions {
   """
   canSeePayoutMethodPrivateDetails: Boolean!
   edit: Permission!
+  editTitle: Permission!
+  editType: Permission!
+  editPaidBy: Permission!
+  editPayee: Permission!
+  editPayoutMethod: Permission!
+  editItems: Permission!
+  attachReceipts: Permission!
+  editItemDescription: Permission!
 
   """
   Whether the current user can edit the expense accounting category
   """
-  editAccountingCategory: Boolean!
+  editAccountingCategory: Permission!
   editTags: Permission!
   delete: Permission!
   seeInvoiceInfo: Permission!
   pay: Permission!
+  markAsPaid: Permission!
   approve: Permission!
   unapprove: Permission!
   reject: Permission!
@@ -7829,6 +8902,21 @@ type ExpenseQuote {
   The date on which the item was created
   """
   estimatedDeliveryAt: DateTime
+
+  """
+  Notices related to this quote
+  """
+  notices: [ExpenseQuoteNotice]
+}
+
+"""
+Fields for an expense quote notice
+"""
+type ExpenseQuoteNotice {
+  type: String!
+  text: String!
+  code: String!
+  link: String!
 }
 
 type TransferWiseRequiredField {
@@ -7935,6 +9023,7 @@ enum SecurityCheckScope {
   COLLECTIVE
   PAYEE
   PAYOUT_METHOD
+  ATTACHMENTS
 }
 
 """
@@ -8049,16 +9138,6 @@ type OrderPermissions {
   If paused, whether the current user can resume this order
   """
   canResume: Boolean!
-}
-
-"""
-A collection of "Activities"
-"""
-type ActivityCollection implements Collection {
-  offset: Int
-  limit: Int
-  totalCount: Int
-  nodes: [Activity!]
 }
 
 type PendingOrderData {
@@ -8208,14 +9287,20 @@ type Bot implements Account {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -8242,10 +9327,15 @@ type Bot implements Account {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -8284,6 +9374,7 @@ type Bot implements Account {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -8294,6 +9385,11 @@ type Bot implements Account {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -8319,6 +9415,11 @@ type Bot implements Account {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -8375,6 +9476,11 @@ type Bot implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -8519,12 +9625,22 @@ type Bot implements Account {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -8572,6 +9688,11 @@ type Bot implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -8640,6 +9761,16 @@ type Bot implements Account {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -8660,6 +9791,11 @@ type Bot implements Account {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -8673,6 +9809,11 @@ type Bot implements Account {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -8704,6 +9845,11 @@ type Bot implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -8769,6 +9915,11 @@ type Bot implements Account {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -8829,7 +9980,12 @@ type Bot implements Account {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -9031,6 +10187,36 @@ type Bot implements Account {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -9048,7 +10234,7 @@ type Bot implements Account {
 """
 This represents a Collective account
 """
-type Collective implements Account & AccountWithHost & AccountWithContributions {
+type Collective implements Account & AccountWithHost & AccountWithContributions & AccountWithPlatformSubscription {
   id: String!
   legacyId: Int!
 
@@ -9121,14 +10307,20 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether it's active: can accept financial contributions and pay expenses.
   """
   isActive: Boolean!
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -9155,10 +10347,15 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -9197,6 +10394,7 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -9207,6 +10405,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -9232,6 +10435,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -9288,6 +10496,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -9432,12 +10645,22 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -9485,6 +10708,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -9553,6 +10781,16 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -9573,6 +10811,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -9586,6 +10829,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -9617,6 +10865,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -9682,6 +10935,11 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -9742,7 +11000,12 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -9944,6 +11207,36 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -10093,6 +11386,13 @@ type Collective implements Account & AccountWithHost & AccountWithContributions 
   Returns true if the account has started the process to resume contributions
   """
   hasResumeContributionsProcessStarted: Boolean!
+
+  """
+  Returns the current platform subscription
+  """
+  platformSubscription: PlatformSubscription
+  platformBilling(billingPeriod: PlatformBillingPeriodInput): PlatformBilling!
+  legacyPlan: HostPlan!
 }
 
 """
@@ -10278,6 +11578,7 @@ type Credit implements Transaction {
     """
     fetchTax: Boolean = false
   ): Amount!
+  netAmountInPayeeCurrency: Amount
   taxAmount(
     """
     Fetch TAX transaction for retro-compatiblity.
@@ -10424,6 +11725,7 @@ type Debit implements Transaction {
     """
     fetchTax: Boolean = false
   ): Amount!
+  netAmountInPayeeCurrency: Amount
   taxAmount(
     """
     Fetch TAX transaction for retro-compatiblity.
@@ -10585,14 +11887,20 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether it's active: can accept financial contributions and pay expenses.
   """
   isActive: Boolean!
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -10619,10 +11927,15 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -10661,6 +11974,7 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -10671,6 +11985,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -10696,6 +12015,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -10752,6 +12076,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -10896,12 +12225,22 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -10949,6 +12288,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -11017,6 +12361,16 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -11037,6 +12391,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -11050,6 +12409,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -11081,6 +12445,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -11146,6 +12515,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -11206,7 +12580,12 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -11408,6 +12787,36 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -11577,6 +12986,11 @@ type Event implements Account & AccountWithHost & AccountWithContributions & Acc
   Timezone of the Event (TZ database format, e.g. UTC or Europe/Berlin)
   """
   timezone: String
+
+  """
+  Private instructions for the host to be sent to participating users.
+  """
+  privateInstructions: String
 }
 
 """
@@ -11767,14 +13181,20 @@ type Individual implements Account {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -11801,10 +13221,15 @@ type Individual implements Account {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -11843,6 +13268,7 @@ type Individual implements Account {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -11853,6 +13279,11 @@ type Individual implements Account {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -11878,6 +13309,11 @@ type Individual implements Account {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -11934,6 +13370,11 @@ type Individual implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -12078,12 +13519,22 @@ type Individual implements Account {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -12131,6 +13582,11 @@ type Individual implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -12199,6 +13655,16 @@ type Individual implements Account {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -12219,6 +13685,11 @@ type Individual implements Account {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -12232,6 +13703,11 @@ type Individual implements Account {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -12263,6 +13739,11 @@ type Individual implements Account {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -12328,6 +13809,11 @@ type Individual implements Account {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -12388,7 +13874,12 @@ type Individual implements Account {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -12588,6 +14079,36 @@ type Individual implements Account {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -12602,10 +14123,16 @@ type Individual implements Account {
   ): WebhookCollection!
 
   """
+  Company slugs the user is part of.
+  """
+  company: String
+
+  """
   Email for the account. For authenticated user: scope: "email".
   """
   email: String
   isGuest: Boolean!
+  requiresProfileCompletion: Boolean
   isFollowingConversation(id: String!): Boolean!
   hasTwoFactorAuth: Boolean
   newsletterOptIn: Boolean
@@ -12652,6 +14179,36 @@ type Individual implements Account {
   """
   twoFactorMethods: [UserTwoFactorMethod]
   contributorProfiles(forAccount: AccountReferenceInput!): [ContributorProfile]!
+
+  """
+  KYC Verification requests to this account
+  """
+  kycVerifications(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only KYC requests made by these accounts
+    """
+    requestedByAccounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
+
+  """
+  Verified KYC status, if any
+  """
+  kycStatus(
+    """
+    If set, returns only KYC requests made by these accounts
+    """
+    requestedByAccount: AccountReferenceInput!
+  ): KYCStatus!
 }
 
 """
@@ -12776,6 +14333,13 @@ type ContributorProfile {
 }
 
 """
+A individual KYC verified status
+"""
+type KYCStatus {
+  manual: KYCVerification
+}
+
+"""
 This represents a Member relationship (ie: Organization backing a Collective)
 """
 type Member {
@@ -12854,7 +14418,7 @@ type MemberOf {
 """
 This represents an Organization account
 """
-type Organization implements Account & AccountWithContributions {
+type Organization implements Account & AccountWithContributions & AccountWithPlatformSubscription {
   id: String!
   legacyId: Int!
 
@@ -12927,14 +14491,20 @@ type Organization implements Account & AccountWithContributions {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -12961,10 +14531,15 @@ type Organization implements Account & AccountWithContributions {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -13003,6 +14578,7 @@ type Organization implements Account & AccountWithContributions {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -13013,6 +14589,11 @@ type Organization implements Account & AccountWithContributions {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -13038,6 +14619,11 @@ type Organization implements Account & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -13094,6 +14680,11 @@ type Organization implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -13238,12 +14829,22 @@ type Organization implements Account & AccountWithContributions {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -13291,6 +14892,11 @@ type Organization implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -13359,6 +14965,16 @@ type Organization implements Account & AccountWithContributions {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -13379,6 +14995,11 @@ type Organization implements Account & AccountWithContributions {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -13392,6 +15013,11 @@ type Organization implements Account & AccountWithContributions {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -13423,6 +15049,11 @@ type Organization implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -13488,6 +15119,11 @@ type Organization implements Account & AccountWithContributions {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -13548,7 +15184,12 @@ type Organization implements Account & AccountWithContributions {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -13748,6 +15389,36 @@ type Organization implements Account & AccountWithContributions {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -13836,12 +15507,39 @@ type Organization implements Account & AccountWithContributions {
   Returns true if the account has started the process to resume contributions
   """
   hasResumeContributionsProcessStarted: Boolean!
+
+  """
+  Returns the current platform subscription
+  """
+  platformSubscription: PlatformSubscription
+  platformBilling(billingPeriod: PlatformBillingPeriodInput): PlatformBilling!
+  legacyPlan: HostPlan!
   email: String @deprecated(reason: "2022-07-18: This field is deprecated and will return null")
 
   """
   If the organization is a host account, this will return the matching Host object
   """
   host: Host
+
+  """
+  Returns whether the account has money management activated.
+  """
+  hasMoneyManagement: Boolean!
+
+  """
+  Returns whether the account has hosting activated.
+  """
+  hasHosting: Boolean!
+
+  """
+  Returns whether this organization can be a vendor of the specified host. This checks if the organization only transacted with this host and all its admins are also admins of the host.
+  """
+  canBeVendorOf(
+    """
+    The host account to check against
+    """
+    host: AccountReferenceInput!
+  ): Boolean!
 }
 
 """
@@ -13953,14 +15651,20 @@ type Vendor implements Account & AccountWithContributions {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether the account accepts financial contributions.
   """
   isActive: Boolean
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -13987,10 +15691,15 @@ type Vendor implements Account & AccountWithContributions {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -14029,6 +15738,7 @@ type Vendor implements Account & AccountWithContributions {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -14039,6 +15749,11 @@ type Vendor implements Account & AccountWithContributions {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -14064,6 +15779,11 @@ type Vendor implements Account & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -14120,6 +15840,11 @@ type Vendor implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -14264,12 +15989,22 @@ type Vendor implements Account & AccountWithContributions {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -14317,6 +16052,11 @@ type Vendor implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -14385,6 +16125,16 @@ type Vendor implements Account & AccountWithContributions {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -14405,6 +16155,11 @@ type Vendor implements Account & AccountWithContributions {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -14418,6 +16173,11 @@ type Vendor implements Account & AccountWithContributions {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -14449,6 +16209,11 @@ type Vendor implements Account & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -14514,6 +16279,11 @@ type Vendor implements Account & AccountWithContributions {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -14574,7 +16344,12 @@ type Vendor implements Account & AccountWithContributions {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -14776,6 +16551,36 @@ type Vendor implements Account & AccountWithContributions {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -14875,6 +16680,11 @@ type Vendor implements Account & AccountWithContributions {
   The account who created this order
   """
   createdByAccount: Account
+
+  """
+  The accounts where this vendor is visible, if empty or null applies to all collectives under the vendor host
+  """
+  visibleToAccounts: [Account]!
 }
 
 """
@@ -14956,6 +16766,46 @@ enum VirtualCardRequestStatus {
   APPROVED
   REJECTED
   PENDING
+}
+
+"""
+A financial institution for off-platform transactions
+"""
+type OffPlatformTransactionsInstitution {
+  """
+  The unique identifier for the institution
+  """
+  id: String!
+
+  """
+  The name of the institution
+  """
+  name: String!
+
+  """
+  The BIC (Bank Identifier Code) of the institution
+  """
+  bic: String!
+
+  """
+  URL to the institution logo
+  """
+  logoUrl: String
+
+  """
+  List of country codes supported by this institution
+  """
+  supportedCountries: [String!]!
+
+  """
+  Maximum number of days the access can be valid for
+  """
+  maxAccessValidForDays: Int!
+
+  """
+  Total number of days of transaction data available
+  """
+  transactionTotalDays: Int!
 }
 
 """
@@ -15078,6 +16928,36 @@ type Query {
     Filter by the balance of the account and its children accounts (events and projects)
     """
     consolidatedBalance: AmountRangeInput
+
+    """
+    Filter by the plan slug of the account
+    """
+    plan: [String]
+
+    """
+    Filter accounts that are subscribers to the platform
+    """
+    isPlatformSubscriber: Boolean
+
+    """
+    Filter accounts that are verified
+    """
+    isVerified: Boolean
+
+    """
+    Filter accounts that are first party hosts
+    """
+    isFirstPartyHost: Boolean
+
+    """
+    Filter accounts that have a last transaction after this date
+    """
+    lastTransactionFrom: DateTime
+
+    """
+    Filter accounts that have a last transaction before this date
+    """
+    lastTransactionTo: DateTime
   ): AccountCollection!
   activities(
     """
@@ -15091,9 +16971,19 @@ type Query {
     offset: Int! = 0
 
     """
+    The individual associated with the Activity
+    """
+    individual: AccountReferenceInput
+
+    """
     The accounts associated with the Activity
     """
-    account: [AccountReferenceInput!]!
+    account: [AccountReferenceInput!]
+
+    """
+    The hosts associated with the Activity
+    """
+    host: AccountReferenceInput
 
     """
     If account is a parent, also include child accounts
@@ -15129,6 +17019,11 @@ type Query {
     If true, return the timeline of activities for this account
     """
     timeline: Boolean! = false
+
+    """
+    Order of the results
+    """
+    orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
   ): ActivityCollection!
   application(
     """
@@ -15173,6 +17068,41 @@ type Query {
     """
     id: String!
   ): Conversation
+
+  """
+  Return accounts that have interacted with a given account or host
+  """
+  community(
+    """
+    Account filter
+    """
+    account: AccountReferenceInput
+
+    """
+    Host context filter
+    """
+    host: AccountReferenceInput
+    type: [AccountType]
+
+    """
+    Admin only. Search by email address or name of a member.
+    """
+    searchTerm: String
+    relation: [CommunityRelationType!]
+    orderBy: OrderByInput
+
+    """
+    Only return accounts that contributed within this amount range
+    """
+    totalContributed: AmountRangeInput
+
+    """
+    Only return accounts that expended within this amount range
+    """
+    totalExpended: AmountRangeInput
+    limit: Int! = 100
+    offset: Int! = 0
+  ): AccountCollection!
 
   """
   Get exchange rates from Open Collective
@@ -15237,6 +17167,11 @@ type Query {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -15250,6 +17185,11 @@ type Query {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -15281,6 +17221,11 @@ type Query {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -15346,6 +17291,11 @@ type Query {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   expenseTagStats(
     """
@@ -15487,7 +17437,7 @@ type Query {
   ): Individual
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -15528,12 +17478,22 @@ type Query {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -15581,6 +17541,11 @@ type Query {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -15649,6 +17614,16 @@ type Query {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   organization(
     """
@@ -15711,6 +17686,11 @@ type Query {
     Limit the scope of the search to this host and its hosted accounts
     """
     host: AccountReferenceInput
+
+    """
+    Set this to true if you are displaying all the results in the same list, and want a consistent sorting order across different types. (!) Paginating wih `offset` will not be supported
+    """
+    useTopHits: Boolean! = false
 
     """
     The maximum amount of time in millisecond to wait for a single entity type query to complete (for SQL search)
@@ -15821,6 +17801,11 @@ type Query {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -16016,7 +18001,7 @@ type Query {
     """
     The public id identifying the import (ie: rvelja97-pkzqbgq7-bbzyx6wd-50o8n4rm)
     """
-    id: String!
+    id: NonEmptyString!
   ): TransactionsImport
   update(
     """
@@ -16144,8 +18129,24 @@ type Query {
     collective: [AccountReferenceInput]
   ): VirtualCardRequestCollection!
   hostApplication(hostApplication: HostApplicationReferenceInput): HostApplication
+
+  """
+  Get financial institutions for off-platform transactions
+  """
+  offPlatformTransactionsInstitutions(
+    """
+    The country code to get institutions for
+    """
+    country: String!
+
+    """
+    The provider to use for fetching institutions
+    """
+    provider: OffPlatformTransactionsProvider!
+  ): [OffPlatformTransactionsInstitution!]!
   loggedInAccount: Individual
   me: Individual
+  platformSubscriptionTiers: [PlatformSubscriptionTier]
 }
 
 """
@@ -17420,7 +19421,9 @@ enum ActivityAndClassesType {
   COLLECTIVE_EDITED
   COLLECTIVE_DELETED
   COLLECTIVE_UNHOSTED
+  COLLECTIVE_CONVERTED_TO_ORGANIZATION
   ORGANIZATION_COLLECTIVE_CREATED
+  ORGANIZATION_CONVERTED_TO_COLLECTIVE
   COLLECTIVE_FROZEN
   COLLECTIVE_UNFROZEN
   COLLECTIVE_CONVERSATION_CREATED
@@ -17502,6 +19505,10 @@ enum ActivityAndClassesType {
   VENDOR_CREATED
   VENDOR_EDITED
   VENDOR_DELETED
+  MANUAL_PAYMENT_PROVIDER_CREATED
+  MANUAL_PAYMENT_PROVIDER_UPDATED
+  MANUAL_PAYMENT_PROVIDER_DELETED
+  MANUAL_PAYMENT_PROVIDER_ARCHIVED
   ORDER_PENDING_CREATED
   ORDER_PENDING_FOLLOWUP
   ORDER_PENDING_RECEIVED
@@ -17514,6 +19521,7 @@ enum ActivityAndClassesType {
   USER_NEW_TOKEN
   USER_SIGNIN
   USER_RESET_PASSWORD
+  USER_OTP_REQUESTED
   OAUTH_APPLICATION_AUTHORIZED
   TWO_FACTOR_METHOD_ADDED
   TWO_FACTOR_METHOD_DELETED
@@ -17529,9 +19537,16 @@ enum ActivityAndClassesType {
   ACTIVATED_COLLECTIVE_AS_HOST
   ACTIVATED_COLLECTIVE_AS_INDEPENDENT
   DEACTIVATED_COLLECTIVE_AS_HOST
+  ACTIVATED_MONEY_MANAGEMENT
+  DEACTIVATED_MONEY_MANAGEMENT
+  ACTIVATED_HOSTING
+  DEACTIVATED_HOSTING
   AGREEMENT_CREATED
   AGREEMENT_EDITED
   AGREEMENT_DELETED
+  PLATFORM_SUBSCRIPTION_UPDATED
+  PLATFORM_BILLING_OVERDUE_REMINDER
+  PLATFORM_BILLING_ADDITIONAL_CHARGES_NOTIFICATION
   ADDED_FUND_TO_ORG
   COLLECTIVE_TRANSACTION_PAID
   COLLECTIVE_USER_ADDED
@@ -17541,6 +19556,9 @@ enum ActivityAndClassesType {
   COLLECTIVE_COMMENT_CREATED
   ORDER_PENDING_CRYPTO
   BACKYOURSTACK_DISPATCH_CONFIRMED
+  KYC_REQUESTED
+  KYC_REVOKED
+  KYC_VERIFIED
   COLLECTIVE
   EXPENSES
   CONTRIBUTIONS
@@ -17656,14 +19674,20 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether it's active: can accept financial contributions and pay expenses.
   """
   isActive: Boolean!
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -17690,10 +19714,15 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -17732,6 +19761,7 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -17742,6 +19772,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -17767,6 +19802,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -17823,6 +19863,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -17967,12 +20012,22 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -18020,6 +20075,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -18088,6 +20148,16 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -18108,6 +20178,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -18121,6 +20196,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -18152,6 +20232,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -18217,6 +20302,11 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -18277,7 +20367,12 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -18479,6 +20574,36 @@ type Fund implements Account & AccountWithHost & AccountWithContributions {
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -18716,14 +20841,20 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   isFrozen: Boolean!
 
   """
+  Whether this account is suspended
+  """
+  isSuspended: Boolean!
+
+  """
   Returns whether it's active: can accept financial contributions and pay expenses.
   """
   isActive: Boolean!
 
   """
-  Returns whether the account is setup to Host collectives.
+  Returns whether the account has money management activated.
   """
   isHost: Boolean!
+    @deprecated(reason: "2025-11-21: use hasMoneyManagement or hasHosting on the Organization object instead.")
 
   """
   Returns true if the remote user is an admin of this account
@@ -18750,10 +20881,15 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: ASC }
     includeInherited: Boolean = true
+
+    """
+    Filter members by tier. Pass null to filter for members without any tier.
+    """
+    tier: TierReferenceInput
   ): MemberCollection!
 
   """
-  [AUTHENTICATED] Returns the pending invitations
+  Returns the pending invitations, or null if not allowed.
   """
   memberInvitations(
     """
@@ -18792,6 +20928,7 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Filter on whether the account is a host or not
     """
     isHostAccount: Boolean
+      @deprecated(reason: "2025-12-20: Deprecated. Will be eventually replaced by hasMoneyManagement or hasHosting.")
 
     """
     Filter on (un)approved collectives
@@ -18802,6 +20939,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Filter on archived collectives
     """
     isArchived: Boolean
+
+    """
+    Filter on (not) frozen collectives
+    """
+    isFrozen: Boolean
 
     """
     Whether incognito profiles should be included in the result. Only works if requesting user is an admin of the account.
@@ -18827,6 +20969,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Order the query by requested role order
     """
     orderByRoles: Boolean
+
+    """
+    Filter members by tier
+    """
+    tier: TierReferenceInput
   ): MemberOfCollection!
 
   """
@@ -18883,6 +21030,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return transactions where the amount is greater than or equal to this value (in cents)
@@ -19027,12 +21179,22 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     offset: Int! = 0
 
     """
-    If account is a host, also include hosted accounts orders
+    Only return orders that match these accounting categories
     """
-    includeHostedAccounts: Boolean
+    accountingCategory: [String]
 
     """
-    Include orders from children events/projects
+    If account is a host, also include hosted accounts orders
+    """
+    includeHostedAccounts: Boolean @deprecated(reason: "2025-11-20: Please use hostContext instead")
+
+    """
+    If account is a host, select whether to include ALL, INTERNAL or HOSTED accounts. When set (and `hostedAccounts` is not provided), this will automatically include children accounts (events/projects) of the selected accounts. If `hostedAccounts` is also provided, use `includeChildrenAccounts` to control children account inclusion.
+    """
+    hostContext: HostContext
+
+    """
+    Include orders from children events/projects. Only relevant when `hostedAccounts` is provided. When `hostContext` is set without `hostedAccounts`, children accounts are automatically included regardless of this parameter.
     """
     includeChildrenAccounts: Boolean! = false
 
@@ -19080,6 +21242,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return orders where the amount is greater than or equal to this value (in cents)
@@ -19148,6 +21315,16 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Return only orders made from/to these hosted accounts
     """
     hostedAccounts: [AccountReferenceInput]
+
+    """
+    Return orders only for this host
+    """
+    host: AccountReferenceInput
+
+    """
+    Return only orders created by these users. Limited to 1000 users at a time.
+    """
+    createdBy: [AccountReferenceInput]
   ): OrderCollection!
   expenses(
     direction: ExpenseDirection
@@ -19168,6 +21345,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     fromAccount: AccountReferenceInput
 
     """
+    An alternative to filter by fromAccount (singular), both cannot be used together
+    """
+    fromAccounts: [AccountReferenceInput]
+
+    """
     Reference of an account that is the payer of an expense
     """
     account: AccountReferenceInput
@@ -19181,6 +21363,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Return expenses only for this host
     """
     host: AccountReferenceInput
+
+    """
+    If `host` is provided, select whether to include ALL, INTERNAL or HOSTED accounts expenses.
+    """
+    hostContext: HostContext
 
     """
     Return expenses only created by this INDIVIDUAL account
@@ -19212,6 +21399,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     The order of results
     """
     orderBy: ChronologicalOrderInput! = { field: CREATED_AT, direction: DESC }
+
+    """
+    Only return expenses that match this amount range
+    """
+    amount: AmountRangeInput
 
     """
     Only return expenses where the amount is greater than or equal to this value (in cents)
@@ -19277,6 +21469,11 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
     Only return transactions that are associated with this payout method
     """
     payoutMethod: PayoutMethodReferenceInput
+
+    """
+    Filter expenses by activities
+    """
+    activity: ExpenseActivityFilter
   ): ExpenseCollection!
   settings: JSON!
   conversations(
@@ -19337,7 +21534,12 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   """
   The list of connected accounts (Stripe, PayPal, etc ...). Admin only. Scope: "connectedAccounts".
   """
-  connectedAccounts: [ConnectedAccount]
+  connectedAccounts(
+    """
+    Filter connected accounts by service
+    """
+    service: ConnectedAccountService
+  ): [ConnectedAccount]
 
   """
   The list of applications created by this account. Admin only. Scope: "applications".
@@ -19539,6 +21741,36 @@ type Project implements Account & AccountWithHost & AccountWithContributions & A
   EXPERIMENTAL (this may change or be removed)
   """
   transactionReports(timeUnit: TimeUnit = MONTH, dateFrom: DateTime, dateTo: DateTime): TransactionReports
+
+  """
+  Various stats about how this account is connected to the rest of the community
+  """
+  communityStats(host: AccountReferenceInput!): CommunityStats
+
+  """
+  KYC Verification requests made by this account
+  """
+  kycVerificationRequests(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 10
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
+    If set, returns only verification requests with this status
+    """
+    status: [KYCVerificationStatus!]
+
+    """
+    If set, returns only verification requests made to these accounts
+    """
+    accounts: [AccountReferenceInput!]
+  ): KYCVerificationCollection!
   webhooks(
     """
     The number of results to fetch (default 10, max 1000)
@@ -19711,6 +21943,16 @@ type SearchResults {
   """
   accounts(
     """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+
+    """
     Type of account
     """
     type: AccountType
@@ -19729,37 +21971,107 @@ type SearchResults {
   """
   Search results for Comments
   """
-  comments: SearchResultsComments
+  comments(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsComments
 
   """
   Search results for Expenses
   """
-  expenses: SearchResultsExpenses
+  expenses(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsExpenses
 
   """
   Search results for HostApplications
   """
-  hostApplications: SearchResultsHostApplications
+  hostApplications(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsHostApplications
 
   """
   Search results for Orders
   """
-  orders: SearchResultsOrders
+  orders(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsOrders
 
   """
   Search results for Tiers
   """
-  tiers: SearchResultsTiers
+  tiers(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsTiers
 
   """
   Search results for Transactions
   """
-  transactions: SearchResultsTransactions
+  transactions(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsTransactions
 
   """
   Search results for Updates
   """
-  updates: SearchResultsUpdates
+  updates(
+    """
+    The number of results to fetch (default 10, max 1000)
+    """
+    limit: Int! = 0
+
+    """
+    The offset to use to fetch
+    """
+    offset: Int! = 0
+  ): SearchResultsUpdates
 }
 
 type SearchResultsAccounts {
@@ -19884,6 +22196,21 @@ input HostApplicationReferenceInput {
 }
 
 """
+Provider for off-platform transactions
+"""
+enum OffPlatformTransactionsProvider {
+  """
+  GoCardless bank account data provider
+  """
+  GOCARDLESS
+
+  """
+  Plaid bank account data provider
+  """
+  PLAID
+}
+
+"""
 This is the root mutation
 """
 type Mutation {
@@ -19966,21 +22293,6 @@ type Mutation {
     """
     host: AccountReferenceInput
   ): Fund
-
-  """
-  Create an Organization. Scope: "account".
-  """
-  createOrganization(
-    """
-    Information about the organization to create (name, slug, description, website, ...)
-    """
-    organization: OrganizationCreateInput!
-
-    """
-    List of members to invite on Organization creation.
-    """
-    inviteMembers: [InviteMemberInput]
-  ): Organization
 
   """
   Create a Project. Scope: "account".
@@ -20192,7 +22504,7 @@ type Mutation {
     Account to edit.
     """
     account: AccountUpdateInput!
-  ): Host!
+  ): Account!
 
   """
   Adds or removes a policy on a given account. Scope: "account".
@@ -20239,6 +22551,26 @@ type Mutation {
   Regenerate two factor authentication recovery codes
   """
   regenerateRecoveryCodes: [String!]
+
+  """
+  Convert an account to an Organization. Scope: "account".
+  """
+  convertAccountToOrganization(
+    """
+    Account to convert.
+    """
+    account: AccountReferenceInput!
+
+    """
+    Should the Organization have money management capabilities
+    """
+    hasMoneyManagement: Boolean = false
+
+    """
+    Legal name of the Organization.
+    """
+    legalName: String
+  ): Account!
 
   """
   Edit an accounting category. Returns the account with the updated categories.
@@ -20555,7 +22887,7 @@ type Mutation {
     """
     A optional private comment to add to the created expense
     """
-    privateComment: String
+    privateComment: String @deprecated(reason: "2025-11-03: This field is no longer used")
   ): Expense!
 
   """
@@ -20568,9 +22900,29 @@ type Mutation {
     expense: ExpenseUpdateInput!
 
     """
+    Edit draft without submiting it
+    """
+    isDraftEdit: Boolean! = false
+
+    """
     Expense draft key if invited to submit expense. Scope: "expenses".
     """
     draftKey: String
+  ): Expense!
+
+  """
+  Moves an expense from one account within a Collective to another
+  """
+  moveExpense(
+    """
+    Reference of the expense to move
+    """
+    expense: ExpenseReferenceInput!
+
+    """
+    Reference of the account to move the expense to
+    """
+    destinationAccount: AccountReferenceInput!
   ): Expense!
 
   """
@@ -20649,14 +23001,14 @@ type Mutation {
   ): Expense!
 
   """
-  Sends an email for guest to confirm their emails and create their Open Collective account
+  Create a Stripe payment intent
   """
-  sendGuestConfirmationEmail(
+  createExpenseStripePaymentIntent(
     """
-    The email to validate
+    Reference of the expense to process
     """
-    email: EmailAddress!
-  ): Boolean!
+    expense: ExpenseReferenceInput!
+  ): PaymentIntent!
 
   """
   Mark an account as confirmed
@@ -20866,6 +23218,21 @@ type Mutation {
   ): MemberInvitation!
 
   """
+  Creates and invites admins to an existing Account. Scope: "account".
+  """
+  inviteMembers(
+    """
+    Reference to the account to invite admins to, must be an Organization, Collective, Fund, Event or Project.
+    """
+    account: AccountReferenceInput!
+
+    """
+    List of members to invite as admins.
+    """
+    members: [InviteMemberInput!]!
+  ): [MemberInvitation!]!
+
+  """
   Edit an existing member invitation of the Collective. Scope: "account".
   """
   editMemberInvitation(
@@ -20901,6 +23268,66 @@ type Mutation {
     """
     accept: Boolean!
   ): Boolean!
+
+  """
+  Create a new manual payment provider for a host. Scope: "host".
+  """
+  createManualPaymentProvider(
+    """
+    The host to create the manual payment provider for
+    """
+    host: AccountReferenceInput!
+
+    """
+    The manual payment provider data
+    """
+    manualPaymentProvider: ManualPaymentProviderCreateInput!
+  ): ManualPaymentProvider!
+
+  """
+  Update an existing manual payment provider. Scope: "host".
+  """
+  updateManualPaymentProvider(
+    """
+    Reference to the manual payment provider to update
+    """
+    manualPaymentProvider: ManualPaymentProviderReferenceInput!
+
+    """
+    The updated fields
+    """
+    input: ManualPaymentProviderUpdateInput!
+  ): ManualPaymentProvider!
+
+  """
+  Delete a manual payment provider. If orders reference this provider, it will be archived instead. Scope: "host".
+  """
+  deleteManualPaymentProvider(
+    """
+    Reference to the manual payment provider to delete
+    """
+    manualPaymentProvider: ManualPaymentProviderReferenceInput!
+  ): ManualPaymentProvider!
+
+  """
+  Reorder manual payment providers for a host. Scope: "host".
+  """
+  reorderManualPaymentProviders(
+    """
+    The host to reorder manual payment providers for
+    """
+    host: AccountReferenceInput!
+
+    """
+    The type of providers to reorder
+    """
+    type: ManualPaymentProviderType!
+
+    """
+    Ordered list of provider IDs
+    """
+    providers: [ManualPaymentProviderReferenceInput!]!
+  ): [ManualPaymentProvider!]!
 
   """
   Follows a given Collective. Scope: "account"
@@ -21170,6 +23597,72 @@ type Mutation {
   ): Account!
 
   """
+  Create an Organization. Scope: "account".
+  """
+  createOrganization(
+    """
+    Information about the organization to create (name, slug, description, website, ...)
+    """
+    organization: OrganizationCreateInput!
+
+    """
+    List of members to invite on Organization creation.
+    """
+    inviteMembers: [InviteMemberInput]
+
+    """
+    If creating organization as a new user, provide the user information (name, email, password, etc.).
+    """
+    individual: IndividualCreateInput
+
+    """
+    Description of the role of the user creating the organization.
+    """
+    roleDescription: String
+    captcha: CaptchaInputType
+
+    """
+    If true, the organization will be created with Money Management activated, allowing the organization to receive contributions and pay for expenses. Defaults to false.
+    """
+    hasMoneyManagement: Boolean = false
+
+    """
+    If true, the organization will be created with Hosting activated, allowing the organization to host Collectives and Funds. Defaults to false.
+    """
+    hasHosting: Boolean = false
+  ): Organization
+
+  """
+  Convert an account to an Organization. Scope: "account".
+  """
+  editOrganizationMoneyManagementAndHosting(
+    """
+    Organization to edit money management capability.
+    """
+    organization: AccountReferenceInput!
+
+    """
+    Should the Organization have money management capabilities
+    """
+    hasMoneyManagement: Boolean
+
+    """
+    Should the Organization have hosting capabilities
+    """
+    hasHosting: Boolean
+  ): Organization!
+
+  """
+  Convert an Organization to a Collective. Scope: "account".
+  """
+  convertOrganizationToCollective(
+    """
+    Account to convert.
+    """
+    organization: AccountReferenceInput!
+  ): Collective!
+
+  """
   Add a new payment method to be used with an Order. Scope: "orders".
   """
   addCreditCard(
@@ -21320,7 +23813,7 @@ type Mutation {
     The connected account to refresh
     """
     connectedAccount: ConnectedAccountReferenceInput!
-  ): TransactionsImport!
+  ): TransactionsImport! @deprecated(reason: "2025-07-23: Use `syncTransactionsImport` instead")
 
   """
   Refresh the list of sub-accounts & other metadata by re-fetching the account info
@@ -21336,6 +23829,51 @@ type Mutation {
     """
     transactionImport: TransactionsImportReferenceInput
   ): PlaidConnectAccountResponse!
+
+  """
+  Generate a GoCardless link for bank account data access
+  """
+  generateGoCardlessLink(
+    """
+    Input for creating the GoCardless link
+    """
+    input: GoCardlessLinkInput!
+
+    """
+    The account to which the GoCardless link should be generated
+    """
+    host: AccountReferenceInput!
+  ): GoCardlessLink!
+
+  """
+  Connect a GoCardless account
+  """
+  connectGoCardlessAccount(
+    """
+    The requisition ID returned by the GoCardless flow
+    """
+    requisitionId: String!
+
+    """
+    The account to which the GoCardless account should be connected
+    """
+    host: AccountReferenceInput!
+
+    """
+    The name of the institution
+    """
+    sourceName: String
+
+    """
+    The name of the account. Will be inferred if not provided.
+    """
+    name: String
+
+    """
+    If re-connecting an existing account, the transactions import to reconnect
+    """
+    transactionImport: TransactionsImportReferenceInput
+  ): GoCardlessConnectAccountResponse!
 
   """
   [Root only] Edits account flags (deleted, banned, archived, trusted host)
@@ -21483,6 +24021,16 @@ type Mutation {
   ): Transaction!
 
   """
+  Manually request a sync for a transactions import (works for both Plaid and GoCardless)
+  """
+  syncTransactionsImport(
+    """
+    The transactions import to sync
+    """
+    transactionImport: TransactionsImportReferenceInput!
+  ): TransactionsImport!
+
+  """
   Create a new import. To manually add transactions to it, use `importTransactions`.
   """
   createTransactionsImport(
@@ -21562,14 +24110,9 @@ type Mutation {
   """
   updateTransactionsImportRows(
     """
-    ID of the import to add transactions to
-    """
-    id: NonEmptyString!
-
-    """
     Rows to update
     """
-    rows: [TransactionsImportRowUpdateInput!]
+    rows: [TransactionsImportRowUpdateInput!]!
 
     """
     Action to perform on all non-processed rows
@@ -21983,11 +24526,49 @@ type Mutation {
     """
     host: AccountReferenceInput!
   ): Vendor!
+  updateAccountPlatformSubscription(
+    """
+    Account to update the platform subscription for
+    """
+    account: AccountReferenceInput!
+    planId: String
+
+    """
+    The new platform subscription tier to apply to the account
+    """
+    subscription: PlatformSubscriptionInput
+  ): Account!
 
   """
   Send In-App Survey response
   """
   sendSurveyResponse(surveyKey: String!, responseId: String!, score: Int!, text: String, okToContact: Boolean): Boolean
+
+  """
+  Requests an account to be verified using a KYC provider
+  """
+  requestKYCVerification(
+    """
+    Account request KYC Verification
+    """
+    requestedByAccount: AccountReferenceInput!
+
+    """
+    Account that will be verified
+    """
+    verifyAccount: AccountReferenceInput!
+    provider: KYCProvider!
+
+    """
+    Provider specific request data
+    """
+    request: RequestKYCVerificationInput!
+  ): KYCVerification!
+
+  """
+  Revoke the KYC Verification
+  """
+  revokeKYCVerification(kycVerification: KYCVerificationReferenceInput!): KYCVerification!
 }
 
 input CollectiveCreateInput {
@@ -22052,7 +24633,8 @@ The `Upload` scalar type represents a file upload.
 scalar Upload
 
 input IndividualCreateInput {
-  name: String!
+  name: String
+  legalName: String
   email: String!
 }
 
@@ -22081,6 +24663,8 @@ input EventCreateInput {
   description: String
   tags: [String]
   settings: JSON
+  location: LocationInput
+  privateInstructions: String
 
   """
   The Event start date and time
@@ -22113,25 +24697,6 @@ input FundCreateInput {
   slug: String!
   description: String!
   tags: [String]
-  settings: JSON
-
-  """
-  The profile avatar image
-  """
-  image: Upload
-
-  """
-  The profile background image, for the banner and social media sharing
-  """
-  backgroundImage: Upload
-}
-
-input OrganizationCreateInput {
-  name: String!
-  legalName: String
-  slug: String!
-  description: String!
-  website: String @deprecated(reason: "2024-11-12: Please use socialLinks")
   settings: JSON
 
   """
@@ -22218,7 +24783,66 @@ input AccountUpdateInput {
   The public id identifying the account (ie: dgm9bnk8-0437xqry-ejpvzeol-jdayw5re)
   """
   id: String!
+  name: String
+  legalName: String
+  slug: String
+  description: String
+  image: URL
+  longDescription: String
+  company: String
+  tags: [String]
+  location: LocationInput
+  socialLinks: [SocialLinkInput!]
   currency: Currency
+
+  """
+  The host fee percentage for this account. Must be between 0 and 100.
+  """
+  hostFeePercent: Int
+
+  """
+  Settings for the account.
+  """
+  settings: AccountUpdateSettingsInput
+
+  """
+  The Event start date and time
+  """
+  startsAt: DateTime
+
+  """
+  The Event end date and time
+  """
+  endsAt: DateTime
+
+  """
+  Timezone of the Event (TZ database format, e.g. UTC or Europe/Berlin)
+  """
+  timezone: String
+
+  """
+  Private instructions for the host to be sent to participating users.
+  """
+  privateInstructions: String
+}
+
+input AccountUpdateSettingsInput {
+  """
+  Whether this host account is accepting fiscal sponsorship applications.
+  """
+  apply: Boolean
+
+  """
+  Message shown to users when applying to join this account.
+  """
+  applyMessage: String
+
+  """
+  Terms of Service for this account.
+  """
+  tos: String
+  VAT: JSON
+  GST: JSON
 }
 
 input PoliciesInput {
@@ -22928,6 +25552,11 @@ enum ExpenseProcessAction {
   PAY
 
   """
+  To mark expense as paid with stripe, can still be processing
+  """
+  MARK_AS_PAID_WITH_STRIPE
+
+  """
   To mark the expense as spam
   """
   MARK_AS_SPAM
@@ -23133,6 +25762,16 @@ input ExpenseInviteeOrganizationInput {
 }
 
 """
+A Stripe payment intent
+"""
+type PaymentIntent {
+  id: String!
+  paymentIntentClientSecret: String!
+  stripeAccount: String!
+  stripeAccountPublishableSecret: String!
+}
+
+"""
 Response for the confirmGuestAccount mutation
 """
 type ConfirmGuestAccountResponse {
@@ -23212,6 +25851,62 @@ input MemberInvitationReferenceInput {
   The internal id of the invitation (ie: 580)
   """
   legacyId: Int
+}
+
+input ManualPaymentProviderCreateInput {
+  """
+  The type of manual payment provider
+  """
+  type: ManualPaymentProviderType!
+
+  """
+  Display name for this payment provider
+  """
+  name: NonEmptyString!
+
+  """
+  Payment instructions to show contributors (HTML allowed)
+  """
+  instructions: String!
+
+  """
+  Icon name for this payment provider
+  """
+  icon: String
+
+  """
+  Bank account details for BANK_TRANSFER type providers
+  """
+  accountDetails: JSON
+}
+
+input ManualPaymentProviderReferenceInput {
+  """
+  The unique identifier of the manual payment provider
+  """
+  id: String!
+}
+
+input ManualPaymentProviderUpdateInput {
+  """
+  Display name for this payment provider
+  """
+  name: NonEmptyString
+
+  """
+  Payment instructions to show contributors (HTML allowed)
+  """
+  instructions: String
+
+  """
+  Icon name for this payment provider
+  """
+  icon: String
+
+  """
+  Bank account details for BANK_TRANSFER type providers
+  """
+  accountDetails: JSON
 }
 
 type FollowAccountResult {
@@ -23453,6 +26148,11 @@ input PaymentMethodInput {
   The Payment Intent ID used in this checkout
   """
   paymentIntentId: String
+
+  """
+  The Manual Payment Provider ID used in this checkout
+  """
+  manualPaymentProvider: ManualPaymentProviderReferenceInput
 }
 
 input CreditCardCreateInput {
@@ -23566,16 +26266,6 @@ enum ProcessOrderAction {
   To mark the order as paid
   """
   MARK_AS_PAID
-}
-
-"""
-A Stripe payment intent
-"""
-type PaymentIntent {
-  id: String!
-  paymentIntentClientSecret: String!
-  stripeAccount: String!
-  stripeAccountPublishableSecret: String!
 }
 
 """
@@ -23738,6 +26428,46 @@ input PendingOrderEditInput {
   accountingCategory: AccountingCategoryReferenceInput
 }
 
+input OrganizationCreateInput {
+  name: String!
+  legalName: String
+  slug: String!
+  description: String
+  website: String @deprecated(reason: "2024-11-12: Please use socialLinks")
+  settings: JSON
+
+  """
+  Two-letters country code following ISO31661
+  """
+  countryISO: String
+  currency: Currency
+
+  """
+  The profile avatar image
+  """
+  image: Upload
+
+  """
+  The profile background image, for the banner and social media sharing
+  """
+  backgroundImage: Upload
+}
+
+"""
+Input type for captcha verification
+"""
+input CaptchaInputType {
+  """
+  The captcha token to verify
+  """
+  token: String!
+
+  """
+  The captcha provider (HCAPTCHA, RECAPTCHA, or TURNSTILE)
+  """
+  provider: String!
+}
+
 type CreditCardWithStripeError {
   """
   The payment method created
@@ -23803,6 +26533,88 @@ The locale in the format of a BCP 47 (RFC 5646) standard string
 scalar Locale
 
 type PlaidConnectAccountResponse {
+  """
+  The connected account that was created
+  """
+  connectedAccount: ConnectedAccount!
+
+  """
+  The transactions import that was created
+  """
+  transactionsImport: TransactionsImport!
+}
+
+"""
+A GoCardless link for bank account data access
+"""
+type GoCardlessLink {
+  """
+  The unique identifier for the requisition
+  """
+  id: String!
+
+  """
+  The date & time at which the requisition was created
+  """
+  createdAt: DateTime!
+
+  """
+  The reference for the requisition
+  """
+  reference: String!
+
+  """
+  The requisition ID for the link
+  """
+  requisitionId: String!
+
+  """
+  Redirect URL to your application after end-user authorization with ASPSP
+  """
+  redirect: URL!
+
+  """
+  The institution ID for this requisition
+  """
+  institutionId: String!
+
+  """
+  Link to initiate authorization with Institution
+  """
+  link: String
+}
+
+"""
+Input for creating a GoCardless link
+"""
+input GoCardlessLinkInput {
+  """
+  The institution ID for this requisition
+  """
+  institutionId: String!
+
+  """
+  Maximum number of days of transaction data to retrieve (default to the maximum allowed by the institution)
+  """
+  maxHistoricalDays: Int
+
+  """
+  Number of days from acceptance that the access can be used (default to the maximum allowed by the institution)
+  """
+  accessValidForDays: Int
+
+  """
+  A two-letter country code (ISO 639-1) (default: "en")
+  """
+  userLanguage: Locale
+
+  """
+  Option to enable account selection view for the end user (default: true)
+  """
+  accountSelection: Boolean
+}
+
+type GoCardlessConnectAccountResponse {
   """
   The connected account that was created
   """
@@ -23883,6 +26695,11 @@ input TransactionsImportRowCreateInput {
   amount: AmountInput!
 
   """
+  The account ID associated with the row
+  """
+  accountId: String
+
+  """
   The raw value of the row
   """
   rawValue: JSONObject
@@ -23890,14 +26707,14 @@ input TransactionsImportRowCreateInput {
 
 type TransactionsImportEditResponse {
   """
-  Updated import
+  The host account that owns the off-platform transactions
   """
-  import: TransactionsImport!
+  host: Host
 
   """
   The rows updated by the mutation
   """
-  rows: [TransactionsImportRow]!
+  rows: [TransactionsImportRow!]!
 }
 
 input TransactionsImportRowUpdateInput {
@@ -23945,6 +26762,11 @@ input TransactionsImportRowUpdateInput {
   Optional note for the row
   """
   note: String
+
+  """
+  The account ID associated with the row
+  """
+  accountId: String
 }
 
 """
@@ -23955,6 +26777,7 @@ enum TransactionsImportRowAction {
   RESTORE_ALL
   PUT_ON_HOLD_ALL
   UPDATE_ROWS
+  UNLINK
 }
 
 """
@@ -24064,13 +26887,16 @@ enum UploadedFileKind {
   EXPENSE_ATTACHED_FILE
   EXPENSE_ITEM
   TRANSACTIONS_IMPORT
+  TRANSACTIONS_CSV_EXPORT
   ACCOUNT_LONG_DESCRIPTION
   UPDATE
   COMMENT
   TIER_LONG_DESCRIPTION
+  CUSTOM_PAYMENT_METHOD_TEMPLATE
   ACCOUNT_CUSTOM_EMAIL
   AGREEMENT_ATTACHMENT
   EXPENSE_INVOICE
+  RECEIPT_EMBEDDED_IMAGE
 }
 
 """
@@ -24257,6 +27083,7 @@ input VendorCreateInput {
   imageUrl: String @deprecated(reason: "2024-11-26: Please use image + backgroundImage fields")
   vendorInfo: VendorInfoInput
   payoutMethod: PayoutMethodInput
+  visibleToAccounts: [AccountReferenceInput]
 
   """
   The profile avatar image
@@ -24311,6 +27138,7 @@ input VendorEditInput {
   imageUrl: String @deprecated(reason: "2024-11-26: Please use image + backgroundImage fields")
   vendorInfo: VendorInfoInput
   payoutMethod: PayoutMethodInput
+  visibleToAccounts: [AccountReferenceInput]
 
   """
   The profile avatar image
@@ -24322,3 +27150,104 @@ input VendorEditInput {
   """
   backgroundImage: Upload
 }
+
+input PlatformSubscriptionInput {
+  """
+  The ID of the platform subscription to update
+  """
+  id: String
+
+  """
+  The new platform subscription plan to apply to the account
+  """
+  plan: PlatformSubscriptionPlanInput!
+}
+
+input PlatformSubscriptionPlanInput {
+  """
+  The title of the subscription plan
+  """
+  title: String!
+
+  """
+  The type of the subscription plan (e.g., "basic", "premium")
+  """
+  type: String!
+
+  """
+  The ID of the base plan for this subscription tier
+  """
+  basePlanId: String!
+
+  """
+  Features included in this subscription plan
+  """
+  features: PlatformSubscriptionFeaturesFeatures
+
+  """
+  Pricing details for the subscription plan
+  """
+  pricing: PlatformSubscriptionPlanPricing!
+}
+
+input PlatformSubscriptionFeaturesFeatures {
+  TRANSFERWISE: Boolean!
+  PAYPAL_PAYOUTS: Boolean!
+  RECEIVE_HOST_APPLICATIONS: Boolean!
+  CHART_OF_ACCOUNTS: Boolean!
+  EXPENSE_SECURITY_CHECKS: Boolean!
+  EXPECTED_FUNDS: Boolean!
+  CHARGE_HOSTING_FEES: Boolean!
+  AGREEMENTS: Boolean!
+  TAX_FORMS: Boolean!
+  FUNDS_GRANTS_MANAGEMENT: Boolean!
+  VENDORS: Boolean!
+  USE_EXPENSES: Boolean!
+  UPDATES: Boolean!
+  RECEIVE_FINANCIAL_CONTRIBUTIONS: Boolean!
+  RECEIVE_EXPENSES: Boolean!
+  ACCOUNT_MANAGEMENT: Boolean!
+  OFF_PLATFORM_TRANSACTIONS: Boolean!
+}
+
+input PlatformSubscriptionPlanPricing {
+  """
+  The price of the subscription plan per month
+  """
+  pricePerMonth: AmountInput!
+
+  """
+  Price for each additional collective beyond the included limit
+  """
+  pricePerAdditionalCollective: AmountInput!
+
+  """
+  Price for each additional expense beyond the included limit
+  """
+  pricePerAdditionalExpense: AmountInput!
+
+  """
+  Number of collectives included in this subscription plan
+  """
+  includedCollectives: Int!
+
+  """
+  Number of expenses included in this subscription plan per month
+  """
+  includedExpensesPerMonth: Int!
+}
+
+input RequestKYCVerificationInput {
+  manual: RequestManualKYCVerificationInput
+}
+
+input RequestManualKYCVerificationInput {
+  legalName: String!
+  legalAddress: String
+  notes: String
+}
+
+"""
+A reference to a KYC Verification
+"""
+scalar KYCVerificationReferenceInput

@@ -38,6 +38,8 @@ type Fields =
   | 'dateApplied'
   | 'unhostedAt'
   | 'unfrozenAt'
+  | 'startsAt'
+  | 'endsAt'
   | 'numberOfExpensesYear'
   | 'valueOfExpensesYear'
   | 'maxExpenseValueYear'
@@ -100,6 +102,8 @@ export const hostedCollectivesQuery = gqlV2`
     $includeYearSummary: Boolean!
     $lastYear: DateTime!
     $includeAllTimeSummary: Boolean!
+    $startsAtFrom: DateTime
+    $startsAtTo: DateTime
   ) {
     host(slug: $hostSlug) {
       id
@@ -120,6 +124,8 @@ export const hostedCollectivesQuery = gqlV2`
         balance: $balance
         consolidatedBalance: $consolidatedBalance
         currencies: $currencies
+        startsAtFrom: $startsAtFrom
+        startsAtTo: $startsAtTo
       ) {
         offset
         limit
@@ -150,6 +156,10 @@ export const hostedCollectivesQuery = gqlV2`
           policies {
             id
             COLLECTIVE_ADMINS_CAN_SEE_PAYOUT_METHODS
+          }
+          ... on Event {
+            startsAt
+            endsAt
           }
           ... on AccountWithHost {
             host {
@@ -201,14 +211,14 @@ export const hostedCollectivesQuery = gqlV2`
               hostFeeTotal { value, currency }
               spentTotal { value, currency }
               receivedTotal { value, currency }
-              expenseMonthlyAverageCount: expenseAverageCount(period: MONTH) 
-              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency } 
-              contributionMonthlyAverageCount: contributionAverageCount(period: MONTH) 
-              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency } 
-              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency } 
-              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency } 
-              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency } 
-              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency } 
+              expenseMonthlyAverageCount: expenseAverageCount(period: MONTH)
+              expenseMonthlyAverageTotal: expenseAverageTotal(period: MONTH)  { value, currency }
+              contributionMonthlyAverageCount: contributionAverageCount(period: MONTH)
+              contributionMonthlyAverageTotal: contributionAverageTotal(period: MONTH)  { value, currency }
+              spentTotalMonthlyAverage: spentTotalAverage(period: MONTH)  { value, currency }
+              receivedTotalMonthlyAverage: receivedTotalAverage(period: MONTH)  { value, currency }
+              spentTotalYearlyAverage: spentTotalAverage(period: YEAR)  { value, currency }
+              receivedTotalYearlyAverage: receivedTotalAverage(period: YEAR)  { value, currency }
             }
           }
           admins: members(role: [ADMIN]) {
@@ -297,6 +307,8 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
   dateApplied: (account) => shortDate(account.hostApplication?.createdAt),
   unhostedAt: (account) => shortDate(account.unhostedAt),
   unfrozenAt: (account) => shortDate(account.unfrozenAt),
+  startsAt: (account) => shortDate(account.startsAt),
+  endsAt: (account) => shortDate(account.endsAt),
   numberOfExpensesYear: (account) => account.yearSummary?.expenseCount,
   valueOfExpensesYear: (account) =>
     account.yearSummary?.expenseTotal && amountAsString(account.yearSummary.expenseTotal),
@@ -434,6 +446,21 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         ].includes(field),
       ),
     };
+
+    if (req.query.startsAtFrom) {
+      variables['startsAtFrom'] = moment.utc(req.query.startsAtFrom as string).toISOString();
+    }
+    if (req.query.startsAtTo) {
+      // Detect short form (e.g: 2021-08-30)
+      const shortDate = (req.query.startsAtTo as string).match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
+      variables['startsAtTo'] = moment.utc(req.query.startsAtTo as string);
+      // Extend to end of the day, 1 sec before midnight
+      if (shortDate) {
+        variables['startsAtTo'].set('hour', 23).set('minute', 59).set('second', 59);
+      }
+      variables['startsAtTo'] = variables['startsAtTo'].toISOString();
+    }
+
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', { variables, headers });
 
