@@ -35,6 +35,7 @@
     "node-fetch": "2.7.0",
     "omit-deep-lodash": "1.1.7",
     "react": "19.2.4",
+    "rxjs": "7.8.2",
     "winston": "3.19.0"
   },
   "scripts": {
