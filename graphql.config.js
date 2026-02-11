@@ -8,8 +8,7 @@ module.exports = {
           prod: 'https://api.opencollective.com/graphql/v2',
         },
         pluckConfig: {
-          globalGqlIdentifierName: 'gqlV2',
-          gqlMagicComment: 'GraphQLV2',
+          globalGqlIdentifierName: 'gql',
         },
       },
     },
@@ -21,8 +20,7 @@ module.exports = {
           prod: 'https://api.opencollective.com/graphql/v1',
         },
         pluckConfig: {
-          globalGqlIdentifierName: 'gql',
-          gqlMagicComment: 'GraphQL',
+          globalGqlIdentifierName: 'gqlV1',
         },
       },
     },

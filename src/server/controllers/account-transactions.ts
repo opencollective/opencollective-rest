@@ -1,6 +1,6 @@
 import { Parser, type ParserOptions } from '@json2csv/plainjs';
 import type { RequestHandler } from 'express';
-import gqlV2 from 'graphql-tag';
+import gql from 'graphql-tag';
 import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
@@ -20,7 +20,7 @@ function json2csv(data: object, opts: ParserOptions) {
   return parser.parse(data);
 }
 
-export const transactionsFragment = gqlV2 /* GraphQL */ `
+export const transactionsFragment = gql`
   fragment TransactionsFragment on TransactionCollection {
     __typename
     limit
@@ -234,7 +234,7 @@ export const transactionsFragment = gqlV2 /* GraphQL */ `
 
 /* $fetchHostFee seems not used but it is in fragment */
 
-const transactionsQuery = gqlV2 /* GraphQL */ `
+const transactionsQuery = gql`
   query AccountTransactions(
     $accountingCategory: [String]
     $clearedFrom: DateTime
@@ -306,7 +306,7 @@ const transactionsQuery = gqlV2 /* GraphQL */ `
   ${transactionsFragment}
 `;
 
-const hostTransactionsQuery = gqlV2 /* GraphQL */ `
+const hostTransactionsQuery = gql`
   query HostTransactions(
     $account: [AccountReferenceInput!]
     $accountingCategory: [String]

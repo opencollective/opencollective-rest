@@ -1,10 +1,10 @@
-import gqlV2 from 'graphql-tag';
+import gql from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
 import { graphqlRequest } from '../lib/graphql';
 import { logger } from '../logger';
 
-const query = gqlV2 /* GraphQL */ `
+const query = gql`
   query AccountOrders(
     $slug: String!
     $filter: AccountOrdersFilter

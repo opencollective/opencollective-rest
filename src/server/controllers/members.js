@@ -5,8 +5,9 @@ import { simpleGraphqlRequest } from '../lib/graphql';
 import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
-// Emulate gql from graphql-tag
-const gql = (string) => String(string).replace(`\n`, ` `).trim();
+// Simple tagged template that flattens the string instead of parsing it into a DocumentNode,
+// because simpleGraphqlRequest (graphql-request) expects a raw string query, not an AST.
+const gqlV1 = (string) => String(string).replace(`\n`, ` `).trim();
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -38,7 +39,7 @@ export async function list(req, res, next) {
     headers['Personal-Token'] = personalToken;
   }
 
-  const query = gql`
+  const query = gqlV1 /* GraphQL */ `
     query collectiveMembers(
       $collectiveSlug: String
       $backerType: String
@@ -50,6 +51,7 @@ export async function list(req, res, next) {
     ) {
       Collective(slug: $collectiveSlug) {
         currency
+
         members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
           id
           createdAt

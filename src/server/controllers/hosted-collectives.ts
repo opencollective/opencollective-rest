@@ -2,7 +2,7 @@ import assert from 'assert';
 
 import { Parser } from '@json2csv/plainjs';
 import type { RequestHandler } from 'express';
-import gqlV2 from 'graphql-tag';
+import gql from 'graphql-tag';
 import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
@@ -69,7 +69,7 @@ type Fields =
   | 'spentTotalYearlyAverage'
   | 'receivedTotalYearlyAverage';
 
-const hostQuery = gqlV2 /* GraphQL */ `
+const hostQuery = gql`
   query HostedCollectives($hostSlug: String!) {
     host(slug: $hostSlug) {
       id
@@ -81,7 +81,7 @@ const hostQuery = gqlV2 /* GraphQL */ `
   }
 `;
 
-export const hostedCollectivesQuery = gqlV2 /* GraphQL */ `
+export const hostedCollectivesQuery = gql`
   query HostedCollectives(
     $hostSlug: String!
     $hostCurrency: Currency!
