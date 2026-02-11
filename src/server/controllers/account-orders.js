@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
 import { graphqlRequest } from '../lib/graphql';
+import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 const query = gql`
@@ -46,6 +47,14 @@ const query = gql`
 `;
 
 const accountOrders = async (req, res) => {
+  const paramsError = validateParams(req.params, {
+    filter: ['incoming', 'outgoing'],
+    status: ['active', 'cancelled', 'error', 'paid', 'pending'],
+  });
+  if (paramsError) {
+    return res.status(400).send({ error: { message: paramsError } });
+  }
+
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;

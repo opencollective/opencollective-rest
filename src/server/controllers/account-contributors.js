@@ -4,7 +4,7 @@ import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { parseToBooleanDefaultFalse } from '../lib/utils';
+import { parseToBooleanDefaultFalse, validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -169,6 +169,11 @@ const applyMapping = (mapping, row) => {
 const accountContributors = async (req, res) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     return res.status(405).send({ error: { message: 'Method not allowed' } });
+  }
+
+  const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
+  if (paramsError) {
+    return res.status(400).send({ error: { message: paramsError } });
   }
 
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'limit', 'offset']);

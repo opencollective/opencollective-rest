@@ -92,6 +92,24 @@ export const splitIds = (str?: string) => str?.split(',').map(trim) || [];
 
 export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 
+/**
+ * Validates route params against allowed values (replaces Express 4 inline regex constraints).
+ * Returns an error message string if any param is invalid, or null if all are valid.
+ * Undefined/missing params (optional) are considered valid.
+ */
+export const validateParams = (
+  params: Record<string, string | undefined>,
+  rules: Record<string, string[]>,
+): string | null => {
+  for (const [paramName, allowed] of Object.entries(rules)) {
+    const value = params[paramName];
+    if (value !== undefined && !allowed.includes(value)) {
+      return `Invalid value for "${paramName}": "${value}". Allowed values: ${allowed.join(', ')}`;
+    }
+  }
+  return null;
+};
+
 export const applyMapping = (mapping, row, meta?) => {
   const res = {};
   Object.keys(mapping).map((key) => {

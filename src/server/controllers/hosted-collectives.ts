@@ -8,7 +8,13 @@ import moment from 'moment';
 
 import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
-import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
+import {
+  applyMapping,
+  parseToBooleanDefaultFalse,
+  parseToBooleanDefaultTrue,
+  splitEnums,
+  validateParams,
+} from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -442,6 +448,13 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
   }
+
+  const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
+  if (paramsError) {
+    res.status(400).send({ error: { message: paramsError } });
+    return;
+  }
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};

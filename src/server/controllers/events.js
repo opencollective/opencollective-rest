@@ -2,6 +2,10 @@ import { fetchEvent } from '../lib/graphql';
 import { logger } from '../logger';
 
 export async function info(req, res, next) {
+  if (req.params.format !== 'json') {
+    return res.status(400).send({ error: { message: 'Format must be json' } });
+  }
+
   // Keeping the resulting info for 10m in the CDN cache
   res.setHeader('Cache-Control', `public, max-age=${60 * 10}`);
   let event;

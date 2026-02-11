@@ -12,6 +12,7 @@ import {
   parseToBooleanDefaultTrue,
   splitEnums,
   splitIds,
+  validateParams,
 } from '../lib/utils';
 import { logger } from '../logger';
 
@@ -652,6 +653,26 @@ type Params = {
 const accountTransactions: RequestHandler<Params> = async (req, res) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     res.status(405).send({ error: { message: 'Method not allowed' } });
+    return;
+  }
+
+  const paramsError = validateParams(req.params, {
+    reportType: ['hostTransactions', 'transactions'],
+    type: ['credit', 'debit'],
+    kind: [
+      'contribution',
+      'expense',
+      'added_funds',
+      'host_fee',
+      'host_fee_share',
+      'host_fee_share_debt',
+      'platform_tip',
+      'platform_tip_debt',
+    ],
+    format: ['json', 'csv', 'txt'],
+  });
+  if (paramsError) {
+    res.status(400).send({ error: { message: paramsError } });
     return;
   }
 
