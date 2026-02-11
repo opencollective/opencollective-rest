@@ -3,7 +3,7 @@ import https from 'https';
 
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 import { GraphQLClient } from 'graphql-request';
-import gql from 'graphql-tag';
+import gqlV1 from 'graphql-tag';
 import nodeFetch from 'node-fetch';
 import omitDeep from 'omit-deep-lodash';
 
@@ -98,7 +98,7 @@ export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey,
 }
 
 export async function fetchCollective(collectiveSlug) {
-  const query = gql`
+  const query = gqlV1 /* GraphQL */ `
     query fetchCollective($collectiveSlug: String) {
       Collective(slug: $collectiveSlug) {
         id
@@ -128,7 +128,7 @@ export async function fetchCollective(collectiveSlug) {
  * @returns {Promise<Object>} The event data.
  */
 export async function fetchEvent(eventSlug) {
-  const query = gql`
+  const query = gqlV1 /* GraphQL */ `
     query Collective($slug: String) {
       Collective(slug: $slug) {
         id
@@ -161,7 +161,7 @@ export async function fetchEvent(eventSlug) {
   return result.Collective;
 }
 
-export const allTransactionsQuery = gql`
+export const allTransactionsQuery = gqlV1 /* GraphQL */ `
   query allTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String) {
     allTransactions(collectiveSlug: $collectiveSlug, limit: $limit, offset: $offset, type: $type) {
       id
@@ -205,7 +205,7 @@ export const allTransactionsQuery = gql`
   }
 `;
 
-export const getTransactionQuery = gql`
+export const getTransactionQuery = gqlV1 /* GraphQL */ `
   query Transaction($id: Int, $uuid: String) {
     Transaction(id: $id, uuid: $uuid) {
       id
