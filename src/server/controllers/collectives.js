@@ -5,10 +5,10 @@ import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 export async function info(req, res, next) {
-  const paramsError = validateParams(req.params, {
+  const isValid = validateParams(req.params, {
     format: ['json'],
   });
-  if (paramsError) {
+  if (!isValid) {
     return next();
   }
 

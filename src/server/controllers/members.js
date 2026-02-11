@@ -10,12 +10,12 @@ import { logger } from '../logger';
 const gqlV1 = (string) => String(string).replace(`\n`, ` `).trim();
 
 export async function list(req, res, next) {
-  const paramsError = validateParams(req.params, {
+  const isValid = validateParams(req.params, {
     format: ['json', 'csv'],
     backerType: ['all', 'users', 'organizations'],
     role: ['attendees', 'followers', 'organizers', 'all'],
   });
-  if (paramsError) {
+  if (!isValid) {
     return next();
   }
 

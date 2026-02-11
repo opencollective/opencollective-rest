@@ -47,11 +47,11 @@ const query = gql`
 `;
 
 const accountOrders = async (req, res, next) => {
-  const paramsError = validateParams(req.params, {
+  const isValid = validateParams(req.params, {
     filter: ['incoming', 'outgoing'],
     status: ['active', 'cancelled', 'error', 'paid', 'pending'],
   });
-  if (paramsError) {
+  if (!isValid) {
     return next();
   }
 

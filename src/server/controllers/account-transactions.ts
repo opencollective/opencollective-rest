@@ -658,7 +658,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
     return;
   }
 
-  const paramsError = validateParams(req.params, {
+  const isValid = validateParams(req.params, {
     reportType: ['hostTransactions', 'transactions'],
     type: ['credit', 'debit'],
     kind: [
@@ -673,7 +673,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
     ],
     format: ['json', 'csv', 'txt'],
   });
-  if (paramsError) {
+  if (!isValid) {
     next();
     return;
   }

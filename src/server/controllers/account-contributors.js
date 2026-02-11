@@ -171,8 +171,8 @@ const accountContributors = async (req, res, next) => {
     return res.status(405).send({ error: { message: 'Method not allowed' } });
   }
 
-  const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
-  if (paramsError) {
+  const isValid = validateParams(req.params, { format: ['json', 'csv'] });
+  if (!isValid) {
     return next();
   }
 

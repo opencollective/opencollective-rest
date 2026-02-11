@@ -100,14 +100,14 @@ export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 export const validateParams = <T extends Record<string, string | string[] | undefined>>(
   params: T,
   rules: Partial<Record<keyof T & string, string[]>>,
-): string | null => {
+): boolean => {
   for (const [paramName, allowed] of Object.entries(rules) as [string, string[]][]) {
     const value = params[paramName];
     if (typeof value === 'string' && !allowed.includes(value)) {
-      return `Invalid value for "${paramName}": "${value}". Allowed values: ${allowed.join(', ')}`;
+      return false;
     }
   }
-  return null;
+  return true;
 };
 
 export const applyMapping = (mapping, row, meta?) => {

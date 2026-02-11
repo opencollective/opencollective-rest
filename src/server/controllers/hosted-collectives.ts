@@ -449,8 +449,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     return;
   }
 
-  const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
-  if (paramsError) {
+  const isValid = validateParams(req.params, { format: ['json', 'csv'] });
+  if (!isValid) {
     next();
     return;
   }
