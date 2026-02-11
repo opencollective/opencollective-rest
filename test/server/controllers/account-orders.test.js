@@ -26,6 +26,18 @@ describe('account-orders', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for invalid filter', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/orders/invalid');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid status', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/orders/incoming/invalid');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('accountOrders', () => {
     test('return /v2/:slug/orders', async () => {
       const orders = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/orders');
