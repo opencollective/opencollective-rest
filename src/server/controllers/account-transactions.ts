@@ -642,9 +642,10 @@ const defaultFields = [
   'refundKind',
 ];
 
+type ReportType = 'hostTransactions' | 'transactions';
+
 type Params = {
   slug: string;
-  reportType: 'hostTransactions' | 'transactions';
   type?: 'credit' | 'debit';
   kind?: string;
   format: 'json' | 'csv' | 'txt';
@@ -656,8 +657,13 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
     return;
   }
 
+  // reportType is now a literal path segment, not a route parameter — derive it from the URL
+  // path is like /v2/:slug/hostTransactions.csv, so segment [3] is "hostTransactions.csv"
+  const reportType: ReportType = req.path.split('/')[3]?.startsWith('hostTransactions')
+    ? 'hostTransactions'
+    : 'transactions';
+
   const paramsError = validateParams(req.params, {
-    reportType: ['hostTransactions', 'transactions'],
     type: ['credit', 'debit'],
     kind: [
       'contribution',
@@ -854,7 +860,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
   if (req.query.fullDescription) {
     variables.fullDescription = parseToBooleanDefaultFalse(req.query.fullDescription as string);
   } else {
-    variables.fullDescription = req.params.reportType === 'hostTransactions' ? true : false;
+    variables.fullDescription = reportType === 'hostTransactions' ? true : false;
   }
 
   let fields = (get(req.query, 'fields', '') as string)
@@ -874,7 +880,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
       .filter((v) => !!v);
 
     const baseAllFields =
-      req.params.reportType === 'hostTransactions' ? allFields.filter((field) => field !== 'balance') : allFields;
+      reportType === 'hostTransactions' ? allFields.filter((field) => field !== 'balance') : allFields;
 
     let baseDefaultFields = defaultFields;
     if (!variables.fetchHostFee) {
@@ -917,7 +923,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
       headers['Personal-Token'] = personalToken;
     }
 
-    const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
+    const query = reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 
     let result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
 
@@ -930,9 +936,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
           res.append('Content-Type', `text/plain;charset=utf-8`);
         }
         let filename =
-          req.params.reportType === 'hostTransactions'
-            ? `${variables.slug}-host-transactions`
-            : `${variables.slug}-transactions`;
+          reportType === 'hostTransactions' ? `${variables.slug}-host-transactions` : `${variables.slug}-transactions`;
         if (variables.dateFrom) {
           const until = variables.dateTo || moment.utc().toISOString();
           filename += `-${variables.dateFrom.slice(0, 10)}-${until.slice(0, 10)}`;
