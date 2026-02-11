@@ -227,15 +227,9 @@ const accountContributors = async (req, res) => {
     let result = await graphqlRequest(contributorsQuery, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
-      case 'txt':
       case 'csv': {
-        if (req.params.format === 'csv') {
-          res.append('Content-Type', `text/csv;charset=utf-8`);
-        } else {
-          res.append('Content-Type', `text/plain;charset=utf-8`);
-        }
-        let filename = `${variables.slug}-contributors`;
-        filename += `.${req.params.format}`;
+        res.append('Content-Type', `text/csv;charset=utf-8`);
+        const filename = `${variables.slug}-contributors.csv`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.account.members.totalCount);
