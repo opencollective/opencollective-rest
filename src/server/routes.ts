@@ -24,20 +24,27 @@ export const loadRoutes = (app: Express) => {
     res.send('User-agent: *\nDisallow: /');
   });
 
-  app.get('/:version(v1)?/:collectiveSlug.:format(json)', controllers.collectives.info);
-  app.get('/:version(v1)?/:collectiveSlug/members.:format(json|csv)', controllers.members.list);
+  // Express 5: inline regex constraints like :param(regex) and optional ? are no longer supported.
+  // Using array-based routes for the optional /v1 prefix, and removing inline regex constraints.
+  // Parameter validation (format, backerType, role, etc.) is handled by the controllers.
+
+  app.get(['/v1/:collectiveSlug.:format', '/:collectiveSlug.:format'], controllers.collectives.info);
+  app.get(['/v1/:collectiveSlug/members.:format', '/:collectiveSlug/members.:format'], controllers.members.list);
   app.get(
-    '/:version(v1)?/:collectiveSlug/members/:backerType(all|users|organizations).:format(json|csv)',
+    ['/v1/:collectiveSlug/members/:backerType.:format', '/:collectiveSlug/members/:backerType.:format'],
     controllers.members.list,
   );
   app.get(
-    '/:version(v1)?/:collectiveSlug/tiers/:tierSlug/:backerType(all|users|organizations).:format(json|csv)',
+    ['/v1/:collectiveSlug/tiers/:tierSlug/:backerType.:format', '/:collectiveSlug/tiers/:tierSlug/:backerType.:format'],
     controllers.members.list,
   );
 
-  app.get('/:version(v1)?/:collectiveSlug/events/:eventSlug.:format(json)', controllers.events.info);
   app.get(
-    '/:version(v1)?/:collectiveSlug/events/:eventSlug/:role(attendees|followers|organizers|all).:format(json|csv)',
+    ['/v1/:collectiveSlug/events/:eventSlug.:format', '/:collectiveSlug/events/:eventSlug.:format'],
+    controllers.events.info,
+  );
+  app.get(
+    ['/v1/:collectiveSlug/events/:eventSlug/:role.:format', '/:collectiveSlug/events/:eventSlug/:role.:format'],
     controllers.members.list,
   );
 
@@ -55,22 +62,20 @@ export const loadRoutes = (app: Express) => {
 
   /* API v2 */
 
-  app.get(
-    '/v2/:slug/tier/:tierSlug/orders/:filter(incoming)?/:status(active|cancelled|error|paid|pending)?',
-    controllers.accountOrders,
-  );
+  app.get('/v2/:slug/tier/:tierSlug/orders{/:filter}{/:status}', controllers.accountOrders);
 
-  app.get(
-    '/v2/:slug/orders/:filter(incoming|outgoing)?/:status(active|cancelled|error|paid|pending)?',
-    controllers.accountOrders,
-  );
+  app.get('/v2/:slug/orders{/:filter}{/:status}', controllers.accountOrders);
 
   app.all(
-    '/v2/:slug/:reportType(hostTransactions|transactions)/:type(credit|debit)?/:kind(contribution|expense|added_funds|host_fee|host_fee_share|host_fee_share_debt|platform_tip|platform_tip_debt)?.:format(json|csv|txt)',
+    [
+      '/v2/:slug/:reportType.:format',
+      '/v2/:slug/:reportType/:type.:format',
+      '/v2/:slug/:reportType/:type/:kind.:format',
+    ],
     controllers.accountTransactions,
   );
 
-  app.get('/v2/:slug/contributors.:format(json|csv)', controllers.accountContributors);
+  app.get('/v2/:slug/contributors.:format', controllers.accountContributors);
 
-  app.all('/v2/:slug/hosted-collectives.:format(json|csv)', controllers.hostedCollectives);
+  app.all('/v2/:slug/hosted-collectives.:format', controllers.hostedCollectives);
 };

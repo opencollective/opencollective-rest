@@ -4,7 +4,7 @@ import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { parseToBooleanDefaultFalse } from '../lib/utils';
+import { parseToBooleanDefaultFalse, validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -166,9 +166,14 @@ const applyMapping = (mapping, row) => {
   return res;
 };
 
-const accountContributors = async (req, res) => {
+const accountContributors = async (req, res, next) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     return res.status(405).send({ error: { message: 'Method not allowed' } });
+  }
+
+  const isValid = validateParams(req.params, { format: ['json', 'csv'] });
+  if (!isValid) {
+    return next();
   }
 
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'limit', 'offset']);
@@ -222,15 +227,9 @@ const accountContributors = async (req, res) => {
     let result = await graphqlRequest(contributorsQuery, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
-      case 'txt':
       case 'csv': {
-        if (req.params.format === 'csv') {
-          res.append('Content-Type', `text/csv;charset=utf-8`);
-        } else {
-          res.append('Content-Type', `text/plain;charset=utf-8`);
-        }
-        let filename = `${variables.slug}-contributors`;
-        filename += `.${req.params.format}`;
+        res.append('Content-Type', `text/csv;charset=utf-8`);
+        const filename = `${variables.slug}-contributors.csv`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.account.members.totalCount);

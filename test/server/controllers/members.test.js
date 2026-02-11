@@ -47,6 +47,23 @@ describe('members', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/railsgirlsatl/members.xml');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid backerType', async () => {
+      const response = await fetchResponseWithCacheBurst('/railsgirlsatl/members/invalid.json');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid event role', async () => {
+      const response = await fetchResponseWithCacheBurst('/veganizerbxl/events/superfilles/invalid.json');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('for event', () => {
     test('return /:collectiveSlug/events/:eventSlug/attendees.json', async () => {
       const attendees = await fetchJsonWithCacheBurst('/veganizerbxl/events/superfilles/attendees.json');
