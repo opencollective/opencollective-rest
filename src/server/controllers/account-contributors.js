@@ -1,5 +1,5 @@
 import { Parser } from '@json2csv/plainjs';
-import gqlV2 from 'graphql-tag';
+import gql from 'graphql-tag';
 import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 
@@ -12,7 +12,7 @@ function json2csv(data, opts) {
   return parser.parse(data);
 }
 
-const contributorsQuery = gqlV2 /* GraphQL */ `
+const contributorsQuery = gql`
   query Contributors($slug: String, $limit: Int, $offset: Int) {
     account(slug: $slug) {
       id
