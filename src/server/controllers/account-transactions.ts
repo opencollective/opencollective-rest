@@ -646,6 +646,7 @@ type ReportType = 'hostTransactions' | 'transactions';
 
 type Params = {
   slug: string;
+  reportType: ReportType;
   type?: 'credit' | 'debit';
   kind?: string;
   format: 'json' | 'csv' | 'txt';
@@ -657,13 +658,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
     return;
   }
 
-  // reportType is now a literal path segment, not a route parameter — derive it from the URL
-  // path is like /v2/:slug/hostTransactions.csv, so segment [3] is "hostTransactions.csv"
-  const reportType: ReportType = req.path.split('/')[3]?.startsWith('hostTransactions')
-    ? 'hostTransactions'
-    : 'transactions';
-
   const paramsError = validateParams(req.params, {
+    reportType: ['hostTransactions', 'transactions'],
     type: ['credit', 'debit'],
     kind: [
       'contribution',
@@ -681,6 +677,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
     next();
     return;
   }
+
+  const { reportType } = req.params;
 
   const variables: any = pick({ ...req.params, ...req.query }, [
     'account',

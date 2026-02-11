@@ -68,18 +68,9 @@ export const loadRoutes = (app: Express) => {
 
   app.all(
     [
-      '/v2/:slug/transactions.:format',
-      '/v2/:slug/transactions/:type.:format',
-      '/v2/:slug/transactions/:type/:kind.:format',
-    ],
-    controllers.accountTransactions,
-  );
-
-  app.all(
-    [
-      '/v2/:slug/hostTransactions.:format',
-      '/v2/:slug/hostTransactions/:type.:format',
-      '/v2/:slug/hostTransactions/:type/:kind.:format',
+      '/v2/:slug/:reportType.:format',
+      '/v2/:slug/:reportType/:type.:format',
+      '/v2/:slug/:reportType/:type/:kind.:format',
     ],
     controllers.accountTransactions,
   );
