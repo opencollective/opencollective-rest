@@ -555,12 +555,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
     switch (req.params.format) {
       case 'csv': {
-        if (req.params.format === 'csv') {
-          res.append('Content-Type', `text/csv;charset=utf-8`);
-        } else {
-          res.append('Content-Type', `text/plain;charset=utf-8`);
-        }
-        const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.${req.params.format}`;
+        res.append('Content-Type', `text/csv;charset=utf-8`);
+        const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.csv`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.host.hostedAccounts.totalCount);
