@@ -16,7 +16,7 @@ export async function list(req, res, next) {
     role: ['attendees', 'followers', 'organizers', 'all'],
   });
   if (paramsError) {
-    return res.status(400).send({ error: { message: paramsError } });
+    return next();
   }
 
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;

@@ -5,7 +5,7 @@ import { logger } from '../logger';
 
 export async function info(req, res, next) {
   if (req.params.format !== 'json') {
-    return res.status(400).send({ error: { message: 'Format must be json' } });
+    return next();
   }
 
   // Keeping the resulting image for 1h in the CDN cache (we purge that cache on deploy)

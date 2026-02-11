@@ -443,7 +443,7 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
     amountAsString(account.allTimeSummary.receivedTotalYearlyAverage),
 };
 
-const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
+const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res, next) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
@@ -451,7 +451,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
   const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
   if (paramsError) {
-    res.status(400).send({ error: { message: paramsError } });
+    next();
     return;
   }
 

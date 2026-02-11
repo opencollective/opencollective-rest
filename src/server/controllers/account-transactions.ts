@@ -650,7 +650,7 @@ type Params = {
   format: 'json' | 'csv' | 'txt';
 };
 
-const accountTransactions: RequestHandler<Params> = async (req, res) => {
+const accountTransactions: RequestHandler<Params> = async (req, res, next) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
@@ -672,7 +672,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     format: ['json', 'csv', 'txt'],
   });
   if (paramsError) {
-    res.status(400).send({ error: { message: paramsError } });
+    next();
     return;
   }
 

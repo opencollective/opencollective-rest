@@ -46,13 +46,13 @@ const query = gql`
   }
 `;
 
-const accountOrders = async (req, res) => {
+const accountOrders = async (req, res, next) => {
   const paramsError = validateParams(req.params, {
     filter: ['incoming', 'outgoing'],
     status: ['active', 'cancelled', 'error', 'paid', 'pending'],
   });
   if (paramsError) {
-    return res.status(400).send({ error: { message: paramsError } });
+    return next();
   }
 
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);

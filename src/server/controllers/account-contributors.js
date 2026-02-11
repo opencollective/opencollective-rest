@@ -166,14 +166,14 @@ const applyMapping = (mapping, row) => {
   return res;
 };
 
-const accountContributors = async (req, res) => {
+const accountContributors = async (req, res, next) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     return res.status(405).send({ error: { message: 'Method not allowed' } });
   }
 
   const paramsError = validateParams(req.params, { format: ['json', 'csv'] });
   if (paramsError) {
-    return res.status(400).send({ error: { message: paramsError } });
+    return next();
   }
 
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'limit', 'offset']);

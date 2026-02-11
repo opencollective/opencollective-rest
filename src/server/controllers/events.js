@@ -3,7 +3,7 @@ import { logger } from '../logger';
 
 export async function info(req, res, next) {
   if (req.params.format !== 'json') {
-    return res.status(400).send({ error: { message: 'Format must be json' } });
+    return next();
   }
 
   // Keeping the resulting info for 10m in the CDN cache
