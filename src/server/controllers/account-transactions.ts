@@ -5,7 +5,7 @@ import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 
 import moment from 'moment';
 
 import { accountNameAndLegalName, amountAsString } from '../lib/formatting';
-import { graphqlRequest } from '../lib/graphql';
+import { graphqlRequestWithRetry } from '../lib/graphql';
 import {
   applyMapping,
   parseToBooleanDefaultFalse,
@@ -894,7 +894,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 
-    let result = await graphqlRequest(query, variables, { version: 'v2', headers });
+    let result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
       case 'txt':
@@ -943,7 +943,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
             do {
               variables.offset += result.transactions.limit;
 
-              result = await graphqlRequest(query, variables, { version: 'v2', headers });
+              result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
 
               const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
               res.write(json2csv(mappedTransactions, { header: false }));
