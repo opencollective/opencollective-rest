@@ -97,13 +97,13 @@ export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
  * Returns an error message string if any param is invalid, or null if all are valid.
  * Undefined/missing params (optional) are considered valid.
  */
-export const validateParams = (
-  params: Record<string, string | undefined>,
-  rules: Record<string, string[]>,
+export const validateParams = <T extends Record<string, string | string[] | undefined>>(
+  params: T,
+  rules: Partial<Record<keyof T & string, string[]>>,
 ): string | null => {
-  for (const [paramName, allowed] of Object.entries(rules)) {
+  for (const [paramName, allowed] of Object.entries(rules) as [string, string[]][]) {
     const value = params[paramName];
-    if (value !== undefined && !allowed.includes(value)) {
+    if (typeof value === 'string' && !allowed.includes(value)) {
       return `Invalid value for "${paramName}": "${value}". Allowed values: ${allowed.join(', ')}`;
     }
   }
