@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 import pluginReact from 'eslint-plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { includeIgnoreFile } from '@eslint/compat';
+import { includeIgnoreFile, fixupPluginRules } from '@eslint/compat';
 import pluginJest from 'eslint-plugin-jest';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,8 +25,12 @@ export default defineConfig([
     extends: ['js/recommended'],
   },
   tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
   {
+    plugins: {
+      react: fixupPluginRules(pluginReact),
+    },
+    rules: pluginReact.configs.flat.recommended.rules,
+    languageOptions: pluginReact.configs.flat.recommended.languageOptions,
     settings: {
       react: {
         version: 'detect',
@@ -36,7 +40,7 @@ export default defineConfig([
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {
-      formatjs,
+      formatjs: fixupPluginRules(formatjs),
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',

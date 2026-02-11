@@ -70,18 +70,18 @@
   "devDependencies": {
     "@babel/cli": "^7.28.6",
     "@babel/node": "^7.28.6",
-    "@eslint/compat": "^2.0.1",
-    "@eslint/js": "^9.22.0",
+    "@eslint/compat": "^2.0.2",
+    "@eslint/js": "^10.0.0",
     "@graphql-eslint/eslint-plugin": "^4.4.0",
     "@types/express": "^4.17.21",
     "@types/lodash": "^4.17.23",
-    "@typescript-eslint/eslint-plugin": "^8.53.1",
-    "@typescript-eslint/parser": "^8.53.1",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.55.0",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^9.22.0",
+    "eslint": "^10.0.0",
     "eslint-plugin-formatjs": "^6.1.1",
-    "eslint-plugin-jest": "^29.12.1",
+    "eslint-plugin-jest": "^29.13.0",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.0.0",
     "husky": "^9.1.7",
@@ -94,7 +94,7 @@
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.8.1",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.53.1"
+    "typescript-eslint": "^8.55.0"
   },
   "config": {
     "commitizen": {
@@ -138,5 +138,22 @@
       "@graphql-eslint/eslint-plugin"
     ]
   },
-  "heroku-run-build-script": true
+  "heroku-run-build-script": true,
+  "overrides": {
+    "eslint-plugin-formatjs": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
+    "@typescript-eslint/utils": {
+      "eslint": "$eslint"
+    },
+    "@typescript-eslint/eslint-plugin": {
+      "eslint": "$eslint"
+    },
+    "@typescript-eslint/parser": {
+      "eslint": "$eslint"
+    }
+  }
 }
