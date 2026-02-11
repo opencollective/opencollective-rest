@@ -94,7 +94,7 @@ export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 
 /**
  * Validates route params against allowed values (replaces Express 4 inline regex constraints).
- * Returns an error message string if any param is invalid, or null if all are valid.
+ * Returns false if any param is invalid, or true if all are valid.
  * Undefined/missing params (optional) are considered valid.
  */
 // Validates route params against allowed values. Callers should call next() (without
