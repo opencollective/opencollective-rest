@@ -97,6 +97,9 @@ export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
  * Returns an error message string if any param is invalid, or null if all are valid.
  * Undefined/missing params (optional) are considered valid.
  */
+// Validates route params against allowed values. Callers should call next() (without
+// an error) when validation fails so Express falls through to the next matching route,
+// replicating the Express 4 inline-regex constraint behavior (e.g. :format(json|csv)).
 export const validateParams = <T extends Record<string, string | string[] | undefined>>(
   params: T,
   rules: Partial<Record<keyof T & string, string[]>>,
