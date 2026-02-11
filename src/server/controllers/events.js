@@ -1,8 +1,12 @@
 import { fetchEvent } from '../lib/graphql';
+import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 export async function info(req, res, next) {
-  if (req.params.format !== 'json') {
+  const paramsError = validateParams(req.params, {
+    format: ['json'],
+  });
+  if (paramsError) {
     return next();
   }
 
