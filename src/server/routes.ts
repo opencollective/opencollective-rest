@@ -29,19 +29,13 @@ export const loadRoutes = (app: Express) => {
   // Parameter validation (format, backerType, role, etc.) is handled by the controllers.
 
   app.get(['/v1/:collectiveSlug.:format', '/:collectiveSlug.:format'], controllers.collectives.info);
-  app.get(
-    ['/v1/:collectiveSlug/members.:format', '/:collectiveSlug/members.:format'],
-    controllers.members.list,
-  );
+  app.get(['/v1/:collectiveSlug/members.:format', '/:collectiveSlug/members.:format'], controllers.members.list);
   app.get(
     ['/v1/:collectiveSlug/members/:backerType.:format', '/:collectiveSlug/members/:backerType.:format'],
     controllers.members.list,
   );
   app.get(
-    [
-      '/v1/:collectiveSlug/tiers/:tierSlug/:backerType.:format',
-      '/:collectiveSlug/tiers/:tierSlug/:backerType.:format',
-    ],
+    ['/v1/:collectiveSlug/tiers/:tierSlug/:backerType.:format', '/:collectiveSlug/tiers/:tierSlug/:backerType.:format'],
     controllers.members.list,
   );
 
@@ -50,10 +44,7 @@ export const loadRoutes = (app: Express) => {
     controllers.events.info,
   );
   app.get(
-    [
-      '/v1/:collectiveSlug/events/:eventSlug/:role.:format',
-      '/:collectiveSlug/events/:eventSlug/:role.:format',
-    ],
+    ['/v1/:collectiveSlug/events/:eventSlug/:role.:format', '/:collectiveSlug/events/:eventSlug/:role.:format'],
     controllers.members.list,
   );
 
@@ -71,15 +62,9 @@ export const loadRoutes = (app: Express) => {
 
   /* API v2 */
 
-  app.get(
-    '/v2/:slug/tier/:tierSlug/orders{/:filter}{/:status}',
-    controllers.accountOrders,
-  );
+  app.get('/v2/:slug/tier/:tierSlug/orders{/:filter}{/:status}', controllers.accountOrders);
 
-  app.get(
-    '/v2/:slug/orders{/:filter}{/:status}',
-    controllers.accountOrders,
-  );
+  app.get('/v2/:slug/orders{/:filter}{/:status}', controllers.accountOrders);
 
   // Express 5: optional params before .:format require multiple paths
   app.all(
