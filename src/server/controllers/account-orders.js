@@ -72,6 +72,9 @@ const accountOrders = async (req, res, next) => {
   }
 
   if (variables.tierSlug) {
+    if (variables.filter && variables.filter !== 'incoming') {
+      return next();
+    }
     variables.filter = 'INCOMING';
   } else if (variables.filter) {
     variables.filter = variables.filter.toUpperCase();
