@@ -94,6 +94,7 @@ const contributorsQuery = gqlV2 /* GraphQL */ `
               }
             }
           }
+          isActive
           totalDonations {
             value
             currency
@@ -108,6 +109,7 @@ const recurringContribution = (m) =>
   get(m, 'account.activeRecurringContributions.nodes[0]') || get(m, 'account.inactiveRecurringContributions.nodes[0]');
 
 const csvMapping = {
+  isActive: 'isActive',
   contributorUrl: (m) => `${process.env.WEBSITE_URL}/${m.account.slug}`,
   contributorName: 'account.name',
   contributorEmail: 'account.email',
