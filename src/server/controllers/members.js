@@ -2,7 +2,7 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 import { simpleGraphqlRequest } from '../lib/graphql';
-import { json2csv } from '../lib/utils';
+import { json2csv, validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 // Simple tagged template that flattens the string instead of parsing it into a DocumentNode,
@@ -10,6 +10,15 @@ import { logger } from '../logger';
 const gqlV1 = (string) => String(string).replace(`\n`, ` `).trim();
 
 export async function list(req, res, next) {
+  const isValid = validateParams(req.params, {
+    format: ['json', 'csv'],
+    backerType: ['all', 'users', 'organizations'],
+    role: ['attendees', 'followers', 'organizers', 'all'],
+  });
+  if (!isValid) {
+    return next();
+  }
+
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
 
   let backerType;

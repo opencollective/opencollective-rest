@@ -1,7 +1,15 @@
 import { fetchEvent } from '../lib/graphql';
+import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 export async function info(req, res, next) {
+  const isValid = validateParams(req.params, {
+    format: ['json'],
+  });
+  if (!isValid) {
+    return next();
+  }
+
   // Keeping the resulting info for 10m in the CDN cache
   res.setHeader('Cache-Control', `public, max-age=${60 * 10}`);
   let event;

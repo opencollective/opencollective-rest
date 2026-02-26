@@ -8,7 +8,13 @@ import moment from 'moment';
 
 import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
-import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
+import {
+  applyMapping,
+  parseToBooleanDefaultFalse,
+  parseToBooleanDefaultTrue,
+  splitEnums,
+  validateParams,
+} from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -437,11 +443,18 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
     amountAsString(account.allTimeSummary.receivedTotalYearlyAverage),
 };
 
-const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res) => {
+const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }> = async (req, res, next) => {
   if (!['HEAD', 'GET'].includes(req.method)) {
     res.status(405).send({ error: { message: 'Method not allowed' } });
     return;
   }
+
+  const isValid = validateParams(req.params, { format: ['json', 'csv'] });
+  if (!isValid) {
+    next();
+    return;
+  }
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};
@@ -542,12 +555,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
 
     switch (req.params.format) {
       case 'csv': {
-        if (req.params.format === 'csv') {
-          res.append('Content-Type', `text/csv;charset=utf-8`);
-        } else {
-          res.append('Content-Type', `text/plain;charset=utf-8`);
-        }
-        const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.${req.params.format}`;
+        res.append('Content-Type', `text/csv;charset=utf-8`);
+        const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.csv`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
         res.append('X-Exported-Rows', result.host.hostedAccounts.totalCount);

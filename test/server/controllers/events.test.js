@@ -23,6 +23,13 @@ describe('events', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/veganizerbxl/events/superfilles.xml');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('info', () => {
     test('return /:collectiveSlug/events/:eventSlug.json', async () => {
       const event = await fetchJsonWithCacheBurst('/veganizerbxl/events/superfilles.json');

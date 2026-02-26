@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
 import { graphqlRequest } from '../lib/graphql';
+import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 const query = gql`
@@ -45,7 +46,15 @@ const query = gql`
   }
 `;
 
-const accountOrders = async (req, res) => {
+const accountOrders = async (req, res, next) => {
+  const isValid = validateParams(req.params, {
+    filter: ['incoming', 'outgoing'],
+    status: ['active', 'cancelled', 'error', 'paid', 'pending'],
+  });
+  if (!isValid) {
+    return next();
+  }
+
   const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;
@@ -63,6 +72,9 @@ const accountOrders = async (req, res) => {
   }
 
   if (variables.tierSlug) {
+    if (variables.filter && variables.filter !== 'incoming') {
+      return next();
+    }
     variables.filter = 'INCOMING';
   } else if (variables.filter) {
     variables.filter = variables.filter.toUpperCase();

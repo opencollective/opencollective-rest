@@ -27,6 +27,28 @@ describe('account-transactions', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/transactions.xml');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid reportType', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/invalid.json');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid type', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/transactions/invalid.json');
+      expect(response.statusCode).toBe(404);
+    });
+
+    test('returns 404 for invalid kind', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/transactions/credit/invalid.json');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('accountTransactions', () => {
     test('return /v2/:slug/transactions.json', async () => {
       const transactions = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/transactions.json');

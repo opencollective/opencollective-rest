@@ -25,6 +25,13 @@ describe('collectives', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/railsgirlsatl.xml');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('info', () => {
     test('return /:collectiveSlug.json', async () => {
       const collective = await fetchJsonWithCacheBurst('/railsgirlsatl.json');

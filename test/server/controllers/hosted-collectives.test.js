@@ -26,6 +26,13 @@ describe('hosted-collectives', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/hosted-collectives.xml');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('hostedCollectives', () => {
     test('return /v2/:slug/hosted-collectives.json', async () => {
       const collectives = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/hosted-collectives.json');

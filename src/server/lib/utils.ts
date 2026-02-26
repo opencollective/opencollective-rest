@@ -92,6 +92,27 @@ export const splitIds = (str?: string) => str?.split(',').map(trim) || [];
 
 export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 
+/**
+ * Validates route params against allowed values (replaces Express 4 inline regex constraints).
+ * Returns false if any param is invalid, or true if all are valid.
+ * Undefined/missing params (optional) are considered valid.
+ */
+// Validates route params against allowed values. Callers should call next() (without
+// an error) when validation fails so Express falls through to the next matching route,
+// replicating the Express 4 inline-regex constraint behavior (e.g. :format(json|csv)).
+export const validateParams = <T extends Record<string, string | string[] | undefined>>(
+  params: T,
+  rules: Partial<Record<keyof T & string, string[]>>,
+): boolean => {
+  for (const [paramName, allowed] of Object.entries(rules) as [string, string[]][]) {
+    const value = params[paramName];
+    if (typeof value === 'string' && !allowed.includes(value)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 export const applyMapping = (mapping, row, meta?) => {
   const res = {};
   Object.keys(mapping).map((key) => {

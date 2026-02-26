@@ -1,9 +1,17 @@
 import { get, pick } from 'lodash';
 
 import { fetchCollective } from '../lib/graphql';
+import { validateParams } from '../lib/utils';
 import { logger } from '../logger';
 
 export async function info(req, res, next) {
+  const isValid = validateParams(req.params, {
+    format: ['json'],
+  });
+  if (!isValid) {
+    return next();
+  }
+
   // Keeping the resulting image for 1h in the CDN cache (we purge that cache on deploy)
   res.setHeader('Cache-Control', `public, max-age=${60 * 60}`);
 

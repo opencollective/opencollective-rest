@@ -27,6 +27,13 @@ describe('account-contributors', () => {
     });
   });
 
+  describe('param validation', () => {
+    test('returns 404 for unsupported format', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/contributors.xml');
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('accountContributors', () => {
     test('return /v2/:slug/contributors.json', async () => {
       const result = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/contributors.json');
