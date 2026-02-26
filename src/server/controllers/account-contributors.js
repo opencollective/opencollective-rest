@@ -17,7 +17,7 @@ const contributorsQuery = gql`
     account(slug: $slug) {
       id
       slug
-      members(role: BACKER, limit: $limit, offset: $offset) {
+      members(role: [BACKER, ATTENDEE], limit: $limit, offset: $offset) {
         limit
         totalCount
         nodes {
