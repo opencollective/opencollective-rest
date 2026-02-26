@@ -179,7 +179,7 @@ const accountContributors = async (req, res) => {
       : // Else, we use the limit provided by the user, or default to 1000
         variables.limit
         ? Number(variables.limit)
-        : 1000;
+        : 100;
   variables.offset = Number(variables.offset) || 0;
 
   let fields = get(req.query, 'fields', '')
