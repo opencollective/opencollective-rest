@@ -19,6 +19,7 @@ const contributorsQuery = gql`
       slug
       members(role: [BACKER, ATTENDEE], limit: $limit, offset: $offset) {
         limit
+        offset
         totalCount
         nodes {
           account {
@@ -176,10 +177,10 @@ const accountContributors = async (req, res) => {
     // If HEAD, we only want count, so we set limit to 0
     req.method === 'HEAD'
       ? 0
-      : // Else, we use the limit provided by the user, or default to 1000
+      : // Else, we use the limit provided by the user,
         variables.limit
         ? Number(variables.limit)
-        : 100;
+        : 500;
   variables.offset = Number(variables.offset) || 0;
 
   let fields = get(req.query, 'fields', '')
