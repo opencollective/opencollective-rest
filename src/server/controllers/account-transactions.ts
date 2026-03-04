@@ -29,6 +29,7 @@ export const transactionsFragment = gql`
     nodes {
       id
       legacyId
+      publicId
       group
       type
       kind
@@ -79,6 +80,7 @@ export const transactionsFragment = gql`
       }
       account {
         id
+        publicId
         slug
         name
         legalName
@@ -89,6 +91,7 @@ export const transactionsFragment = gql`
         ... on AccountWithParent {
           parent {
             id
+            publicId
             slug
             name
             legalName
@@ -101,6 +104,7 @@ export const transactionsFragment = gql`
       }
       oppositeAccount {
         id
+        publicId
         slug
         name
         legalName
@@ -111,6 +115,7 @@ export const transactionsFragment = gql`
         ... on AccountWithParent {
           parent {
             id
+            publicId
             slug
             name
             legalName
@@ -123,6 +128,7 @@ export const transactionsFragment = gql`
       }
       host {
         id
+        publicId
         slug
         name
         legalName
@@ -131,6 +137,7 @@ export const transactionsFragment = gql`
       order {
         id
         legacyId
+        publicId
         status
         createdAt
         frequency
@@ -139,6 +146,7 @@ export const transactionsFragment = gql`
         customData
         fromAccount {
           id
+          publicId
           name
           location {
             address
@@ -147,11 +155,13 @@ export const transactionsFragment = gql`
         }
         accountingCategory @include(if: $hasAccountingCategoryField) {
           id
+          publicId
           code
           name
         }
         transactionImportRow @include(if: $hasTransactionImportRowField) {
           id
+          publicId
           sourceId
           description
           date
@@ -167,6 +177,7 @@ export const transactionsFragment = gql`
         }
         manualPaymentProvider {
           id
+          publicId
           name
         }
       }
@@ -177,6 +188,7 @@ export const transactionsFragment = gql`
       expense {
         id
         legacyId
+        publicId
         type
         tags
         createdAt
@@ -191,15 +203,18 @@ export const transactionsFragment = gql`
           currency
         }
         payoutMethod {
+          publicId
           type
         }
         accountingCategory @include(if: $hasAccountingCategoryField) {
           id
+          publicId
           code
           name
         }
         transactionImportRow @include(if: $hasTransactionImportRowField) {
           id
+          publicId
           sourceId
           description
           date
@@ -210,12 +225,15 @@ export const transactionsFragment = gql`
           }
         }
         approvedBy {
+          publicId
           slug
         }
         paidBy {
+          publicId
           slug
         }
         createdByAccount {
+          publicId
           slug
         }
       }
@@ -224,6 +242,7 @@ export const transactionsFragment = gql`
       refundTransaction {
         id
         legacyId
+        publicId
         refundKind
       }
       refundKind
@@ -386,6 +405,7 @@ const columnNames = {
   datetime: 'Date & Time',
   effectiveDate: 'Effective Date & Time',
   legacyId: 'Transaction ID',
+  publicId: 'Transaction Public ID',
   group: 'Group ID',
   description: 'Description',
   type: 'Credit/Debit',
@@ -418,12 +438,14 @@ const columnNames = {
   oppositeParentAccountType: 'Opposite Parent Account Type',
   oppositeParentAccountEmail: 'Opposite Parent Account Email',
   orderLegacyId: 'Contribution ID',
+  orderPublicId: 'Contribution Public ID',
   orderMemo: 'Contribution Memo',
   orderFrequency: 'Contribution Frequency',
   orderCustomData: 'Contribution Custom Data',
   orderContributorAddress: 'Contributor Address',
   orderContributorCountry: 'Contributor Country',
   expenseLegacyId: 'Expense ID',
+  expensePublicId: 'Expense Public ID',
   expenseType: 'Expense Type',
   expenseTags: 'Expense Tags',
   taxType: 'Tax Type',
@@ -459,6 +481,7 @@ const columnNames = {
   importSourceData: 'Import Source Data',
   shortRefundId: 'Short Refund Transaction ID',
   refundLegacyId: 'Refund Transaction ID',
+  refundPublicId: 'Refund Transaction Public ID',
   refundId: 'Refund ID',
   isRefund: 'Is Refund',
   isRefunded: 'Is Refunded',
@@ -478,6 +501,7 @@ const csvMapping = {
   effectiveDate: (t) => (t.clearedAt ? moment.utc(t.clearedAt).format('YYYY-MM-DDTHH:mm:ss') : ''),
   id: 'id',
   legacyId: 'legacyId',
+  publicId: 'publicId',
   shortId: (t) => t.id.substr(0, 8),
   shortGroup: (t) => t.group.substr(0, 8),
   group: 'group',
@@ -489,11 +513,13 @@ const csvMapping = {
   refundId: (t) => get(t, 'refundTransaction.id', ''),
   shortRefundId: (t) => get(t, 'refundTransaction.id', '').substr(0, 8),
   refundLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
+  refundPublicId: (t) => get(t, 'refundTransaction.publicId', ''),
   refundKind: 'refundKind',
   isReverse: (t) => (t.isRefund ? 'REVERSE' : ''),
   isReversed: (t) => (t.isRefunded ? 'REVERSED' : ''),
   reverseId: (t) => get(t, 'refundTransaction.id', ''),
   reverseLegacyId: (t) => get(t, 'refundTransaction.legacyId', ''),
+  reversePublicId: (t) => get(t, 'refundTransaction.publicId', ''),
   reverseKind: 'refundKind',
   displayAmount: (t) => amountAsString(t.amount),
   amount: (t) => get(t, 'amountInHostCurrency.value', 0),
@@ -525,6 +551,7 @@ const csvMapping = {
   hostName: (t) => accountNameAndLegalName(t.host),
   hostType: (t) => get(t, 'host.type'),
   orderId: (t) => get(t, 'order.id'),
+  orderPublicId: (t) => get(t, 'order.publicId'),
   orderLegacyId: (t) => get(t, 'order.legacyId'),
   orderFrequency: (t) => get(t, 'order.frequency'),
   orderContributorAddress: (t) => get(t, 'order.fromAccount.location.address'),
@@ -550,6 +577,7 @@ const csvMapping = {
   },
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
+  expensePublicId: (t) => get(t, 'expense.publicId'),
   expenseType: (t) => get(t, 'expense.type'),
   expenseTags: (t) => get(t, 'expense.tags', []).join(', '),
   expensePayeeAddress: (t) => get(t, 'expense.payeeLocation.address'),
@@ -664,6 +692,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'clearedTo',
     'excludeAccount',
     'expenseId',
+    'expensePublicId',
     'expenseType',
     'group',
     'hasDebt',
@@ -680,6 +709,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'minAmount',
     'offset',
     'orderId',
+    'orderPublicId',
     'manualPaymentProvider',
     'paymentMethodService',
     'paymentMethodType',
@@ -814,10 +844,14 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
   if (variables.orderId) {
     variables.order = { legacyId: parseInt(variables.orderId) };
+  } else if (variables.orderPublicId) {
+    variables.order = { publicId: variables.orderPublicId };
   }
 
   if (variables.expenseId) {
     variables.expense = { legacyId: parseInt(variables.expenseId) };
+  } else if (variables.expensePublicId) {
+    variables.expense = { publicId: variables.expensePublicId };
   }
 
   // isRefund can be false but default should be undefined
