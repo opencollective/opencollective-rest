@@ -43,19 +43,19 @@ export const transactionsFragment = gql`
         value
         currency
       }
-      balanceInHostCurrency {
+      balanceInHostCurrency @include(if: $hasBalanceField) {
         value
         currency
       }
-      paymentProcessorFee(fetchPaymentProcessorFee: $fetchPaymentProcessorFee) {
+      paymentProcessorFee(fetchPaymentProcessorFee: $fetchPaymentProcessorFee) @include(if: $hasPaymentProcessorFeeField) {
         value
         currency
       }
-      platformFee {
+      platformFee @include(if: $hasPlatformFeeField) {
         value
         currency
       }
-      hostFee(fetchHostFee: $fetchHostFee) {
+      hostFee(fetchHostFee: $fetchHostFee) @include(if: $hasHostFeeField) {
         value
         currency
       }
@@ -63,15 +63,15 @@ export const transactionsFragment = gql`
         fetchHostFee: $fetchHostFee
         fetchPaymentProcessorFee: $fetchPaymentProcessorFee
         fetchTax: $fetchTax
-      ) {
+      ) @include(if: $hasNetAmountField) {
         value
         currency
       }
-      taxAmount(fetchTax: $fetchTax) {
+      taxAmount(fetchTax: $fetchTax) @include(if: $hasTaxAmountField) {
         value
         currency
       }
-      taxInfo {
+      taxInfo @include(if: $hasTaxInfoField) {
         id
         type
         rate
@@ -121,14 +121,14 @@ export const transactionsFragment = gql`
           }
         }
       }
-      host {
+      host @include(if: $hasHostField) {
         id
         slug
         name
         legalName
         type
       }
-      order {
+      order @include(if: $hasOrderField) {
         id
         legacyId
         status
@@ -170,11 +170,11 @@ export const transactionsFragment = gql`
           name
         }
       }
-      paymentMethod {
+      paymentMethod @include(if: $hasPaymentMethodField) {
         service
         type
       }
-      expense {
+      expense @include(if: $hasExpenseField) {
         id
         legacyId
         type
@@ -219,14 +219,14 @@ export const transactionsFragment = gql`
           slug
         }
       }
-      isRefund
-      isRefunded
-      refundTransaction {
+      isRefund @include(if: $hasRefundField)
+      isRefunded @include(if: $hasRefundField)
+      refundTransaction @include(if: $hasRefundField) {
         id
         legacyId
         refundKind
       }
-      refundKind
+      refundKind @include(if: $hasRefundField)
       merchantId
     }
   }
@@ -250,6 +250,18 @@ const transactionsQuery = gql`
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasBalanceField: Boolean!
+    $hasExpenseField: Boolean!
+    $hasHostFeeField: Boolean!
+    $hasHostField: Boolean!
+    $hasNetAmountField: Boolean!
+    $hasOrderField: Boolean!
+    $hasPaymentMethodField: Boolean!
+    $hasPaymentProcessorFeeField: Boolean!
+    $hasPlatformFeeField: Boolean!
+    $hasRefundField: Boolean!
+    $hasTaxAmountField: Boolean!
+    $hasTaxInfoField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeGiftCardTransactions: Boolean
@@ -323,6 +335,18 @@ const hostTransactionsQuery = gql`
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasBalanceField: Boolean!
+    $hasExpenseField: Boolean!
+    $hasHostFeeField: Boolean!
+    $hasHostField: Boolean!
+    $hasNetAmountField: Boolean!
+    $hasOrderField: Boolean!
+    $hasPaymentMethodField: Boolean!
+    $hasPaymentProcessorFeeField: Boolean!
+    $hasPlatformFeeField: Boolean!
+    $hasRefundField: Boolean!
+    $hasTaxAmountField: Boolean!
+    $hasTaxInfoField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeHost: Boolean
@@ -880,6 +904,24 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));
   variables.hasTransactionImportRowField = fields.some((field) => field.startsWith('importSource'));
 
+  const orderFields = ['orderId', 'orderLegacyId', 'orderFrequency', 'orderMemo', 'orderProcessedDate', 'orderCustomData', 'orderContributorAddress', 'orderContributorCountry'];
+  const paymentMethodFields = ['paymentMethodService', 'paymentMethodType'];
+  const expenseFields = ['expenseId', 'expenseLegacyId', 'expenseType', 'expenseTags', 'expensePayeeAddress', 'expensePayeeCountry', 'payoutMethodType', 'expenseTotalAmount', 'expenseCurrency', 'expenseSubmittedByHandle', 'expenseApprovedByHandle', 'expensePaidByHandle', 'expenseReference', 'expenseTransferReference'];
+  const refundFields = ['isRefund', 'isRefunded', 'refundId', 'shortRefundId', 'refundLegacyId', 'refundKind', 'isReverse', 'isReversed', 'reverseId', 'reverseLegacyId', 'reverseKind'];
+
+  variables.hasOrderField = fields.some((f) => orderFields.includes(f) || paymentMethodFields.includes(f)) || variables.hasAccountingCategoryField || variables.hasTransactionImportRowField;
+  variables.hasExpenseField = fields.some((f) => expenseFields.includes(f)) || variables.hasAccountingCategoryField || variables.hasTransactionImportRowField;
+  variables.hasHostField = fields.some((f) => f.startsWith('host'));
+  variables.hasPaymentMethodField = fields.some((f) => paymentMethodFields.includes(f));
+  variables.hasRefundField = fields.some((f) => refundFields.includes(f));
+  variables.hasBalanceField = fields.includes('balance');
+  variables.hasTaxInfoField = fields.some((f) => ['taxType', 'taxRate', 'taxIdNumber'].includes(f));
+  variables.hasNetAmountField = fields.includes('netAmount');
+  variables.hasPaymentProcessorFeeField = fields.includes('paymentProcessorFee') || variables.hasNetAmountField;
+  variables.hasPlatformFeeField = fields.includes('platformFee');
+  variables.hasHostFeeField = fields.includes('hostFee') || variables.hasNetAmountField;
+  variables.hasTaxAmountField = fields.includes('taxAmount') || variables.hasNetAmountField;
+
   try {
     // Forward Api Key or Authorization header
     const headers = {};
@@ -898,6 +940,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 
+    console.log(variables);
     let result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
@@ -947,6 +990,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
             do {
               variables.offset += result.transactions.limit;
 
+              console.log(variables);
               result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
 
               const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
