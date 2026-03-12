@@ -252,6 +252,7 @@ const transactionsQuery = gql`
     $hasAccountingCategoryField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
+    $includeEditedReversedTransactions: Boolean
     $includeGiftCardTransactions: Boolean
     $includeIncognitoTransactions: Boolean
     $includeRegularTransactions: Boolean
@@ -283,6 +284,7 @@ const transactionsQuery = gql`
       group: $group
       includeChildrenTransactions: $includeChildrenTransactions
       includeDebts: true
+      includeEditedReversedTransactions: $includeEditedReversedTransactions
       includeGiftCardTransactions: $includeGiftCardTransactions
       includeIncognitoTransactions: $includeIncognitoTransactions
       includeRegularTransactions: $includeRegularTransactions
@@ -325,6 +327,7 @@ const hostTransactionsQuery = gql`
     $hasAccountingCategoryField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
+    $includeEditedReversedTransactions: Boolean
     $includeHost: Boolean
     $isRefund: Boolean
     $hasDebt: Boolean
@@ -356,6 +359,7 @@ const hostTransactionsQuery = gql`
       host: { slug: $slug }
       includeChildrenTransactions: $includeChildrenTransactions
       includeDebts: true
+      includeEditedReversedTransactions: $includeEditedReversedTransactions
       includeHost: $includeHost
       isRefund: $isRefund
       hasDebt: $hasDebt
@@ -668,6 +672,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'group',
     'hasDebt',
     'includeChildrenTransactions',
+    'includeEditedReversedTransactions',
     'includeGiftCardTransactions',
     'includeHost',
     'includeIncognitoTransactions',
@@ -828,6 +833,13 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   // hasDebt can be false but default should be undefined
   if (!isNil(variables.hasDebt)) {
     variables.hasDebt = parseToBooleanDefaultFalse(variables.hasDebt);
+  }
+
+  // includeEditedReversedTransactions can be false but default should be undefined (API defaults to true)
+  if (!isNil(variables.includeEditedReversedTransactions)) {
+    variables.includeEditedReversedTransactions = parseToBooleanDefaultTrue(
+      variables.includeEditedReversedTransactions,
+    );
   }
 
   if (req.query.fullDescription) {
