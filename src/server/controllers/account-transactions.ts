@@ -166,7 +166,7 @@ export const transactionsFragment = gql`
           }
         }
         manualPaymentProvider {
-          id
+          publicId
           name
         }
       }
@@ -549,8 +549,7 @@ const csvMapping = {
     }
 
     const manualProvider = get(t, 'order.manualPaymentProvider');
-    const providerShortId = manualProvider ? `mp-${manualProvider.id.split('-')[0]}` : undefined;
-    return manualProvider ? `Manual: ${manualProvider.name} (#${providerShortId})` : undefined;
+    return manualProvider ? `Manual: ${manualProvider.name} (#${manualProvider.publicId})` : undefined;
   },
   expenseId: (t) => get(t, 'expense.id'),
   expenseLegacyId: (t) => get(t, 'expense.legacyId'),
