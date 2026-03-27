@@ -204,6 +204,10 @@ export const transactionsFragment = gql`
           description
           date
           rawValue
+          transactionsImport {
+            id
+            name
+          }
           amount {
             value
             currency
@@ -474,7 +478,7 @@ const columnNames = {
   taxAmount: 'Tax Amount',
 };
 
-const csvMapping = {
+export const csvMapping = {
   accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
@@ -585,7 +589,7 @@ const csvMapping = {
   importSourceData: (t) => get(getTransactionImportRowFromTransaction(t), 'rawValue'),
 };
 
-const getTransactionImportRowFromTransaction = (transaction) => {
+export const getTransactionImportRowFromTransaction = (transaction) => {
   return get(transaction, 'expense.transactionImportRow') || get(transaction, 'order.transactionImportRow');
 };
 
