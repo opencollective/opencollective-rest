@@ -204,6 +204,10 @@ export const transactionsFragment = gql`
           description
           date
           rawValue
+          transactionsImport {
+            id
+            name
+          }
           amount {
             value
             currency
