@@ -189,7 +189,7 @@ jobs:
           - 6379:6379
         options: --entrypoint redis-server
       postgres:
-        image: postgres:17.6
+        image: postgres:17.9@sha256:5b96f1a16bd9768b060dd2ffe55cb6225c4d9ef4d214a8b21eb08134869a97e4
         env:
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
