@@ -27,16 +27,16 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: 'package.json'
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -45,7 +45,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: node-modules
         with:
           path: node_modules
@@ -67,16 +67,16 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: 'package.json'
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -85,7 +85,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: node-modules
         with:
           path: node_modules
@@ -107,16 +107,16 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: 'package.json'
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -125,7 +125,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: node-modules
         with:
           path: node_modules
@@ -147,16 +147,16 @@ jobs:
         run: sudo apt-get update || exit 0
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: 'package.json'
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -165,7 +165,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: node-modules
         with:
           path: node_modules
@@ -184,12 +184,12 @@ jobs:
 
     services:
       redis:
-        image: redis
+        image: redis@sha256:832d7785830f3f4b559300e6191fc914b15642c1935252338825cf4332200148
         ports:
           - 6379:6379
         options: --entrypoint redis-server
       postgres:
-        image: postgres:17.6
+        image: postgres:17.6@sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929
         env:
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
@@ -208,16 +208,16 @@ jobs:
 
         # Checkouts
       - name: Checkout (rest)
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: 'package.json'
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -227,13 +227,13 @@ jobs:
 
       # Prepare API
       - name: Checkout (api)
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: opencollective/opencollective-api
           path: opencollective-api
 
       - name: Restore node_modules (api)
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: api-node-modules
         with:
           path: opencollective-api/node_modules
@@ -251,7 +251,7 @@ jobs:
 
       # Prepare Rest
       - name: Restore node_modules (rest)
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: rest-node-modules
         with:
           path: node_modules
@@ -278,13 +278,13 @@ jobs:
         run: npm run test:server:coverage
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: opencollective/opencollective-rest
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
