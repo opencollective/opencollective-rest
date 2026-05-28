@@ -87,7 +87,7 @@
     "globals": "^17.0.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "jest-junit": "^16.0.0",
+    "jest-junit": "^17.0.0",
     "jsonwebtoken": "^9.0.3",
     "light-my-request": "^6.6.0",
     "lint-staged": "^16.2.7",
