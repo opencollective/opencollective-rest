@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import { get, isNaN, toUpper, trim } from 'lodash';
 
 export const getBaseApiUrl = () => {
@@ -103,4 +104,24 @@ export const applyMapping = (mapping, row, meta?) => {
     }
   });
   return res;
+};
+
+export const isAuthenticatedRequest = (req: Request) => {
+  return Boolean(
+    req.cookies?.authorization ||
+    req.get('Authorization') ||
+    req.get('Api-Key') ||
+    req.get('Personal-Token') ||
+    req.query.apiKey ||
+    req.query.personalToken,
+  );
+};
+
+/** Prevent CDN/browser caching of authenticated export responses (defence in depth). */
+export const setPrivateCacheHeadersIfAuthenticated = (req: Request, res: Response) => {
+  if (isAuthenticatedRequest(req)) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
 };

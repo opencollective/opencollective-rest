@@ -10,6 +10,7 @@ import {
   applyMapping,
   parseToBooleanDefaultFalse,
   parseToBooleanDefaultTrue,
+  setPrivateCacheHeadersIfAuthenticated,
   splitEnums,
   splitIds,
 } from '../lib/utils';
@@ -944,6 +945,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     } else if (personalToken) {
       headers['Personal-Token'] = personalToken;
     }
+
+    setPrivateCacheHeadersIfAuthenticated(req, res);
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 

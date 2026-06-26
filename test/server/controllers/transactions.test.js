@@ -6,7 +6,7 @@ describe('transactions', () => {
       const response = await fetchResponseWithCacheBurst('/v1/collectives/railsgirlsatl/transactions');
       expect(response.statusCode).toBe(200);
       expect(response.headers['cache-control']).toBe('public, max-age=60');
-      expect(response.headers['vary']).toBe('Accept-Encoding, Authorization, Personal-Token, Api-Key');
+      expect(response.headers['vary']).toBe('Accept-Encoding, Authorization, Personal-Token, Api-Key, Cookie');
     });
 
     test('is private when authenticated', async () => {

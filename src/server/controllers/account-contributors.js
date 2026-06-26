@@ -4,7 +4,7 @@ import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 
 import { graphqlRequest } from '../lib/graphql';
-import { parseToBooleanDefaultFalse } from '../lib/utils';
+import { parseToBooleanDefaultFalse, setPrivateCacheHeadersIfAuthenticated } from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -221,6 +221,8 @@ const accountContributors = async (req, res) => {
     } else if (personalToken) {
       headers['Personal-Token'] = personalToken;
     }
+
+    setPrivateCacheHeadersIfAuthenticated(req, res);
 
     let result = await graphqlRequest(contributorsQuery, variables, { version: 'v2', headers });
 

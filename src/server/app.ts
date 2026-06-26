@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
-import { parseToBooleanDefaultFalse } from './lib/utils';
+import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
 import { loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
@@ -26,20 +26,14 @@ app.use(loggerMiddleware.errorLogger);
 
 // Global caching strategy
 app.use((req, res, next) => {
-  if (
-    req.get('Authorization') ||
-    req.query.apiKey ||
-    req.get('Personal-Token') ||
-    req.query.personalToken ||
-    req.get('Authorization')
-  ) {
+  if (isAuthenticatedRequest(req)) {
     // Make sure authenticated requests are never cached
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
   } else {
     res.setHeader('Cache-Control', 'public, max-age=60');
-    res.setHeader('Vary', 'Accept-Encoding, Authorization, Personal-Token, Api-Key');
+    res.setHeader('Vary', 'Accept-Encoding, Authorization, Personal-Token, Api-Key, Cookie');
   }
 
   next();

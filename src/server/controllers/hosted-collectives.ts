@@ -8,7 +8,13 @@ import moment from 'moment';
 
 import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
-import { applyMapping, parseToBooleanDefaultFalse, parseToBooleanDefaultTrue, splitEnums } from '../lib/utils';
+import {
+  applyMapping,
+  parseToBooleanDefaultFalse,
+  parseToBooleanDefaultTrue,
+  setPrivateCacheHeadersIfAuthenticated,
+  splitEnums,
+} from '../lib/utils';
 import { logger } from '../logger';
 
 function json2csv(data, opts) {
@@ -457,6 +463,8 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     } else if (personalToken) {
       headers['Personal-Token'] = personalToken;
     }
+
+    setPrivateCacheHeadersIfAuthenticated(req, res);
 
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
