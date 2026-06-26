@@ -78,7 +78,7 @@
     "@types/lodash": "^4.17.23",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
-    "commitizen": "^4.3.1",
+    "commitizen": "^4.3.2",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.2",
     "eslint-plugin-formatjs": "^6.1.1",
