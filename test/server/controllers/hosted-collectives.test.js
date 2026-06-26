@@ -14,13 +14,23 @@ describe('hosted-collectives', () => {
     test('is public if not authenticated', async () => {
       const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/hosted-collectives.json');
       expect(response.headers['cache-control']).toEqual('public, max-age=60');
+      expect(response.headers['vary']).toContain('Cookie');
     });
 
-    test('is private if authenticated', async () => {
+    test('is private if authenticated with Authorization header', async () => {
       const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/hosted-collectives.json', {
         headers: { Authorization: 'Bearer 1234567890' },
       });
-      expect(response.headers['cache-control']).toEqual('no-cache');
+      expect(response.headers['cache-control']).toEqual('private, no-store');
+      expect(response.headers['pragma']).toEqual('no-cache');
+      expect(response.headers['expires']).toEqual('0');
+    });
+
+    test('is private if authenticated with authorization cookie', async () => {
+      const response = await fetchResponseWithCacheBurst('/v2/railsgirlsatl/hosted-collectives.json', {
+        headers: { cookie: 'authorization="Bearer 1234567890"' },
+      });
+      expect(response.headers['cache-control']).toEqual('private, no-store');
       expect(response.headers['pragma']).toEqual('no-cache');
       expect(response.headers['expires']).toEqual('0');
     });
