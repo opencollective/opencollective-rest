@@ -92,7 +92,7 @@
     "light-my-request": "^6.6.0",
     "lint-staged": "^17.0.0",
     "nodemon": "^3.1.11",
-    "npm-run-all2": "^8.0.4",
+    "npm-run-all2": "^9.0.0",
     "prettier": "^3.8.1",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.53.1"
