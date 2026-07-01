@@ -24413,11 +24413,6 @@ type Mutation {
   ): [Order]!
 
   """
-  Creates a Stripe payment intent
-  """
-  createPaymentIntent(paymentIntent: PaymentIntentInput!, guestInfo: GuestInfoInput): PaymentIntent!
-
-  """
   To submit a new order. Scope: "orders".
   """
   createPendingOrder(order: PendingOrderCreateInput!): Order!
@@ -26644,16 +26639,6 @@ input ExpenseInviteeOrganizationInput {
 }
 
 """
-A Stripe payment intent
-"""
-type PaymentIntent {
-  id: String!
-  paymentIntentClientSecret: String!
-  stripeAccount: String!
-  stripeAccountPublishableSecret: String!
-}
-
-"""
 Input type for creating an ExportRequest
 """
 input ExportRequestCreateInput {
@@ -27045,11 +27030,6 @@ input PaymentMethodInput {
   paypalInfo: PaypalPaymentInput
 
   """
-  The Payment Intent ID used in this checkout
-  """
-  paymentIntentId: String
-
-  """
   The Manual Payment Provider ID used in this checkout
   """
   manualPaymentProvider: ManualPaymentProviderReferenceInput
@@ -27166,16 +27146,6 @@ enum ProcessOrderAction {
   To mark the order as paid
   """
   MARK_AS_PAID
-}
-
-"""
-Input to create a Stripe payment intent
-"""
-input PaymentIntentInput {
-  amount: AmountInput!
-  fromAccount: AccountReferenceInput
-  toAccount: AccountReferenceInput!
-  frequency: ContributionFrequency
 }
 
 """
