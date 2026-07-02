@@ -109,9 +109,17 @@ const contributorsQuery = gql`
 const recurringContribution = (m) =>
   get(m, 'account.activeRecurringContributions.nodes[0]') || get(m, 'account.inactiveRecurringContributions.nodes[0]');
 
+const getFormattedDateValue = (member, path) => {
+  const createdAt = get(member, path);
+  return createdAt ? moment.utc(createdAt).format('YYYY-MM-DD') : undefined;
+};
+
 const csvMapping = {
   isActive: 'isActive',
-  contributorUrl: (m) => `${process.env.WEBSITE_URL}/${m.account.slug}`,
+  contributorUrl: (m) => {
+    const slug = get(m, 'account.slug');
+    return slug ? `${process.env.WEBSITE_URL}/${slug}` : undefined;
+  },
   contributorName: 'account.name',
   contributorEmail: 'account.email',
   contributorWebsite: 'account.website',
@@ -126,12 +134,8 @@ const csvMapping = {
   recurringContributionAmount: (m) => get(recurringContribution(m), 'amount.value'),
   recurringContributionCurrency: (m) => get(recurringContribution(m), 'amount.currency'),
   recurringContributionFrequency: (m) => get(recurringContribution(m), 'frequency'),
-  contributorFirstContributionDate: (m) =>
-    m.account.firstContributions.nodes[0] &&
-    moment.utc(m.account.firstContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
-  contributorLatestContributionDate: (m) =>
-    m.account.latestContributions.nodes[0] &&
-    moment.utc(m.account.latestContributions.nodes[0].createdAt).format('YYYY-MM-DD'),
+  contributorFirstContributionDate: (m) => getFormattedDateValue(m, 'account.firstContributions.nodes[0].createdAt'),
+  contributorLatestContributionDate: (m) => getFormattedDateValue(m, 'account.latestContributions.nodes[0].createdAt'),
 };
 
 const allFields = Object.keys(csvMapping);
