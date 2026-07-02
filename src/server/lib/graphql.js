@@ -105,7 +105,6 @@ export async function fetchCollective(collectiveSlug) {
         slug
         image
         currency
-        data
         stats {
           balance
           backers {

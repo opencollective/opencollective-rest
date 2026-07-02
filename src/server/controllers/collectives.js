@@ -1,4 +1,4 @@
-import { get, pick } from 'lodash';
+import { pick } from 'lodash';
 
 import { fetchCollective } from '../lib/graphql';
 import { logger } from '../logger';
@@ -24,7 +24,6 @@ export async function info(req, res, next) {
     balance: collective.stats.balance,
     yearlyIncome: collective.stats.yearlyBudget,
     backersCount: collective.stats.backers.all,
-    contributorsCount: Object.keys(get(collective, 'data.githubContributors') || {}).length,
   };
 
   res.send(response);

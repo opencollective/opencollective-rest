@@ -7,7 +7,6 @@ const validateCollective = (collective) => {
   expect(collective).toHaveProperty('balance');
   expect(collective).toHaveProperty('yearlyIncome');
   expect(collective).toHaveProperty('backersCount');
-  expect(collective).toHaveProperty('contributorsCount');
 };
 
 describe('collectives', () => {
