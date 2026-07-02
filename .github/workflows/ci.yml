@@ -48,7 +48,7 @@ jobs:
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -57,7 +57,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: node-modules
         with:
           path: node_modules
@@ -88,7 +88,7 @@ jobs:
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -97,7 +97,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: node-modules
         with:
           path: node_modules
@@ -128,7 +128,7 @@ jobs:
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -137,7 +137,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: node-modules
         with:
           path: node_modules
@@ -168,7 +168,7 @@ jobs:
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -177,7 +177,7 @@ jobs:
             - ${{ runner.os }}-npm-cache-
 
       - name: Restore node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: node-modules
         with:
           path: node_modules
@@ -229,7 +229,7 @@ jobs:
 
       # Npm cache
       - name: Restore .npm cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-cache-${{ github.sha }}
@@ -245,7 +245,7 @@ jobs:
           path: opencollective-api
 
       - name: Restore node_modules (api)
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: api-node-modules
         with:
           path: opencollective-api/node_modules
@@ -263,7 +263,7 @@ jobs:
 
       # Prepare Rest
       - name: Restore node_modules (rest)
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: rest-node-modules
         with:
           path: node_modules
