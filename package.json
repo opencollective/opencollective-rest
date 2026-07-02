@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@apollo/client": "4.2.3",
-    "@babel/core": "7.29.7",
-    "@babel/plugin-transform-typescript": "7.29.7",
-    "@babel/preset-env": "7.29.7",
+    "@babel/core": "8.0.1",
+    "@babel/plugin-transform-typescript": "8.0.1",
+    "@babel/preset-env": "8.0.2",
     "@hyperwatch/hyperwatch": "4.2.0",
     "@json2csv/plainjs": "7.0.6",
     "babel-plugin-add-module-exports": "1.0.4",
@@ -68,8 +68,8 @@
     "type:check": "tsc"
   },
   "devDependencies": {
-    "@babel/cli": "^7.28.6",
-    "@babel/node": "^7.28.6",
+    "@babel/cli": "^8.0.0",
+    "@babel/node": "^8.0.0",
     "@eslint/compat": "^2.0.1",
     "@eslint/js": "^9.39.2",
     "@graphql-eslint/eslint-plugin": "^4.4.0",
