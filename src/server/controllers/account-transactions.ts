@@ -624,6 +624,7 @@ const getTransactionImportRowFromTransaction = (transaction) => {
 
 const allKinds = [
   'ADDED_FUNDS',
+  'APPLICATION_FEE',
   'BALANCE_TRANSFER',
   'CONTRIBUTION',
   'EXPENSE',
