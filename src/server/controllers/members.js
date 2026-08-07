@@ -160,7 +160,7 @@ export async function list(req, res, next) {
       if (r.member.githubHandle) {
         return `https://github.com/${r.member.githubHandle}`;
       }
-      const githubAccount = r.member.connectedAccounts.find((c) => c.service === 'github');
+      const githubAccount = (r.member.connectedAccounts || []).find((c) => c.service === 'github');
       return githubAccount ? `https://github.com/${githubAccount.username}` : null;
     },
     website: 'member.website',
