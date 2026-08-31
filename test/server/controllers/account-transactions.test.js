@@ -57,6 +57,56 @@ describe('account-transactions', () => {
     });
   });
 
+  describe('balance accounting category columns', () => {
+    let graphqlSpy;
+
+    const mockResultWithNode = {
+      transactions: {
+        limit: 100,
+        offset: 0,
+        totalCount: 1,
+        nodes: [
+          {
+            id: 'uuid-1',
+            legacyId: 1,
+            publicId: 'txn_1',
+            group: 'group-1-abcdef',
+            type: 'DEBIT',
+            kind: 'EXPENSE',
+            description: 'Test transaction',
+            createdAt: '2026-01-01T00:00:00Z',
+            amount: { value: -10, currency: 'USD' },
+            balanceAccountingCategory: { id: 'cat-1', publicId: 'acct_1', code: '1051', name: 'Mercury Checking' },
+          },
+        ],
+      },
+    };
+
+    beforeEach(() => {
+      graphqlSpy = jest.spyOn(graphqlLib, 'graphqlRequestWithRetry').mockResolvedValue(mockResultWithNode);
+    });
+
+    afterEach(() => {
+      graphqlSpy.mockRestore();
+    });
+
+    test('are opt-in and map code/name from the transaction', async () => {
+      const response = await fetchResponseWithCacheBurst(
+        '/v2/railsgirlsatl/transactions.csv?fields=legacyId,balanceAccountingCategoryCode,balanceAccountingCategoryName',
+      );
+      const [, variables] = graphqlSpy.mock.calls[0];
+      expect(variables.hasBalanceAccountingCategoryField).toBe(true);
+      expect(response.payload).toContain('"balanceAccountingCategoryCode","balanceAccountingCategoryName"');
+      expect(response.payload).toContain('"1051","Mercury Checking"');
+    });
+
+    test('are not fetched when not requested', async () => {
+      await fetchResponseWithCacheBurst('/v2/railsgirlsatl/transactions.csv?fields=legacyId');
+      const [, variables] = graphqlSpy.mock.calls[0];
+      expect(variables.hasBalanceAccountingCategoryField).toBe(false);
+    });
+  });
+
   describe('accountTransactions', () => {
     test('return /v2/:slug/transactions.json', async () => {
       const transactions = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/transactions.json');
