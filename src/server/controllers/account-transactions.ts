@@ -182,6 +182,12 @@ export const transactionsFragment = gql`
           name
         }
       }
+      balanceAccountingCategory @include(if: $hasBalanceAccountingCategoryField) {
+        id
+        publicId
+        code
+        name
+      }
       paymentMethod {
         service
         type
@@ -274,6 +280,7 @@ const transactionsQuery = gql`
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasBalanceAccountingCategoryField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeEditedReversedTransactions: Boolean
@@ -349,6 +356,7 @@ const hostTransactionsQuery = gql`
     $fullDescription: Boolean
     $group: [String]
     $hasAccountingCategoryField: Boolean!
+    $hasBalanceAccountingCategoryField: Boolean!
     $hasTransactionImportRowField: Boolean!
     $includeChildrenTransactions: Boolean
     $includeEditedReversedTransactions: Boolean
@@ -427,6 +435,8 @@ const columnNames = {
   isReversed: 'Is Reversed',
   accountingCategoryCode: 'Accounting Category Code',
   accountingCategoryName: 'Accounting Category Name',
+  balanceAccountingCategoryCode: 'Balance Accounting Category Code',
+  balanceAccountingCategoryName: 'Balance Accounting Category Name',
   merchantId: 'Merchant ID',
   paymentMethodService: 'Payment Processor',
   paymentMethodType: 'Payment Method',
@@ -505,6 +515,8 @@ const columnNames = {
 const csvMapping = {
   accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
+  balanceAccountingCategoryCode: (t) => t.balanceAccountingCategory?.code || '',
+  balanceAccountingCategoryName: (t) => t.balanceAccountingCategory?.name || '',
   date: (t) => moment.utc(t.createdAt).format('YYYY-MM-DD'),
   datetime: (t) => moment.utc(t.createdAt).format('YYYY-MM-DDTHH:mm:ss'),
   effectiveDate: (t) => (t.clearedAt ? moment.utc(t.clearedAt).format('YYYY-MM-DDTHH:mm:ss') : ''),
@@ -929,6 +941,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
   // Add fields info to the query, to prevent fetching what's not needed
   variables.hasAccountingCategoryField = fields.some((field) => field.startsWith('accountingCategory'));
+  variables.hasBalanceAccountingCategoryField = fields.some((field) => field.startsWith('balanceAccountingCategory'));
   variables.hasTransactionImportRowField = fields.some((field) => field.startsWith('importSource'));
 
   try {
