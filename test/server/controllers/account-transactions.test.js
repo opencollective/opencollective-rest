@@ -107,6 +107,54 @@ describe('account-transactions', () => {
     });
   });
 
+  describe('reverse fields', () => {
+    let graphqlSpy;
+
+    const mockResultWithNode = {
+      transactions: {
+        limit: 100,
+        offset: 0,
+        totalCount: 1,
+        nodes: [
+          {
+            id: 'uuid-1',
+            legacyId: 1,
+            publicId: 'txn_1',
+            group: 'group-1-abcdef',
+            type: 'DEBIT',
+            kind: 'EXPENSE',
+            description: 'Test transaction',
+            createdAt: '2026-01-01T00:00:00Z',
+            amount: { value: -10, currency: 'USD' },
+            isRefund: true,
+            isRefunded: true,
+            refundKind: 'REFUND',
+            refundTransaction: { id: 'refund-uuid', legacyId: 99, publicId: 'txn_99', refundKind: 'REFUND' },
+          },
+        ],
+      },
+    };
+
+    beforeEach(() => {
+      graphqlSpy = jest.spyOn(graphqlLib, 'graphqlRequestWithRetry').mockResolvedValue(mockResultWithNode);
+    });
+
+    afterEach(() => {
+      graphqlSpy.mockRestore();
+    });
+
+    test('use human-readable headers when useFieldNames is enabled', async () => {
+      const response = await fetchResponseWithCacheBurst(
+        '/v2/railsgirlsatl/transactions.csv?useFieldNames=1&fields=isReverse,isReversed,reverseId,reversePublicId,reverseLegacyId,reverseKind',
+      );
+
+      const header = response.payload.split('\n')[0];
+      expect(header).toEqual(
+        '"Is Reverse","Is Reversed","Reverse ID","Reverse Transaction Public ID","Reverse Transaction ID","Reverse Kind"',
+      );
+    });
+  });
+
   describe('accountTransactions', () => {
     test('return /v2/:slug/transactions.json', async () => {
       const transactions = await fetchJsonWithCacheBurst('/v2/railsgirlsatl/transactions.json');
