@@ -1,4 +1,4 @@
-FROM node:24
+FROM node:24@sha256:22553920add6fb1fd909104346924cd30b4b3ac76ca2980f3b8dba8ede3cf945
 
 WORKDIR /usr/src/rest
 
