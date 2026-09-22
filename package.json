@@ -15,7 +15,7 @@
     "@babel/core": "7.29.7",
     "@babel/plugin-transform-typescript": "7.29.7",
     "@babel/preset-env": "7.29.7",
-    "@hyperwatch/hyperwatch": "4.2.0",
+    "@hyperwatch/hyperwatch": "4.3.1",
     "@json2csv/plainjs": "7.0.6",
     "babel-plugin-add-module-exports": "1.0.4",
     "cloudflare-ip": "0.0.7",
@@ -104,7 +104,28 @@
   "jest": {
     "testPathIgnorePatterns": [
       "opencollective-api/"
-    ]
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!micro-strptime/)"
+    ],
+    "transform": {
+      "/node_modules/micro-strptime/.+\\.js$": [
+        "babel-jest",
+        {
+          "presets": [
+            [
+              "@babel/preset-env",
+              {
+                "targets": {
+                  "node": true
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      "\\.[jt]sx?$": "babel-jest"
+    }
   },
   "lint-staged": {
     "*.{js,json,md,graphql}": [
