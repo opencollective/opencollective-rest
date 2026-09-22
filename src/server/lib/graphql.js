@@ -99,7 +99,7 @@ export function simpleGraphqlRequest(query, variables, { version = 'v1', apiKey,
 
 export async function fetchCollective(collectiveSlug) {
   const query = gqlV1 /* GraphQL */ `
-    query fetchCollective($collectiveSlug: String) {
+    query Collective($collectiveSlug: String) {
       Collective(slug: $collectiveSlug) {
         id
         slug
@@ -161,7 +161,7 @@ export async function fetchEvent(eventSlug) {
 }
 
 export const allTransactionsQuery = gqlV1 /* GraphQL */ `
-  query allTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String) {
+  query AllTransactions($collectiveSlug: String!, $limit: Int, $offset: Int, $type: String) {
     allTransactions(collectiveSlug: $collectiveSlug, limit: $limit, offset: $offset, type: $type) {
       id
       uuid

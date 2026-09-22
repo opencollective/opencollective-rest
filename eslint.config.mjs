@@ -1,74 +1,101 @@
-import { defineConfig } from 'eslint/config';
-import globals from 'globals';
-import js from '@eslint/js';
-import formatjs from 'eslint-plugin-formatjs';
-import tseslint from 'typescript-eslint';
-import pluginReact from 'eslint-plugin-react';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { includeIgnoreFile } from '@eslint/compat';
+import graphqlPlugin from '@graphql-eslint/eslint-plugin'; // eslint-disable-line import/no-unresolved
+import openCollectiveConfig from 'eslint-config-opencollective/eslint-node.config.cjs';
 import pluginJest from 'eslint-plugin-jest';
+import globals from 'globals';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const gitignorePath = path.resolve(__dirname, '.gitignore');
-
-export default defineConfig([
-  includeIgnoreFile(gitignorePath),
-  { ignores: ['node_modules', 'dist', 'coverage', '.nyc_output', '**/*.graphql'] },
+export default [
+  ...openCollectiveConfig,
+  // Global ignores
   {
-    files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
-    languageOptions: { globals: globals.node },
+    ignores: ['**/node_modules/', '**/dist/', '**/coverage/', '**/.history', 'src/graphql/*.graphql'],
   },
   {
-    files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
-    plugins: { js },
-    extends: ['js/recommended'],
-  },
-  tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
-  {
-    files: ['**/*.{ts,tsx}'],
-    plugins: {
-      formatjs,
+    files: ['**/*.{js,ts}'],
+
+    // Lint GraphQL queries embedded in `gql` / `gqlV1` tags against the schemas (see graphql.config.js)
+    processor: graphqlPlugin.processor,
+
+    settings: {
+      'import/resolver': {
+        typescript: true,
+        node: true,
+      },
     },
+
+    rules: {
+      'import/no-commonjs': 'error',
+      'import/no-named-as-default-member': 'off',
+      'n/no-process-exit': 'off',
+      'n/no-unsupported-features/node-builtins': 'off',
+      'no-useless-escape': 'off',
+      'prefer-rest-params': 'off',
+      'require-atomic-updates': 'off',
+      camelcase: 'error',
+    },
+  },
+  // Disable some JS rules that are enforced in TS
+  {
+    files: ['**/*.js'],
+    rules: {
+      'no-unused-vars': 'error',
+    },
+  },
+  {
+    files: ['**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      'react/prop-types': 'off',
-      'formatjs/enforce-id': [
-        'error',
-        {
-          idInterpolationPattern: '[sha512:contenthash:base64:6]',
-        },
-      ],
+      '@typescript-eslint/no-unused-vars': 'error',
     },
   },
-  // Test files
+  // Tests
   {
-    // update this to match your test files
-    files: ['**/*.spec.js', '**/*.test.{js,ts}'],
-    plugins: { jest: pluginJest },
+    files: ['test/**/*'],
+    ...pluginJest.configs['flat/recommended'],
     languageOptions: {
-      globals: pluginJest.environments.globals.globals,
+      globals: {
+        ...globals.jest,
+      },
     },
     rules: {
-      'jest/no-disabled-tests': 'warn',
-      'jest/no-focused-tests': 'error',
-      'jest/no-identical-title': 'error',
+      ...pluginJest.configs['flat/recommended'].rules,
+      'jest/expect-expect': ['warn', { assertFunctionNames: ['expect', 'validate*'] }],
       'jest/prefer-to-have-length': 'warn',
-      'jest/valid-expect': 'error',
-      'no-restricted-properties': [
+      'n/no-unpublished-import': 'off',
+    },
+  },
+  // Mocks
+  {
+    files: ['test/mocks/**/*'],
+    rules: {
+      camelcase: 'off',
+    },
+  },
+  {
+    files: ['**/*.graphql'],
+
+    languageOptions: {
+      parser: graphqlPlugin.parser,
+    },
+    plugins: {
+      '@graphql-eslint': graphqlPlugin,
+    },
+
+    rules: {
+      '@graphql-eslint/no-deprecated': 'warn',
+      '@graphql-eslint/fields-on-correct-type': 'error',
+      '@graphql-eslint/no-duplicate-fields': 'error',
+      '@graphql-eslint/naming-convention': [
         'error',
         {
-          object: 'test',
-          property: 'only',
-          message: 'test.only should only be used for debugging purposes and is not allowed in production code',
-        },
-        {
-          object: 'describe',
-          property: 'only',
-          message: 'describe.only should only be used for debugging purposes and is not allowed in production code',
+          VariableDefinition: 'camelCase',
+
+          OperationDefinition: {
+            style: 'PascalCase',
+            forbiddenPrefixes: ['get', 'fetch'],
+            forbiddenSuffixes: ['Query', 'Mutation', 'Fragment'],
+          },
         },
       ],
     },
   },
-]);
+];
