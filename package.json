@@ -104,7 +104,28 @@
   "jest": {
     "testPathIgnorePatterns": [
       "opencollective-api/"
-    ]
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!micro-strptime/)"
+    ],
+    "transform": {
+      "/node_modules/micro-strptime/.+\\.js$": [
+        "babel-jest",
+        {
+          "presets": [
+            [
+              "@babel/preset-env",
+              {
+                "targets": {
+                  "node": true
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      "\\.[jt]sx?$": "babel-jest"
+    }
   },
   "lint-staged": {
     "*.{js,json,md,graphql}": [
