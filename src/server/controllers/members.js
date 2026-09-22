@@ -40,11 +40,11 @@ export async function list(req, res, next) {
   }
 
   const query = gqlV1 /* GraphQL */ `
-    query collectiveMembers(
+    query CollectiveMembers(
       $collectiveSlug: String
       $backerType: String
       $tierSlug: String
-      $TierId: Int
+      $tierId: Int
       $limit: Int
       $offset: Int
       $role: String
@@ -52,7 +52,7 @@ export async function list(req, res, next) {
       Collective(slug: $collectiveSlug) {
         currency
 
-        members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $TierId, limit: $limit, offset: $offset) {
+        members(type: $backerType, role: $role, tierSlug: $tierSlug, TierId: $tierId, limit: $limit, offset: $offset) {
           id
           createdAt
           role
@@ -68,7 +68,6 @@ export async function list(req, res, next) {
           member {
             type
             slug
-            type
             name
             company
             description
@@ -111,7 +110,7 @@ export async function list(req, res, next) {
     vars.backerType = backerType;
   }
   if (req.query.TierId) {
-    vars.TierId = Number(req.query.TierId);
+    vars.tierId = Number(req.query.TierId);
   }
   if (req.query.limit) {
     vars.limit = Number(req.query.limit);
