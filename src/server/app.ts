@@ -1,6 +1,6 @@
 import '../env';
 
-import cloudflareIps from 'cloudflare-ip/ips.json';
+import cloudflareIps from './cloudflare-ips.json';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 

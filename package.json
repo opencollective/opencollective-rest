@@ -18,7 +18,6 @@
     "@hyperwatch/hyperwatch": "4.2.0",
     "@json2csv/plainjs": "7.0.6",
     "babel-plugin-add-module-exports": "1.0.4",
-    "cloudflare-ip": "0.0.7",
     "cookie-parser": "1.4.7",
     "cors": "2.8.6",
     "debug": "4.4.3",
@@ -40,8 +39,8 @@
   "scripts": {
     "build:clean": "rm -rf dist && mkdir dist",
     "build:server": "babel ./src --copy-files --extensions .js,.ts -d ./dist",
-    "build:updates": "npm --prefix node_modules/cloudflare-ip run update-list",
-    "build": "npm run build:clean && npm run build:updates && npm run build:server",
+    "build:updates": "babel-node --extensions .ts scripts/update-cloudflare-ips.ts dist/server/cloudflare-ips.json",
+    "build": "npm run build:clean && npm run build:server && npm run build:updates",
     "commit": "git-cz",
     "depcheck": "npx @opencollective/depcheck .",
     "deploy:production": "./scripts/pre-deploy.sh production && git push production main",
