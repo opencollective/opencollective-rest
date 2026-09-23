@@ -16,6 +16,14 @@ For the long run, we suggest to integrate these tools in your favorite code edit
 - check [Prettier Editor Integration](https://prettier.io/docs/en/editors.html)
 - check [ESLint Editor Integrations](https://eslint.org/docs/user-guide/integrations)
 
+## Commit convention
+
+Commit messages and Pull Request titles follow the [Conventional Commits](https://www.conventionalcommits.org/) specification: `type(scope): description`, where `type` is one of `feat`, `fix`, `chore`, `refactor`, `test`, `docs`… and `scope` is optional. For example:
+
+- `feat(transactions): add processed date to CSV export`
+- `fix(members): handle collectives without a website`
+- `chore(deps): update dependency express to v4.22.2`
+
 ## Git guidelines
 
 We do aim having a clean Git history! When submitting a Pull Request, make sure:
