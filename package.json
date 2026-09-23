@@ -42,7 +42,6 @@
     "build:server": "babel ./src --copy-files --extensions .js,.ts -d ./dist",
     "build:updates": "babel-node --extensions .ts scripts/update-cloudflare-ips.ts dist/server/cloudflare-ips.json",
     "build": "npm run build:clean && npm run build:server && npm run build:updates",
-    "commit": "git-cz",
     "depcheck": "npx @opencollective/depcheck .",
     "deploy:production": "./scripts/pre-deploy.sh production && git push production main",
     "deploy:staging": "./scripts/pre-deploy.sh staging && git push -f staging main",
@@ -77,8 +76,6 @@
     "@types/lodash": "^4.17.23",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
-    "commitizen": "^4.3.2",
-    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^10.0.0",
     "eslint-plugin-formatjs": "^8.0.5",
     "eslint-plugin-jest": "^29.12.1",
@@ -95,11 +92,6 @@
     "prettier": "^3.8.1",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.53.1"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   },
   "jest": {
     "testPathIgnorePatterns": [
@@ -142,7 +134,6 @@
     "specials": [
       "babel",
       "bin",
-      "commitizen",
       "eslint",
       "husky",
       "lint-staged",
