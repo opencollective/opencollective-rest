@@ -98,9 +98,6 @@ export async function list(req, res, next) {
   if (role === 'attendees') {
     vars.role = 'ATTENDEE';
   }
-  if (role === 'followers') {
-    vars.role = 'FOLLOWER';
-  }
   if (role === 'organizers') {
     vars.role = 'ADMIN';
   }
