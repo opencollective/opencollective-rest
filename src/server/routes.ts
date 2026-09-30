@@ -24,20 +24,28 @@ export const loadRoutes = (app: Express) => {
     res.send('User-agent: *\nDisallow: /');
   });
 
-  app.get('/:version(v1)?/:collectiveSlug.:format(json)', controllers.collectives.info);
-  app.get('/:version(v1)?/:collectiveSlug/members.:format(json|csv)', controllers.members.list);
+  // RegExp routes retain the constrained optional params supported by Express 4.
+  // Named groups populate req.params; /i and /? preserve case and trailing-slash behavior.
+  app.get(/^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\.(?<format>json)\/?$/i, controllers.collectives.info);
   app.get(
-    '/:version(v1)?/:collectiveSlug/members/:backerType(all|users|organizations).:format(json|csv)',
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/members\.(?<format>json|csv)\/?$/i,
     controllers.members.list,
   );
   app.get(
-    '/:version(v1)?/:collectiveSlug/tiers/:tierSlug/:backerType(all|users|organizations).:format(json|csv)',
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/members\/(?<backerType>all|users|organizations)\.(?<format>json|csv)\/?$/i,
+    controllers.members.list,
+  );
+  app.get(
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/tiers\/(?<tierSlug>[^/]+?)\/(?<backerType>all|users|organizations)\.(?<format>json|csv)\/?$/i,
     controllers.members.list,
   );
 
-  app.get('/:version(v1)?/:collectiveSlug/events/:eventSlug.:format(json)', controllers.events.info);
   app.get(
-    '/:version(v1)?/:collectiveSlug/events/:eventSlug/:role(attendees|followers|organizers|all).:format(json|csv)',
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/events\/(?<eventSlug>[^/]+?)\.(?<format>json)\/?$/i,
+    controllers.events.info,
+  );
+  app.get(
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/events\/(?<eventSlug>[^/]+?)\/(?<role>attendees|followers|organizers|all)\.(?<format>json|csv)\/?$/i,
     controllers.members.list,
   );
 
@@ -56,21 +64,21 @@ export const loadRoutes = (app: Express) => {
   /* API v2 */
 
   app.get(
-    '/v2/:slug/tier/:tierSlug/orders/:filter(incoming)?/:status(active|cancelled|error|paid|pending)?',
+    /^\/v2\/(?<slug>[^/]+?)\/tier\/(?<tierSlug>[^/]+?)\/orders(?:\/(?<filter>incoming))?(?:\/(?<status>active|cancelled|error|paid|pending))?\/?$/i,
     controllers.accountOrders,
   );
 
   app.get(
-    '/v2/:slug/orders/:filter(incoming|outgoing)?/:status(active|cancelled|error|paid|pending)?',
+    /^\/v2\/(?<slug>[^/]+?)\/orders(?:\/(?<filter>incoming|outgoing))?(?:\/(?<status>active|cancelled|error|paid|pending))?\/?$/i,
     controllers.accountOrders,
   );
 
   app.all(
-    '/v2/:slug/:reportType(hostTransactions|transactions)/:type(credit|debit)?/:kind(contribution|expense|added_funds|host_fee|host_fee_share|host_fee_share_debt|platform_tip|platform_tip_debt)?.:format(json|csv|txt)',
+    /^\/v2\/(?<slug>[^/]+?)\/(?<reportType>hostTransactions|transactions)(?:\/(?<type>credit|debit))?(?:\/(?<kind>contribution|expense|added_funds|host_fee|host_fee_share|host_fee_share_debt|platform_tip|platform_tip_debt))?\.(?<format>json|csv|txt)\/?$/i,
     controllers.accountTransactions,
   );
 
-  app.get('/v2/:slug/contributors.:format(json|csv)', controllers.accountContributors);
+  app.get(/^\/v2\/(?<slug>[^/]+?)\/contributors\.(?<format>json|csv)\/?$/i, controllers.accountContributors);
 
-  app.all('/v2/:slug/hosted-collectives.:format(json|csv)', controllers.hostedCollectives);
+  app.all(/^\/v2\/(?<slug>[^/]+?)\/hosted-collectives\.(?<format>json|csv)\/?$/i, controllers.hostedCollectives);
 };
