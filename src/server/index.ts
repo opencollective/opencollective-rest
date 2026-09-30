@@ -5,6 +5,9 @@ import { logger } from './logger';
 
 const port = process.env.PORT || 3003;
 
-app.listen(port, () => {
+app.listen(port, (error) => {
+  if (error) {
+    throw error;
+  }
   logger.info(`Ready on http://localhost:${port}`);
 });

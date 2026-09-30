@@ -11,6 +11,8 @@ import { loadRoutes } from './routes';
 
 const app = express();
 
+// Preserve structured query filters (e.g. manualPaymentProvider[0][id]) from Express 4.
+app.set('query parser', 'extended');
 app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'].concat(cloudflareIps));
 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
