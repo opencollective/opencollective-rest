@@ -40,10 +40,7 @@ export function load(app, server) {
       path: path || '/_hyperwatch',
       // The WebSocket upgrades go through the app like HTTP requests, so basic auth applies to both
       middleware: hyperwatchBasicAuth,
-      // We don't serve any other WebSocket: close the upgrades that Hyperwatch doesn't own instead of leaving them hanging
-      fallback: (req, socket) => {
-        socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
-      },
+      // No fallback: Hyperwatch answers 404 to the upgrades it doesn't own, as we serve no other WebSocket
     });
   }
 
