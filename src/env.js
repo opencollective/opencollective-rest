@@ -9,9 +9,11 @@ import lodash from 'lodash';
 // Load extra env file on demand
 // e.g. `npm run dev production` -> `.env.production`
 const extraEnv = process.env.EXTRA_ENV || lodash.last(process.argv);
-const extraEnvPath = path.join(__dirname, '..', `.env.${extraEnv}`);
-if (fs.existsSync(extraEnvPath)) {
-  dotenv.config({ path: extraEnvPath });
+if (extraEnv && /^[a-zA-Z0-9_-]+$/.test(extraEnv)) {
+  const extraEnvPath = path.join(__dirname, '..', `.env.${extraEnv}`);
+  if (fs.existsSync(extraEnvPath)) {
+    dotenv.config({ path: extraEnvPath });
+  }
 }
 
 dotenv.config();
