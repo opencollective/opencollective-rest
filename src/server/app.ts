@@ -1,10 +1,13 @@
 import '../env';
+import './lib/sentry';
 
+import * as Sentry from '@sentry/node';
 import cloudflareIps from './cloudflare-ips.json';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
+import { HandlerType, reportErrorToSentry } from './lib/sentry';
 import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
 import { loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
@@ -42,5 +45,28 @@ app.use((req, res, next) => {
 });
 
 loadRoutes(app);
+
+// Unknown routes are not errors, do not report them to Sentry
+app.use((req, res) => {
+  res.status(404).send({ error: { message: 'Not found' } });
+});
+
+Sentry.setupExpressErrorHandler(app);
+
+// Global fallback error handler. Must be last and use 4 args so Express treats it as an error handler.
+// Catches sync throws and errors forwarded with next(err); async rejections that escape Express
+// are additionally caught by the process-level handlers in ./lib/sentry.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  reportErrorToSentry(err, { handler: HandlerType.EXPRESS, req });
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = Number(err?.status ?? err?.statusCode ?? 500);
+  const safeStatus = Number.isInteger(status) && status >= 400 && status < 600 ? status : 500;
+  res.status(safeStatus).send({
+    error: { message: safeStatus >= 500 ? 'Internal server error' : err?.message || 'Bad request' },
+  });
+});
 
 export default app;
