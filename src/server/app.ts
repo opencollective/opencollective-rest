@@ -2,12 +2,12 @@ import '../env';
 
 import http from 'http';
 
-import cloudflareIps from './cloudflare-ips.json';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
 import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
+import cloudflareIps from './cloudflare-ips.json';
 import { loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
