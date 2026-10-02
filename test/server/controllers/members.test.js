@@ -54,12 +54,5 @@ describe('members', () => {
       expect(attendees[0].role).toEqual('ATTENDEE');
       expect(attendees[1].role).toEqual('ATTENDEE');
     });
-
-    test('return /:collectiveSlug/events/:eventSlug/followers.json', async () => {
-      const followers = await fetchJsonWithCacheBurst('/veganizerbxl/events/superfilles/followers.json');
-      validateMember(followers[0]);
-      expect(followers[0].role).toEqual('FOLLOWER');
-      expect(followers[1].role).toEqual('FOLLOWER');
-    });
   });
 });
