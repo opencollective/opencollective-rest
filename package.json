@@ -16,7 +16,7 @@
     "@babel/core": "8.0.6",
     "@babel/plugin-transform-typescript": "8.0.6",
     "@babel/preset-env": "8.0.6",
-    "@hyperwatch/hyperwatch": "5.1.0",
+    "@hyperwatch/hyperwatch": "5.2.0",
     "@json2csv/plainjs": "7.0.8",
     "babel-plugin-add-module-exports": "1.0.4",
     "cookie-parser": "1.4.7",
