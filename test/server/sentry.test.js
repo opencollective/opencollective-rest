@@ -14,6 +14,25 @@ describe('sentry global error handling', () => {
     expect(JSON.parse(response.payload)).toEqual({ error: { message: 'Not found' } });
   });
 
+  test('debug endpoint requires the configured key', async () => {
+    const previousKey = process.env.DEBUG_SENTRY_KEY;
+    process.env.DEBUG_SENTRY_KEY = 'test-debug-key';
+    try {
+      const invalidResponse = await inject(app, { method: 'GET', url: '/debug-sentry?key=wrong-key' });
+      expect(invalidResponse.statusCode).toBe(404);
+
+      const validResponse = await inject(app, { method: 'GET', url: '/debug-sentry?key=test-debug-key' });
+      expect(validResponse.statusCode).toBe(500);
+      expect(JSON.parse(validResponse.payload)).toEqual({ error: { message: 'Internal server error' } });
+    } finally {
+      if (previousKey === undefined) {
+        delete process.env.DEBUG_SENTRY_KEY;
+      } else {
+        process.env.DEBUG_SENTRY_KEY = previousKey;
+      }
+    }
+  });
+
   test('sentry is disabled without a DSN', () => {
     expect(checkIfSentryConfigured()).toBe(false);
   });
@@ -31,13 +50,14 @@ describe('sentry global error handling', () => {
         'content-type': 'application/json',
       },
       cookies: { authorization: 'Bearer secret' },
-      query_string: 'apiKey=secret&slug=test',
+      query_string: 'apiKey=secret&key=secret&slug=test',
       data: JSON.stringify({ personalToken: 'secret', slug: 'test' }),
     });
     expect(redacted.headers.Authorization).toBe('[Filtered]');
     expect(redacted.headers['Api-Key']).toBe('[Filtered]');
     expect(redacted.headers['content-type']).toBe('application/json');
     expect(redacted.query_string.apiKey).toBe('[Filtered]');
+    expect(redacted.query_string.key).toBe('[Filtered]');
     expect(redacted.query_string.slug).toBe('test');
     expect(JSON.parse(redacted.data).personalToken).toBe('[Filtered]');
     expect(JSON.parse(redacted.data).slug).toBe('test');

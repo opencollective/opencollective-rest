@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
-import { HandlerType, reportErrorToSentry } from './lib/sentry';
+import { HandlerType, isValidDebugSentryKey, reportErrorToSentry } from './lib/sentry';
 import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
 import { loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
@@ -45,6 +45,16 @@ app.use((req, res, next) => {
 });
 
 loadRoutes(app);
+
+// Debug endpoint to verify Sentry reporting end-to-end. Behaves like an unknown route
+// when the shared secret is not configured or does not match.
+app.get('/debug-sentry', (req, res, next) => {
+  if (!isValidDebugSentryKey(req.query.key)) {
+    next();
+    return;
+  }
+  throw new Error('Sentry debug error triggered via /debug-sentry');
+});
 
 // Unknown routes are not errors, do not report them to Sentry
 app.use((req, res) => {

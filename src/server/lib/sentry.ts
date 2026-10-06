@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import querystring from 'querystring';
 
 import * as Sentry from '@sentry/node';
@@ -25,7 +26,18 @@ export type CaptureErrorParams = {
   req?: any;
 };
 
-const SENSITIVE_KEY_PATTERN = /authorization|api[-_]?key|personal[-_]?token|cookie|set-cookie|token|secret|password/i;
+const SENSITIVE_KEY_PATTERN =
+  /authorization|api[-_]?key|personal[-_]?token|cookie|set-cookie|token|secret|password|(?:^|[-_])key$/i;
+
+export const isValidDebugSentryKey = (provided: unknown): boolean => {
+  const expected = process.env.DEBUG_SENTRY_KEY;
+  if (!expected || typeof provided !== 'string' || !provided) {
+    return false;
+  }
+  const providedBuffer = Buffer.from(provided);
+  const expectedBuffer = Buffer.from(expected);
+  return providedBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+};
 
 const redactValue = () => '[Filtered]';
 
