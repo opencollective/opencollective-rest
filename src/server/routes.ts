@@ -45,7 +45,7 @@ export const loadRoutes = (app: Express) => {
     controllers.events.info,
   );
   app.get(
-    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/events\/(?<eventSlug>[^/]+?)\/(?<role>attendees|followers|organizers|all)\.(?<format>json|csv)\/?$/i,
+    /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/events\/(?<eventSlug>[^/]+?)\/(?<role>attendees|organizers|all)\.(?<format>json|csv)\/?$/i,
     controllers.members.list,
   );
 
