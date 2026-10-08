@@ -1,16 +1,13 @@
 import '../env';
 import './lib/sentry';
 
-import app from './app';
+import { server } from './app';
 import { HandlerType, reportErrorToSentry } from './lib/sentry';
 import { logger } from './logger';
 
 const port = process.env.PORT || 3003;
 
-const server = app.listen(port, (error) => {
-  if (error) {
-    throw error;
-  }
+server.listen(port, () => {
   logger.info(`Ready on http://localhost:${port}`);
 });
 

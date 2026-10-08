@@ -1,6 +1,5 @@
 import hyperwatch from '@hyperwatch/hyperwatch';
 import expressBasicAuth from 'express-basic-auth';
-import expressWs from 'express-ws';
 
 import { logger } from '../logger';
 
@@ -13,7 +12,11 @@ const {
   HYPERWATCH_SECRET: secret,
 } = process.env;
 
-export function load(app) {
+/**
+ * @param {import('express').Application} app
+ * @param {import('http').Server} server The HTTP server of the app, needed to serve the Hyperwatch WebSocket streams
+ */
+export function load(app, server) {
   const { input, lib, modules, pipeline } = hyperwatch;
 
   // Init
@@ -26,18 +29,19 @@ export function load(app) {
     },
   });
 
-  // Mount Hyperwatch API and Websocket
-  if (parseToBooleanDefaultFalse(enabled)) {
-    // We need to setup express-ws here to make Hyperwatch's websocket works
-    if (secret) {
-      expressWs(app);
-      const hyperwatchBasicAuth = expressBasicAuth({
-        users: { [username || 'opencollective']: secret },
-        challenge: true,
-      });
-      app.use(path || '/_hyperwatch', hyperwatchBasicAuth, hyperwatch.app.api);
-      app.use(path || '/_hyperwatch', hyperwatchBasicAuth, hyperwatch.app.websocket);
-    }
+  // Mount Hyperwatch API and WebSocket streams
+  if (parseToBooleanDefaultFalse(enabled) && secret) {
+    const hyperwatchBasicAuth = expressBasicAuth({
+      users: { [username || 'opencollective']: secret },
+      challenge: true,
+    });
+    hyperwatch.app.mount(app, {
+      server,
+      path: path || '/_hyperwatch',
+      // The WebSocket upgrades go through the app like HTTP requests, so basic auth applies to both
+      middleware: hyperwatchBasicAuth,
+      // No fallback: Hyperwatch answers 404 to the upgrades it doesn't own, as we serve no other WebSocket
+    });
   }
 
   // Configure input

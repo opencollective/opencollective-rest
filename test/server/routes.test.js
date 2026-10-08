@@ -37,7 +37,7 @@ for (const format of ['json', 'csv']) {
       ],
     );
   }
-  for (const role of ['attendees', 'followers', 'organizers', 'all']) {
+  for (const role of ['attendees', 'organizers', 'all']) {
     v1Cases.push([
       `/example/events/meetup/${role}.${format}`,
       'members.list',
@@ -187,5 +187,20 @@ describe('routes', () => {
   test('rejects malformed percent encoding', async () => {
     const response = await inject(app, { url: '/v2/%FF/orders' });
     expect(response.statusCode).toBe(400);
+  });
+});
+
+describe('removed follower routes', () => {
+  const app = express();
+  loadRoutes(app);
+
+  test.each([
+    '/veganizerbxl/events/superfilles/followers.json',
+    '/veganizerbxl/events/superfilles/followers.csv',
+    '/v1/veganizerbxl/events/superfilles/followers.json',
+    '/v1/veganizerbxl/events/superfilles/followers.csv',
+  ])('returns 404 for %s', async (url) => {
+    const response = await inject(app, { method: 'GET', url });
+    expect(response.statusCode).toEqual(404);
   });
 });

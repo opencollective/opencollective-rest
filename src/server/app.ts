@@ -2,17 +2,21 @@ import '../env';
 import './lib/sentry';
 
 import * as Sentry from '@sentry/node';
-import cloudflareIps from './cloudflare-ips.json';
+import http from 'http';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
 import { HandlerType, isValidDebugSentryKey, reportErrorToSentry } from './lib/sentry';
 import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
+import cloudflareIps from './cloudflare-ips.json';
 import { loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
 const app = express();
+
+// Created here rather than with `app.listen()` so Hyperwatch can handle WebSocket upgrades on it
+export const server = http.createServer(app);
 
 // Preserve structured query filters (e.g. manualPaymentProvider[0][id]) from Express 4.
 app.set('query parser', 'extended');
@@ -23,7 +27,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
 if (parseToBooleanDefaultFalse(process.env.HYPERWATCH_ENABLED)) {
-  hyperwatch(app);
+  hyperwatch(app, server);
 }
 
 app.use(loggerMiddleware.logger);
