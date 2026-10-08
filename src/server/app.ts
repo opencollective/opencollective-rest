@@ -1,8 +1,9 @@
 import '../env';
 import './lib/sentry';
 
-import * as Sentry from '@sentry/node';
 import http from 'http';
+
+import * as Sentry from '@sentry/node';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 
@@ -70,7 +71,6 @@ Sentry.setupExpressErrorHandler(app);
 // Global fallback error handler. Must be last and use 4 args so Express treats it as an error handler.
 // Catches sync throws and errors forwarded with next(err); async rejections that escape Express
 // are additionally caught by the process-level handlers in ./lib/sentry.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err, req: express.Request, res: express.Response, next: express.NextFunction) => {
   reportErrorToSentry(err, { handler: HandlerType.EXPRESS, req });
   if (res.headersSent) {

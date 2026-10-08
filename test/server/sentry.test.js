@@ -50,15 +50,15 @@ describe('sentry global error handling', () => {
         'content-type': 'application/json',
       },
       cookies: { authorization: 'Bearer secret' },
-      query_string: 'apiKey=secret&key=secret&slug=test',
+      ['query_string']: 'apiKey=secret&key=secret&slug=test',
       data: JSON.stringify({ personalToken: 'secret', slug: 'test' }),
     });
     expect(redacted.headers.Authorization).toBe('[Filtered]');
     expect(redacted.headers['Api-Key']).toBe('[Filtered]');
     expect(redacted.headers['content-type']).toBe('application/json');
-    expect(redacted.query_string.apiKey).toBe('[Filtered]');
-    expect(redacted.query_string.key).toBe('[Filtered]');
-    expect(redacted.query_string.slug).toBe('test');
+    expect(redacted['query_string'].apiKey).toBe('[Filtered]');
+    expect(redacted['query_string'].key).toBe('[Filtered]');
+    expect(redacted['query_string'].slug).toBe('test');
     expect(JSON.parse(redacted.data).personalToken).toBe('[Filtered]');
     expect(JSON.parse(redacted.data).slug).toBe('test');
   });

@@ -1,8 +1,8 @@
 import '../env';
 import './lib/sentry';
 
-import { server } from './app';
 import { HandlerType, reportErrorToSentry } from './lib/sentry';
+import { server } from './app';
 import { logger } from './logger';
 
 const port = process.env.PORT || 3003;
