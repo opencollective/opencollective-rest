@@ -1,7 +1,6 @@
 import cors from 'cors';
 import type { Express } from 'express';
 
-import { idOrUuid } from './lib/utils';
 import controllers from './controllers';
 
 const requireApiKey = (req, res, next) => {
@@ -51,15 +50,8 @@ export const loadRoutes = (app: Express) => {
 
   /* API v1 */
 
-  app.param('idOrUuid', idOrUuid);
-
   // Get transactions of a collective given its slug.
   app.get('/v1/collectives/:collectiveSlug/transactions', requireApiKey, controllers.transactions.allTransactions);
-  app.get(
-    '/v1/collectives/:collectiveSlug/transactions/:idOrUuid',
-    requireApiKey,
-    controllers.transactions.getTransaction,
-  );
 
   /* API v2 */
 
