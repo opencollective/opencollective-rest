@@ -18,6 +18,8 @@
     "@babel/preset-env": "8.0.6",
     "@hyperwatch/hyperwatch": "5.3.1",
     "@json2csv/plainjs": "7.0.8",
+    "@sentry/node": "^11.1.0",
+    "@sentry/profiling-node": "^11.1.0",
     "babel-plugin-add-module-exports": "1.0.4",
     "cookie-parser": "1.4.7",
     "cors": "2.8.6",
