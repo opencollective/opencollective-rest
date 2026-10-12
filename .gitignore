@@ -16,3 +16,8 @@ styleguide/index.html
 styleguide/build/
 .vimrc
 .history
+
+# Turborepo task logs and local cache
+.turbo/
+
+/node_modules
