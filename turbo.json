@@ -14,22 +14,14 @@
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "build": {
+    "depcheck:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "depcheck": {
-      "cache": false,
-      "passThroughEnv": ["*"]
-    },
-    "dev": {
+    "dev:task": {
       "cache": false,
       "passThroughEnv": ["*"],
       "persistent": true
-    },
-    "graphql:update": {
-      "cache": false,
-      "passThroughEnv": ["*"]
     },
     "graphql:updateV1": {
       "cache": false,
@@ -43,11 +35,11 @@
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "lint:fix": {
+    "lint:fix:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "lint:quiet": {
+    "lint:quiet:task": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "package-lock.json",
@@ -69,7 +61,7 @@
       "outputs": [],
       "cache": true
     },
-    "lint": {
+    "lint:task": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "package-lock.json",
@@ -91,7 +83,7 @@
       "outputs": [],
       "cache": true
     },
-    "prettier:check": {
+    "prettier:check:task": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "package-lock.json",
@@ -119,24 +111,24 @@
       "persistent": true,
       "dependsOn": ["build:finalize"]
     },
-    "test": {
+    "test:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "test:watch": {
+    "test:watch:task": {
       "cache": false,
       "passThroughEnv": ["*"],
       "persistent": true
     },
-    "test:server": {
+    "test:server:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "test:server:coverage": {
+    "test:server:coverage:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
-    "type:check": {
+    "type:check:task": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "package-lock.json",
@@ -158,7 +150,7 @@
       "outputs": [],
       "cache": true
     },
-    "format:check": {
+    "format:check:task": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "package-lock.json",
@@ -180,7 +172,7 @@
       "outputs": [],
       "cache": true
     },
-    "format": {
+    "format:task": {
       "cache": false,
       "passThroughEnv": ["*"]
     },
@@ -230,6 +222,14 @@
       "cache": false,
       "passThroughEnv": ["*"],
       "dependsOn": ["opencollective-frontend#graphql:refresh"]
+    },
+    "prettier:write:task": {
+      "cache": false,
+      "passThroughEnv": ["*"]
+    },
+    "prettier:task": {
+      "cache": false,
+      "passThroughEnv": ["*"]
     }
   }
 }
