@@ -40,14 +40,14 @@
     "build:clean": "rm -rf dist && mkdir dist",
     "build:server": "babel ./src --copy-files --extensions .js,.ts -d ./dist",
     "build:updates": "babel-node --extensions .ts scripts/update-cloudflare-ips.ts dist/server/cloudflare-ips.json",
-    "build": "npm run build:clean && npm run build:server && npm run build:updates",
+    "build": "npm run turbo -- run build:finalize",
     "depcheck": "npx @opencollective/depcheck .",
     "deploy:production": "./scripts/pre-deploy.sh production && git push production main",
     "deploy:staging": "./scripts/pre-deploy.sh staging && git push -f staging main",
     "dev": "nodemon src/server/index.ts -x \"babel-node --extensions .js,.ts\" . -e js,ts --ignore 'test/'",
     "git:clean": "./scripts/git_clean.sh",
     "graphql:update:local": "cp ../frontend/lib/graphql/*.graphql src/graphql/ && prettier src/graphql/*.graphql --write",
-    "graphql:update": "npm-run-all graphql:updateV1 graphql:updateV2",
+    "graphql:update": "npm run turbo -- run graphql:refresh",
     "graphql:updateV1": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schema.graphql --output src/graphql/schema.graphql && prettier src/graphql/schema.graphql --write",
     "graphql:updateV2": "curl https://raw.githubusercontent.com/opencollective/opencollective-frontend/main/lib/graphql/schemaV2.graphql --output src/graphql/schemaV2.graphql && prettier src/graphql/schemaV2.graphql --write",
     "lint-staged": "lint-staged",
@@ -63,7 +63,16 @@
     "test:watch": "TZ=UTC jest --watch",
     "test:server": "TZ=UTC ./scripts/run_test.sh",
     "test:server:coverage": "TZ=UTC ./scripts/run_test.sh --coverage --reporters=default --reporters=jest-junit",
-    "type:check": "tsc"
+    "type:check": "tsc",
+    "format:check": "npm run prettier:check",
+    "format": "npm run prettier:write",
+    "build:compile": "npm run build:server",
+    "build:finalize": "npm run build:updates",
+    "graphql:refresh": "node -e \"\"",
+    "graphql:sync:local": "node scripts/sync-local-schemas.cjs",
+    "dev:environment": "npm run dev -- \"$OC_DEV_ENV_REST\"",
+    "turbo": "turbo --single-package --root-turbo-json=turbo.standalone.json",
+    "graphql:sync:after-frontend": "npm run graphql:sync:local"
   },
   "devDependencies": {
     "@babel/cli": "^8.0.0",
@@ -88,10 +97,10 @@
     "light-my-request": "^6.6.0",
     "lint-staged": "^17.0.0",
     "nodemon": "^3.1.11",
-    "npm-run-all2": "^9.0.0",
     "prettier": "^3.8.1",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.71.0"
+    "typescript-eslint": "^8.71.0",
+    "turbo": "2.11.7"
   },
   "jest": {
     "testPathIgnorePatterns": [
@@ -147,8 +156,10 @@
       "@babel/node",
       "@typescript-eslint/parser",
       "@graphql-eslint/eslint-plugin",
-      "eslint-import-resolver-typescript"
+      "eslint-import-resolver-typescript",
+      "turbo"
     ]
   },
-  "heroku-run-build-script": true
+  "heroku-run-build-script": true,
+  "packageManager": "npm@11.19.0"
 }
