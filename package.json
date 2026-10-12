@@ -98,10 +98,10 @@
       "opencollective-api/"
     ],
     "transformIgnorePatterns": [
-      "/node_modules/(?!(.*/)?(micro-strptime|syslog-parse|dnsbl|ip-cidr|chalk)/)"
+      "/node_modules/(?!(.*/)?(micro-strptime|syslog-parse|dnsbl|ip-cidr|chalk|cookie)/)"
     ],
     "transform": {
-      "/node_modules/(micro-strptime|syslog-parse|dnsbl|ip-cidr|chalk)/.+\\.js$": [
+      "/node_modules/(micro-strptime|syslog-parse|dnsbl|ip-cidr|chalk|cookie)/.+\\.js$": [
         "babel-jest",
         {
           "presets": [
