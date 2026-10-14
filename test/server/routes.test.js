@@ -11,7 +11,6 @@ jest.mock('../../src/server/controllers', () => {
     events: { info: handler('events.info') },
     transactions: {
       allTransactions: handler('transactions.allTransactions'),
-      getTransaction: handler('transactions.getTransaction'),
     },
     accountOrders: handler('accountOrders'),
     accountTransactions: handler('accountTransactions'),
@@ -135,6 +134,8 @@ describe('routes', () => {
 
   test.each([
     '/v2/example.json',
+    '/v1/collectives/example/transactions/123',
+    '/v1/collectives/example/transactions/2b1b7a7e-4d4f-4c3e-9f1a-6a2b3c4d5e6f',
     '/example.csv',
     '/example.xml',
     '/example/members.xml',

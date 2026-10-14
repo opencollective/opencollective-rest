@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { get, isNaN, toUpper, trim } from 'lodash';
+import { get, toUpper, trim } from 'lodash';
 
 export const getBaseApiUrl = () => {
   return process.env.API_URL;
@@ -39,38 +39,6 @@ export function json2csv(json) {
     );
   });
   return lines.join('\n');
-}
-
-function isUUID(str) {
-  return str.length === 36 && str.match(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i);
-}
-
-function parseIdOrUUID(param) {
-  if (isUUID(param)) {
-    return Promise.resolve({ uuid: param });
-  }
-
-  const id = parseInt(param);
-
-  if (isNaN(id)) {
-    return Promise.reject(new Error('This is not a correct id.'));
-  } else {
-    return Promise.resolve({ id });
-  }
-}
-
-export function idOrUuid(req, res, next, idOrUuid) {
-  parseIdOrUUID(idOrUuid)
-    .then(({ id, uuid }) => {
-      if (id) {
-        req.params.id = id;
-      }
-      if (uuid) {
-        req.params.uuid = uuid;
-      }
-      next();
-    })
-    .catch(next);
 }
 
 export const parseToBooleanDefaultFalse = (value: null | undefined | string | boolean) => {
