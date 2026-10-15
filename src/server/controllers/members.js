@@ -5,9 +5,10 @@ import { simpleGraphqlRequest } from '../lib/graphql';
 import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
 
-// Simple tagged template that flattens the string instead of parsing it into a DocumentNode,
-// because simpleGraphqlRequest (graphql-request) expects a raw string query, not an AST.
-const gqlV1 = (string) => String(string).replace(`\n`, ` `).trim();
+// Tagged template that returns the query as written, without parsing it into a DocumentNode:
+// simpleGraphqlRequest (graphql-request) sends the text as is. Sent as written, the query
+// hashes like its source, so monitoring can trace it back to this file.
+const gqlV1 = (strings) => strings.join('');
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
