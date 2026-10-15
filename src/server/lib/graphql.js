@@ -59,6 +59,8 @@ export function graphqlRequest(query, variables, clientParameters) {
     .query({
       query,
       variables,
+      // Each request has its own client, so the cache would never be read: skip writing to it
+      fetchPolicy: 'no-cache',
       context: {
         headers: clientParameters?.headers,
       },
