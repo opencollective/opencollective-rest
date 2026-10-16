@@ -1,14 +1,10 @@
+import gqlV1 from 'graphql-tag';
 import { get } from 'lodash';
 import moment from 'moment';
 
-import { simpleGraphqlRequest } from '../lib/graphql';
+import { graphqlRequest } from '../lib/graphql';
 import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
-
-// Tagged template that returns the query as written, without parsing it into a DocumentNode:
-// simpleGraphqlRequest (graphql-request) sends the text as is. Sent as written, the query
-// hashes like its source, so monitoring can trace it back to this file.
-const gqlV1 = (strings) => strings.join('');
 
 export async function list(req, res, next) {
   const { collectiveSlug, eventSlug, role, tierSlug } = req.params;
@@ -119,7 +115,7 @@ export async function list(req, res, next) {
 
   let result;
   try {
-    result = await simpleGraphqlRequest(query, vars, { headers });
+    result = await graphqlRequest(query, vars, { headers });
   } catch (err) {
     if (err.message.match(/No collective found/)) {
       return res.status(404).send('Not found');

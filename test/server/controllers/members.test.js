@@ -45,6 +45,19 @@ describe('members', () => {
       expect(organizations[0].type).toEqual('ORGANIZATION');
       expect(organizations[1].type).toEqual('ORGANIZATION');
     });
+
+    test('return members when authenticated', async () => {
+      const members = await fetchJsonWithCacheBurst('/railsgirlsatl/members.json', {
+        headers: { Authorization: `Bearer ${generateJWT()}` },
+      });
+      expect(members.length).toBeGreaterThan(5);
+      validateMember(members[0]);
+    });
+
+    test('return 404 for an unknown collective', async () => {
+      const response = await fetchResponseWithCacheBurst('/this-collective-does-not-exist/members.json');
+      expect(response.statusCode).toBe(404);
+    });
   });
 
   describe('for event', () => {
