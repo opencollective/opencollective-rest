@@ -1,7 +1,11 @@
+import type { NextFunction, Request, Response } from 'express';
+
 import { fetchEvent } from '../lib/graphql';
 import { logger } from '../logger';
 
-export async function info(req, res, next) {
+type EventsParams = Record<string, string> & { collectiveSlug: string; eventSlug: string };
+
+export async function info(req: Request<EventsParams>, res: Response, next: NextFunction): Promise<Response | void> {
   // Keeping the resulting info for 10m in the CDN cache
   res.setHeader('Cache-Control', `public, max-age=${60 * 10}`);
   let event;
