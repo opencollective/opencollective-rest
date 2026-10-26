@@ -21,6 +21,15 @@ function json2csv(data: object, opts: ParserOptions) {
   return parser.parse(data);
 }
 
+interface TransactionsResponse {
+  transactions: {
+    totalCount: number;
+    limit: number;
+    offset: number;
+    nodes: Array<Record<string, unknown>>;
+  };
+}
+
 export const transactionsFragment = gql`
   fragment TransactionsFragment on TransactionCollection {
     __typename
@@ -966,7 +975,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
     const query = req.params.reportType === 'hostTransactions' ? hostTransactionsQuery : transactionsQuery;
 
-    let result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
+    let result = await graphqlRequestWithRetry<TransactionsResponse>(query, variables, { version: 'v2', headers });
 
     switch (req.params.format) {
       case 'txt':
@@ -987,7 +996,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         filename += `.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', result.transactions.totalCount);
+        res.append('X-Exported-Rows', String(result.transactions.totalCount));
         if (req.method === 'HEAD') {
           res.status(200).end();
           return;
@@ -1015,7 +1024,10 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
             do {
               variables.offset += result.transactions.limit;
 
-              result = await graphqlRequestWithRetry(query, variables, { version: 'v2', headers });
+              result = await graphqlRequestWithRetry<TransactionsResponse>(query, variables, {
+                version: 'v2',
+                headers,
+              });
 
               const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
               res.write(json2csv(mappedTransactions, { header: false }));

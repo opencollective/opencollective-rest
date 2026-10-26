@@ -22,6 +22,21 @@ function json2csv(data, opts) {
   return parser.parse(data);
 }
 
+interface HostResponse {
+  host: { currency: string };
+}
+
+interface HostedCollectivesResponse {
+  host: {
+    hostedAccounts: {
+      totalCount: number;
+      limit: number;
+      offset: number;
+      nodes: Array<Record<string, unknown>>;
+    };
+  };
+}
+
 type Fields =
   | 'name'
   | 'slug'
@@ -469,7 +484,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
-    const hostResult = await graphqlRequest(hostQuery, { hostSlug }, { version: 'v2', headers });
+    const hostResult = await graphqlRequest<HostResponse>(hostQuery, { hostSlug }, { version: 'v2', headers });
     const host = hostResult.host;
     assert(host, 'Could not find Host');
 
@@ -546,7 +561,10 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', { variables, headers });
 
-    let result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
+    let result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+      version: 'v2',
+      headers,
+    });
 
     switch (req.params.format) {
       case 'csv': {
@@ -558,7 +576,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', result.host.hostedAccounts.totalCount);
+        res.append('X-Exported-Rows', String(result.host.hostedAccounts.totalCount));
         if (req.method === 'HEAD') {
           res.status(200).end();
           return;
@@ -580,7 +598,10 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
           if (fetchAll) {
             do {
               variables.offset += result.host.hostedAccounts.limit;
-              result = await graphqlRequest(hostedCollectivesQuery, variables, { version: 'v2', headers });
+              result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+                version: 'v2',
+                headers,
+              });
               const mappedTransactions = result.host.hostedAccounts.nodes.map((t) =>
                 applyMapping(mapping, t, result.host),
               );

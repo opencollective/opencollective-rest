@@ -1,5 +1,7 @@
 import hyperwatch from '@hyperwatch/hyperwatch';
+import type express from 'express';
 import expressBasicAuth from 'express-basic-auth';
+import type http from 'http';
 
 import { logger } from '../logger';
 
@@ -13,10 +15,10 @@ const {
 } = process.env;
 
 /**
- * @param {import('express').Application} app
- * @param {import('http').Server} server The HTTP server of the app, needed to serve the Hyperwatch WebSocket streams
+ * @param app
+ * @param server The HTTP server of the app, needed to serve the Hyperwatch WebSocket streams
  */
-export function load(app, server) {
+export function load(app: express.Application, server: http.Server): void {
   const { input, lib, modules, pipeline } = hyperwatch;
 
   // Init
