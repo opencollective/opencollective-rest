@@ -8,6 +8,9 @@ jest.mock('../../src/server/lib/graphql', () => ({
   graphqlRequestWithRetry: jest.fn(),
 }));
 
+const graphqlRequestMock = jest.requireMock('../../src/server/lib/graphql').graphqlRequest;
+const graphqlRequestWithRetryMock = jest.requireMock('../../src/server/lib/graphql').graphqlRequestWithRetry;
+
 describe('query parameters', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -15,7 +18,7 @@ describe('query parameters', () => {
 
   test.each(['transactions', 'hostTransactions'])('preserves structured filters for %s', async (reportType) => {
     const transactions = { nodes: [], totalCount: 0, limit: 1000, offset: 0 };
-    graphqlRequestWithRetry.mockResolvedValue({ transactions });
+    graphqlRequestWithRetryMock.mockResolvedValue({ transactions });
 
     const response = await inject(app, {
       url: `/v2/example/${reportType}.json?manualPaymentProvider[0][id]=provider-one&manualPaymentProvider[1][id]=provider-two`,
@@ -32,7 +35,7 @@ describe('query parameters', () => {
   });
 
   test('keeps tier orders incoming when the query requests outgoing', async () => {
-    graphqlRequest.mockResolvedValue({ account: { orders: { nodes: [] } } });
+    graphqlRequestMock.mockResolvedValue({ account: { orders: { nodes: [] } } });
 
     const response = await inject(app, { url: '/v2/example/tier/backers/orders?filter=outgoing' });
 

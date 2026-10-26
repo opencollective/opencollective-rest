@@ -71,6 +71,7 @@
     "@graphql-eslint/eslint-plugin": "^4.4.1",
     "@types/debug": "^4.1.13",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.23",
     "@types/node-fetch": "^2.6.13",
     "@typescript-eslint/parser": "^8.71.0",
@@ -148,7 +149,8 @@
       "@babel/node",
       "@typescript-eslint/parser",
       "@graphql-eslint/eslint-plugin",
-      "eslint-import-resolver-typescript"
+      "eslint-import-resolver-typescript",
+      "@types/jest"
     ]
   },
   "heroku-run-build-script": true

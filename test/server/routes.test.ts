@@ -19,7 +19,7 @@ jest.mock('../../src/server/controllers', () => {
   };
 });
 
-const v1Cases = [
+const v1Cases: Array<[string, string, Record<string, string>]> = [
   ['/example.json', 'collectives.info', { collectiveSlug: 'example', format: 'json' }],
   ['/example/events/meetup.json', 'events.info', { collectiveSlug: 'example', eventSlug: 'meetup', format: 'json' }],
 ];
@@ -45,7 +45,7 @@ for (const format of ['json', 'csv']) {
   }
 }
 
-const routeCases = v1Cases.flatMap(([url, controller, params]) => [
+const routeCases: Array<[string, string, Record<string, string>]> = v1Cases.flatMap(([url, controller, params]) => [
   [url, controller, params],
   [`/v1${url}`, controller, { version: 'v1', ...params }],
 ]);
@@ -55,9 +55,9 @@ for (const tierSlug of [undefined, 'backers']) {
     for (const status of [undefined, 'active', 'cancelled', 'error', 'paid', 'pending']) {
       const params = {
         slug: 'example',
-        ...(tierSlug && { tierSlug }),
-        ...(filter && { filter }),
-        ...(status && { status }),
+        ...(tierSlug ? { tierSlug } : {}),
+        ...(filter ? { filter } : {}),
+        ...(status ? { status } : {}),
       };
       const prefix = tierSlug ? `/v2/example/tier/${tierSlug}/orders` : '/v2/example/orders';
       routeCases.push([[prefix, filter, status].filter(Boolean).join('/'), 'accountOrders', params]);
@@ -83,7 +83,7 @@ for (const reportType of ['transactions', 'hostTransactions']) {
         routeCases.push([
           `${path}.${format}`,
           'accountTransactions',
-          { slug: 'example', reportType, ...(type && { type }), ...(kind && { kind }), format },
+          { slug: 'example', reportType, ...(type ? { type } : {}), ...(kind ? { kind } : {}), format },
         ]);
       }
     }
