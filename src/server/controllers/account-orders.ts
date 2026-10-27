@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import gql from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
@@ -45,13 +46,48 @@ const query = gql`
   }
 `;
 
-const accountOrders = async (req, res) => {
-  const variables = pick({ ...req.params, ...req.query }, ['slug', 'filter', 'status', 'tierSlug', 'limit', 'offset']);
+type AccountOrdersParams = Record<string, string> & { slug: string };
+
+type AccountOrdersQuery = Record<string, string> & {
+  filter?: string;
+  status?: string;
+  tierSlug?: string;
+  limit?: string;
+  offset?: string;
+};
+
+type AccountOrdersVariables = {
+  slug?: string;
+  filter?: string;
+  status?: string | string[];
+  tierSlug?: string;
+  limit?: string | number;
+  offset?: string | number;
+};
+
+interface AccountOrdersResponse {
+  account: { orders: unknown };
+}
+
+const accountOrders = async (
+  req: Request<AccountOrdersParams, unknown, unknown, AccountOrdersQuery>,
+  res: Response,
+): Promise<Response | void> => {
+  const variables: AccountOrdersVariables = pick({ ...req.params, ...req.query }, [
+    'slug',
+    'filter',
+    'status',
+    'tierSlug',
+    'limit',
+    'offset',
+  ]);
   variables.limit = Number(variables.limit) || 100;
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.status) {
-    variables.status = intersection(variables.status.toUpperCase().split(','), [
+    // The query parameter is a single value before it gets split into the statuses the API accepts
+    const status = variables.status as string;
+    variables.status = intersection(status.toUpperCase().split(','), [
       'ACTIVE',
       'CANCELLED',
       'ERROR',
@@ -69,7 +105,7 @@ const accountOrders = async (req, res) => {
   }
 
   try {
-    const result = await graphqlRequest(query, variables, { version: 'v2' });
+    const result = await graphqlRequest<AccountOrdersResponse>(query, variables, { version: 'v2' });
     res.send(result.account.orders);
   } catch (err) {
     if (err.message.match(/No collective found/)) {

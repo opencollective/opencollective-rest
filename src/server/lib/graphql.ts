@@ -2,15 +2,64 @@ import http from 'http';
 import https from 'https';
 
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
+import type { DocumentNode } from 'graphql';
 import gqlV1 from 'graphql-tag';
+import type { Response as NodeFetchResponse } from 'node-fetch';
 import nodeFetch from 'node-fetch';
 import omitDeep from 'omit-deep-lodash';
 
 import { getGraphqlUrl, parseToBooleanDefaultTrue } from './utils';
 
-let customAgent;
+interface FetchInit {
+  agent?: http.Agent | ((parsedURL: URL) => http.Agent);
+  headers?: Record<string, string>;
+  body?: string;
+}
 
-async function fetch(url, options = {}) {
+export interface ClientParameters {
+  version?: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+}
+
+interface CollectiveStats {
+  balance: number;
+  backers: { all: number };
+  yearlyBudget: number;
+}
+
+export interface Collective {
+  id: number;
+  slug: string;
+  image: string;
+  currency: string;
+  stats: CollectiveStats;
+}
+
+export interface Event {
+  id: number;
+  name: string;
+  description: string;
+  longDescription: string;
+  slug: string;
+  image: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  location: { name: string; address: string; lat: number; long: number };
+  currency: string;
+  tiers: Array<{ id: number; name: string; description: string; amount: number }>;
+  // Added by the events controller on top of the GraphQL response
+  url?: string;
+  attendees?: string;
+}
+
+let customAgent: ((parsedURL: URL) => http.Agent | https.Agent) | undefined;
+
+// node-fetch implements the fetch API at runtime; Apollo's HttpLink is typed against the DOM one
+const asFetchResponse = (response: NodeFetchResponse | Response): Response => response as Response;
+
+async function fetch(url: string, options: FetchInit = {}): Promise<Response> {
   options.agent = getCustomAgent();
 
   // Add headers to help the API identify origin of requests
@@ -22,10 +71,10 @@ async function fetch(url, options = {}) {
 
   const result = await nodeFetch(url, options);
 
-  return result;
+  return asFetchResponse(result);
 }
 
-function getCustomAgent() {
+function getCustomAgent(): ((parsedURL: URL) => http.Agent | https.Agent) | undefined {
   if (!customAgent) {
     const { FETCH_AGENT_KEEP_ALIVE, FETCH_AGENT_KEEP_ALIVE_MSECS } = process.env;
     const keepAlive = FETCH_AGENT_KEEP_ALIVE !== undefined ? parseToBooleanDefaultTrue(FETCH_AGENT_KEEP_ALIVE) : true;
@@ -37,7 +86,7 @@ function getCustomAgent() {
   return customAgent;
 }
 
-function getClient({ version = 'v1', apiKey } = {}) {
+function getClient({ version = 'v1', apiKey }: ClientParameters = {}): ApolloClient {
   return new ApolloClient({
     link: new HttpLink({ uri: getGraphqlUrl({ version, apiKey }), fetch }),
     cache: new InMemoryCache({
@@ -53,7 +102,11 @@ function getClient({ version = 'v1', apiKey } = {}) {
   });
 }
 
-export function graphqlRequest(query, variables, clientParameters) {
+export function graphqlRequest<TData = unknown>(
+  query: DocumentNode,
+  variables?: Record<string, unknown>,
+  clientParameters?: ClientParameters,
+): Promise<TData> {
   return getClient(clientParameters)
     .query({
       query,
@@ -64,20 +117,20 @@ export function graphqlRequest(query, variables, clientParameters) {
         headers: clientParameters?.headers,
       },
     })
-    .then((result) => omitDeep(result.data, ['__typename']));
+    .then((result) => omitDeep(result.data, ['__typename']) as TData);
 }
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function graphqlRequestWithRetry(
-  query,
-  variables,
-  clientParameters,
-  { maxAttempts = 5, baseDelayMs = 1000 } = {},
-) {
+export async function graphqlRequestWithRetry<TData = unknown>(
+  query: DocumentNode,
+  variables?: Record<string, unknown>,
+  clientParameters?: ClientParameters,
+  { maxAttempts = 5, baseDelayMs = 1000 }: { maxAttempts?: number; baseDelayMs?: number } = {},
+): Promise<TData> {
   for (let attempt = 1; ; attempt++) {
     try {
-      return await graphqlRequest(query, variables, clientParameters);
+      return await graphqlRequest<TData>(query, variables, clientParameters);
     } catch (err) {
       if (attempt >= maxAttempts) {
         throw err;
@@ -89,7 +142,7 @@ export async function graphqlRequestWithRetry(
   }
 }
 
-export async function fetchCollective(collectiveSlug) {
+export async function fetchCollective(collectiveSlug: string): Promise<Collective> {
   const query = gqlV1 /* GraphQL */ `
     query Collective($collectiveSlug: String) {
       Collective(slug: $collectiveSlug) {
@@ -108,17 +161,17 @@ export async function fetchCollective(collectiveSlug) {
     }
   `;
 
-  const result = await graphqlRequest(query, { collectiveSlug });
+  const result = await graphqlRequest<{ Collective: Collective }>(query, { collectiveSlug });
   return result.Collective;
 }
 
 /**
  * Fetches an event by its slug.
  * /!\ Do not include any private fields, as the result is cached at the CDN level.
- * @param {string} eventSlug - The slug of the event to fetch.
- * @returns {Promise<Object>} The event data.
+ * @param eventSlug - The slug of the event to fetch.
+ * @returns The event data.
  */
-export async function fetchEvent(eventSlug) {
+export async function fetchEvent(eventSlug: string): Promise<Event> {
   const query = gqlV1 /* GraphQL */ `
     query Collective($slug: String) {
       Collective(slug: $slug) {
@@ -148,7 +201,7 @@ export async function fetchEvent(eventSlug) {
     }
   `;
 
-  const result = await graphqlRequest(query, { slug: eventSlug });
+  const result = await graphqlRequest<{ Collective: Event }>(query, { slug: eventSlug });
   return result.Collective;
 }
 

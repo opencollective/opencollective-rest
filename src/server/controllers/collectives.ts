@@ -1,9 +1,16 @@
+import type { NextFunction, Request, Response } from 'express';
 import { pick } from 'lodash';
 
 import { fetchCollective } from '../lib/graphql';
 import { logger } from '../logger';
 
-export async function info(req, res, next) {
+type CollectivesParams = Record<string, string> & { collectiveSlug: string };
+
+export async function info(
+  req: Request<CollectivesParams>,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   // Keeping the resulting image for 1h in the CDN cache (we purge that cache on deploy)
   res.setHeader('Cache-Control', `public, max-age=${60 * 60}`);
 

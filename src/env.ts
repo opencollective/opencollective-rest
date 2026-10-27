@@ -17,7 +17,7 @@ if (fs.existsSync(extraEnvPath)) {
 dotenv.config();
 debug.enable(process.env.DEBUG);
 
-const defaults = {
+const defaults: Record<string, string | number> = {
   PORT: 3003,
   NODE_ENV: 'development',
   REST_URL: 'http://localhost:3003',
@@ -31,6 +31,6 @@ const defaults = {
 
 for (const key in defaults) {
   if (process.env[key] === undefined) {
-    process.env[key] = defaults[key];
+    process.env[key] = String(defaults[key]);
   }
 }
