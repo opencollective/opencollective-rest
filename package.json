@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@apollo/client": "4.3.5",
-    "@babel/core": "8.0.7",
+    "@babel/core": "8.0.9",
     "@babel/plugin-transform-typescript": "8.0.6",
     "@babel/preset-env": "8.0.7",
     "@hyperwatch/hyperwatch": "5.3.3",
