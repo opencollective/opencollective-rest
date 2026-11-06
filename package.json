@@ -12,7 +12,7 @@
     "npm": "11.x"
   },
   "dependencies": {
-    "@apollo/client": "4.3.5",
+    "@apollo/client": "4.3.6",
     "@babel/core": "8.0.10",
     "@babel/plugin-transform-typescript": "8.0.6",
     "@babel/preset-env": "8.0.7",
