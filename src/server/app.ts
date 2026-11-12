@@ -6,9 +6,10 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import hyperwatch from './lib/hyperwatch';
+import { isValidDebugSentryKey } from './lib/sentry';
 import { isAuthenticatedRequest, parseToBooleanDefaultFalse } from './lib/utils';
 import cloudflareIps from './cloudflare-ips.json';
-import { loggerMiddleware } from './logger';
+import { logger, loggerMiddleware } from './logger';
 import { loadRoutes } from './routes';
 
 const app = express();
@@ -47,5 +48,36 @@ app.use((req, res, next) => {
 });
 
 loadRoutes(app);
+
+// Debug endpoint to verify Sentry reporting end-to-end. Behaves like an unknown route
+// when the shared secret is not configured or does not match.
+app.get('/debug-sentry', (req, res, next) => {
+  if (!isValidDebugSentryKey(req.query.key)) {
+    next();
+    return;
+  }
+  throw new Error('Sentry debug error triggered via /debug-sentry');
+});
+
+// Unknown routes are not errors, do not report them to Sentry
+app.use((req, res) => {
+  res.status(404).send({ error: { message: 'Not found' } });
+});
+
+// Global fallback error handler. Must be last and use 4 args so Express treats it as an error handler.
+// Reporting to Sentry is done by `expressIntegration` (see ./lib/sentry), which only captures 5xx.
+app.use((err, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = Number(err?.status ?? err?.statusCode ?? 500);
+  const safeStatus = Number.isInteger(status) && status >= 400 && status < 600 ? status : 500;
+  if (safeStatus >= 500) {
+    logger.error(`Unhandled error on ${req.method} ${req.path}: ${err?.stack || err}`);
+  }
+  res.status(safeStatus).send({
+    error: { message: safeStatus >= 500 ? 'Internal server error' : err?.message || 'Bad request' },
+  });
+});
 
 export default app;
