@@ -22,8 +22,6 @@ export type CaptureErrorParams = {
   tags?: Record<string, string>;
   extra?: Record<string, unknown>;
   handler?: HandlerType | `${HandlerType}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  req?: any;
 };
 
 const SENSITIVE_KEY_PATTERN =
@@ -109,8 +107,10 @@ Sentry.init({
   dist: process.env.OC_ENV || process.env.NODE_ENV,
   enabled: checkIfSentryConfigured() && process.env.NODE_ENV !== 'test',
   attachStacktrace: true,
+  // Uncaught exceptions and unhandled rejections are reported by Sentry's default integrations.
   integrations: compact([
     PROFILES_SAMPLE_RATE > 0 && nodeProfilingIntegration(),
+    // Captures errors thrown in (or forwarded with next(err) from) Express handlers. Only 5xx are reported.
     Sentry.expressIntegration({
       shouldHandleError(error) {
         const status = Number(error?.['status'] ?? error?.['statusCode'] ?? 500);
@@ -139,19 +139,6 @@ Sentry.init({
   profileSessionSampleRate: PROFILES_SAMPLE_RATE,
 });
 
-if (checkIfSentryConfigured() && process.env.NODE_ENV !== 'test') {
-  // Global fallback for errors that never reach Express (e.g. rejected promises in async handlers)
-  process.on('unhandledRejection', (reason: unknown) => {
-    reportErrorToSentry(reason instanceof Error ? reason : new Error(String(reason)), {
-      severity: 'fatal',
-      handler: HandlerType.FALLBACK,
-    });
-  });
-  process.on('uncaughtException', (err: Error) => {
-    reportErrorToSentry(err, { severity: 'fatal', handler: HandlerType.FALLBACK });
-  });
-}
-
 export function reportErrorToSentry(err: Error, params: CaptureErrorParams = {}): void {
   if (checkIfSentryConfigured() && process.env.NODE_ENV !== 'test') {
     Sentry.withScope((scope) => {
@@ -168,9 +155,6 @@ export function reportErrorToSentry(err: Error, params: CaptureErrorParams = {})
         for (const [key, value] of Object.entries(params.extra)) {
           scope.setExtra(key, value);
         }
-      }
-      if (params.req) {
-        scope.setSDKProcessingMetadata({ request: params.req });
       }
       Sentry.captureException(err);
     });
