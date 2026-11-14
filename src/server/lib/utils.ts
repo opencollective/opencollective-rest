@@ -21,8 +21,8 @@ export const days = (d1, d2 = new Date()) => {
   return Math.round(Math.abs((new Date(d1).getTime() - new Date(d2).getTime()) / oneDay));
 };
 
-export function json2csv(json) {
-  const lines = [`"${Object.keys(json[0]).join('","')}"`];
+export function json2csv(json, fields = Object.keys(json[0])) {
+  const lines = [`"${fields.join('","')}"`];
   json.forEach((row) => {
     lines.push(
       `"${Object.values(row)

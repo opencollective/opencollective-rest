@@ -1,3 +1,4 @@
+import * as graphqlLib from '../../../src/server/lib/graphql';
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst, generateJWT } from '../../utils';
 
 const validateMember = (member) => {
@@ -57,6 +58,29 @@ describe('members', () => {
     test('return 404 for an unknown collective', async () => {
       const response = await fetchResponseWithCacheBurst('/this-collective-does-not-exist/members.json');
       expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('csv', () => {
+    let graphqlSpy;
+
+    beforeEach(() => {
+      graphqlSpy = jest
+        .spyOn(graphqlLib, 'graphqlRequest')
+        .mockResolvedValue({ Collective: { currency: 'USD', members: [] } });
+    });
+
+    afterEach(() => {
+      graphqlSpy.mockRestore();
+    });
+
+    test('return the header row when there are no members', async () => {
+      const response = await fetchResponseWithCacheBurst('/railsgirlsatl/members/organizations.csv');
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('text/csv');
+      expect(response.payload).toEqual(
+        '"MemberId","createdAt","type","role","tier","isActive","totalAmountDonated","currency","lastTransactionAt","lastTransactionAmount","profile","name","company","description","image","email","newsletterOptIn","twitter","github","website"',
+      );
     });
   });
 
