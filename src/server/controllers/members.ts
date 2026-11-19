@@ -238,7 +238,7 @@ export async function list(
 
   switch (req.params.format) {
     case 'csv': {
-      const csv = json2csv(data);
+      const csv = json2csv(data, fields);
       res.setHeader('content-type', 'text/csv');
       res.send(csv);
       break;
