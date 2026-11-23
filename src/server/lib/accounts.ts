@@ -169,8 +169,9 @@ export async function fetchEvent(eventSlug: string): Promise<Event> {
           endsAt
           timezone
         }
+        # v1 returned every tier: v2 defaults to 100 per page, 1,000 at most
         ... on AccountWithContributions {
-          tiers {
+          tiers(limit: 1000) {
             nodes {
               legacyId
               name
