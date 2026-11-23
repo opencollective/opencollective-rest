@@ -22,38 +22,6 @@ export interface ClientParameters {
   headers?: Record<string, string>;
 }
 
-interface CollectiveStats {
-  balance: number;
-  backers: { all: number };
-  yearlyBudget: number;
-}
-
-export interface Collective {
-  id: number;
-  slug: string;
-  image: string;
-  currency: string;
-  stats: CollectiveStats;
-}
-
-export interface Event {
-  id: number;
-  name: string;
-  description: string;
-  longDescription: string;
-  slug: string;
-  image: string;
-  startsAt: string;
-  endsAt: string;
-  timezone: string;
-  location: { name: string; address: string; lat: number; long: number };
-  currency: string;
-  tiers: Array<{ id: number; name: string; description: string; amount: number }>;
-  // Added by the events controller on top of the GraphQL response
-  url?: string;
-  attendees?: string;
-}
-
 let customAgent: ((parsedURL: URL) => http.Agent | https.Agent) | undefined;
 
 // node-fetch implements the fetch API at runtime; Apollo's HttpLink is typed against the DOM one
@@ -140,69 +108,6 @@ export async function graphqlRequestWithRetry<TData = unknown>(
       await sleep(delay);
     }
   }
-}
-
-export async function fetchCollective(collectiveSlug: string): Promise<Collective> {
-  const query = gqlV1 /* GraphQL */ `
-    query Collective($collectiveSlug: String) {
-      Collective(slug: $collectiveSlug) {
-        id
-        slug
-        image
-        currency
-        stats {
-          balance
-          backers {
-            all
-          }
-          yearlyBudget
-        }
-      }
-    }
-  `;
-
-  const result = await graphqlRequest<{ Collective: Collective }>(query, { collectiveSlug });
-  return result.Collective;
-}
-
-/**
- * Fetches an event by its slug.
- * /!\ Do not include any private fields, as the result is cached at the CDN level.
- * @param eventSlug - The slug of the event to fetch.
- * @returns The event data.
- */
-export async function fetchEvent(eventSlug: string): Promise<Event> {
-  const query = gqlV1 /* GraphQL */ `
-    query Collective($slug: String) {
-      Collective(slug: $slug) {
-        id
-        name
-        description
-        longDescription
-        slug
-        image
-        startsAt
-        endsAt
-        timezone
-        location {
-          name
-          address
-          lat
-          long
-        }
-        currency
-        tiers {
-          id
-          name
-          description
-          amount
-        }
-      }
-    }
-  `;
-
-  const result = await graphqlRequest<{ Collective: Event }>(query, { slug: eventSlug });
-  return result.Collective;
 }
 
 export const allTransactionsQuery = gqlV1 /* GraphQL */ `

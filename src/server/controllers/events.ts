@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { fetchEvent } from '../lib/graphql';
+import { fetchEvent } from '../lib/accounts';
 import { logger } from '../logger';
 
 type EventsParams = Record<string, string> & { collectiveSlug: string; eventSlug: string };
@@ -17,7 +17,7 @@ export async function info(req: Request<EventsParams>, res: Response, next: Next
     logger.debug('>>> events.info event: %j', event);
     res.send(event);
   } catch (e) {
-    if (e.message.match(/No collective found/)) {
+    if (e.message.match(/No collective found|Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> events.info error', e);
