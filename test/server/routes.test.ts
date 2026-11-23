@@ -101,6 +101,27 @@ describe('routes', () => {
   const app = express();
   loadRoutes(app);
 
+  describe('deprecated members endpoints', () => {
+    test.each([
+      ['/example/members.csv', '</v2/example/contributors.csv>'],
+      ['/v1/example/members/users.json', '</v2/example/contributors.json>'],
+      ['/example/tiers/backers/all.csv', '</v2/example/contributors.csv>'],
+      ['/example/events/meetup/attendees.JSON', '</v2/meetup/contributors.json>'],
+    ])('GET %s', async (url, successor) => {
+      const response = await inject(app, { url });
+      expect(response.headers['deprecation']).toBe('@1795392000');
+      expect(response.headers['link']).toBe(`${successor}; rel="successor-version"`);
+    });
+
+    test.each(['/example.json', '/example/events/meetup.json', '/v2/example/contributors.csv'])(
+      'GET %s is not deprecated',
+      async (url) => {
+        const response = await inject(app, { url });
+        expect(response.headers['deprecation']).toBeUndefined();
+      },
+    );
+  });
+
   describe.each([
     ['original case', false, ''],
     ['trailing slash', false, '/'],
