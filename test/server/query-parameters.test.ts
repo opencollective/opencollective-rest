@@ -34,6 +34,53 @@ describe('query parameters', () => {
     );
   });
 
+  test.each(['transactions', 'hostTransactions'])(
+    'maps payment method, payout method and virtual card filters for %s',
+    async (reportType) => {
+      const transactions = { nodes: [], totalCount: 0, limit: 1000, offset: 0 };
+      graphqlRequestWithRetryMock.mockResolvedValue({ transactions });
+
+      const response = await inject(app, {
+        url: `/v2/example/${reportType}.json?paymentMethod=pm-one,pm-two&payoutMethod=payout-one&virtualCard=vc-one,vc-two`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(graphqlRequestWithRetry).toHaveBeenCalledTimes(1);
+      expect(graphqlRequestWithRetry).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          paymentMethod: [{ id: 'pm-one' }, { id: 'pm-two' }],
+          payoutMethod: { id: 'payout-one' },
+          virtualCard: [{ id: 'vc-one' }, { id: 'vc-two' }],
+        }),
+        expect.anything(),
+      );
+    },
+  );
+
+  test.each(['transactions', 'hostTransactions'])(
+    'preserves structured payment method, payout method and virtual card filters for %s',
+    async (reportType) => {
+      const transactions = { nodes: [], totalCount: 0, limit: 1000, offset: 0 };
+      graphqlRequestWithRetryMock.mockResolvedValue({ transactions });
+
+      const response = await inject(app, {
+        url: `/v2/example/${reportType}.json?paymentMethod[0][id]=pm-one&payoutMethod[id]=payout-one&virtualCard[0][id]=vc-one`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(graphqlRequestWithRetry).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          paymentMethod: [{ id: 'pm-one' }],
+          payoutMethod: { id: 'payout-one' },
+          virtualCard: [{ id: 'vc-one' }],
+        }),
+        expect.anything(),
+      );
+    },
+  );
+
   test('keeps tier orders incoming when the query requests outgoing', async () => {
     graphqlRequestMock.mockResolvedValue({ account: { orders: { nodes: [] } } });
 
