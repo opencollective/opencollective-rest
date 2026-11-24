@@ -105,14 +105,11 @@ describe('not found', () => {
     ['/unknown/events/unknown.json', 'No collective found with slug unknown'],
     ['/unknown.json', 'Account Not Found'],
     ['/unknown/events/unknown.json', 'Account Not Found'],
-  ])(
-    '%s returns 404 on "%s"',
-    async (url, message) => {
-      graphqlRequestMock.mockRejectedValue(new Error(message));
-      const response = await inject(app, { url });
-      expect(response.statusCode).toBe(404);
-    },
-  );
+  ])('%s returns 404 on "%s"', async (url, message) => {
+    graphqlRequestMock.mockRejectedValue(new Error(message));
+    const response = await inject(app, { url });
+    expect(response.statusCode).toBe(404);
+  });
 
   test.each(['/coll.json', '/coll/events/meetup.json'])(
     '%s does not turn other "Not Found" errors into a 404',
