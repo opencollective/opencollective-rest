@@ -8,6 +8,20 @@ const requireApiKey = (req, res, next) => {
   next();
 };
 
+/**
+ * The v1 members endpoints are deprecated, without a removal date: `/v2/:slug/contributors.(json|csv)` replaces them.
+ * Signalled with the `Deprecation` header (RFC 9745) and a `Link` to the successor (RFC 8288).
+ */
+const DEPRECATED_SINCE = Date.UTC(2026, 10, 23) / 1000; // 2026-11-23
+
+const deprecatedMembersRoute = (req, res, next) => {
+  const slug = req.params.eventSlug || req.params.collectiveSlug;
+  const format = req.params.format.toLowerCase();
+  res.setHeader('Deprecation', `@${DEPRECATED_SINCE}`);
+  res.setHeader('Link', `</v2/${slug}/contributors.${format}>; rel="successor-version"`);
+  next();
+};
+
 export const loadRoutes = (app: Express) => {
   app.use(cors());
 
@@ -28,14 +42,17 @@ export const loadRoutes = (app: Express) => {
   app.get(/^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\.(?<format>json)\/?$/i, controllers.collectives.info);
   app.get(
     /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/members\.(?<format>json|csv)\/?$/i,
+    deprecatedMembersRoute,
     controllers.members.list,
   );
   app.get(
     /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/members\/(?<backerType>all|users|organizations)\.(?<format>json|csv)\/?$/i,
+    deprecatedMembersRoute,
     controllers.members.list,
   );
   app.get(
     /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/tiers\/(?<tierSlug>[^/]+?)\/(?<backerType>all|users|organizations)\.(?<format>json|csv)\/?$/i,
+    deprecatedMembersRoute,
     controllers.members.list,
   );
 
@@ -45,6 +62,7 @@ export const loadRoutes = (app: Express) => {
   );
   app.get(
     /^(?:\/(?<version>v1))?\/(?<collectiveSlug>[^/]+?)\/events\/(?<eventSlug>[^/]+?)\/(?<role>attendees|organizers|all)\.(?<format>json|csv)\/?$/i,
+    deprecatedMembersRoute,
     controllers.members.list,
   );
 
