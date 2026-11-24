@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst, generateJWT } from '../../utils';
 
-const validateMember = (member) => {
+const validateMember = (member: Record<string, unknown>) => {
   expect(member).toHaveProperty('MemberId');
   expect(member).toHaveProperty('name');
   expect(member).toHaveProperty('image');

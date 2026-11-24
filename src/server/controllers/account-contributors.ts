@@ -225,7 +225,7 @@ const defaultFields = [
 type ContributorMapping = Record<string, string | ((row: ContributorRow) => unknown)>;
 
 const applyMapping = (mapping: ContributorMapping, row: ContributorRow) => {
-  const res = {};
+  const res: Record<string, unknown> = {};
   Object.keys(mapping).map((key) => {
     const val = mapping[key];
     if (typeof val === 'function') {
@@ -359,10 +359,12 @@ const accountContributors = async (
         break;
     }
   } catch (err) {
-    if (err.message.match(/No account found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    const { message } = err as Error;
+    if (message.match(/No account found/)) {
       return res.status(404).send('Not account found.');
     }
-    logger.error(`Error while fetching account contributors: ${err.message}`);
+    logger.error(`Error while fetching account contributors: ${message}`);
     res.status(400).send(`Error while fetching account contributors.`);
   }
 };

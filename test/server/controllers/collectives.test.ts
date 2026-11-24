@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst, generateJWT } from '../../utils';
 
-const validateCollective = (collective) => {
+const validateCollective = (collective: Record<string, unknown>) => {
   expect(collective).toHaveProperty('slug');
   expect(collective).toHaveProperty('currency');
   expect(collective).toHaveProperty('image');

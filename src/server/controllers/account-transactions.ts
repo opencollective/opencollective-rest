@@ -8,6 +8,7 @@ import { accountNameAndLegalName, amountAsString } from '../lib/formatting';
 import { graphqlRequestWithRetry } from '../lib/graphql';
 import {
   applyMapping,
+  type FieldMapping,
   parseToBooleanDefaultFalse,
   parseToBooleanDefaultTrue,
   setPrivateCacheHeadersIfAuthenticated,
@@ -21,12 +22,45 @@ function json2csv(data: object, opts: ParserOptions) {
   return parser.parse(data);
 }
 
+interface TransactionAccount {
+  name?: string;
+  legalName?: string;
+  parent?: TransactionAccount;
+}
+
+interface AccountingCategory {
+  code?: string;
+  name?: string;
+}
+
+// Only the fields read directly by the CSV mapping, the others are read with lodash `get`
+interface Transaction {
+  id: string;
+  group: string;
+  type: string;
+  createdAt: string;
+  clearedAt?: string;
+  isRefund?: boolean;
+  isRefunded?: boolean;
+  amount: { value: number; currency: string };
+  balanceAccountingCategory?: AccountingCategory;
+  account?: TransactionAccount;
+  oppositeAccount?: TransactionAccount;
+  host?: TransactionAccount;
+  expense?: { accountingCategory?: AccountingCategory; approvedBy?: Array<{ slug?: string }> };
+  order?: {
+    processedAt?: string;
+    accountingCategory?: AccountingCategory;
+    manualPaymentProvider?: { name?: string; publicId?: string };
+  };
+}
+
 interface TransactionsResponse {
   transactions: {
     totalCount: number;
     limit: number;
     offset: number;
-    nodes: Array<Record<string, unknown>>;
+    nodes: Transaction[];
   };
 }
 
@@ -423,11 +457,11 @@ const hostTransactionsQuery = gql`
   ${transactionsFragment}
 `;
 
-const getAccountingCategory = (transaction) => {
+const getAccountingCategory = (transaction: Transaction) => {
   return get(transaction, 'expense.accountingCategory') || get(transaction, 'order.accountingCategory');
 };
 
-const columnNames = {
+const columnNames: Record<string, string> = {
   datetime: 'Date & Time',
   effectiveDate: 'Effective Date & Time',
   legacyId: 'Transaction ID',
@@ -523,7 +557,7 @@ const columnNames = {
   taxAmount: 'Tax Amount',
 };
 
-const csvMapping = {
+const csvMapping: FieldMapping<Transaction> = {
   accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
   balanceAccountingCategoryCode: (t) => t.balanceAccountingCategory?.code || '',
@@ -641,7 +675,7 @@ const csvMapping = {
   importSourceData: (t) => get(getTransactionImportRowFromTransaction(t), 'rawValue'),
 };
 
-const getTransactionImportRowFromTransaction = (transaction) => {
+const getTransactionImportRowFromTransaction = (transaction: Transaction) => {
   return get(transaction, 'expense.transactionImportRow') || get(transaction, 'order.transactionImportRow');
 };
 
@@ -700,6 +734,11 @@ const defaultFields = [
   'orderProcessedDate',
   'refundKind',
 ];
+
+// Shape probed on what is caught below: it is not guaranteed by the type of the thrown value
+interface RequestError extends Error {
+  networkError?: { result?: { errors?: unknown[] } };
+}
 
 type Params = {
   slug: string;
@@ -766,10 +805,10 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.account) {
-    variables.account = variables.account.split(',').map((slug) => ({ slug }));
+    variables.account = variables.account.split(',').map((slug: string) => ({ slug }));
   }
   if (variables.excludeAccount) {
-    variables.excludeAccount = variables.excludeAccount.split(',').map((slug) => ({ slug }));
+    variables.excludeAccount = variables.excludeAccount.split(',').map((slug: string) => ({ slug }));
   }
 
   if (variables.dateFrom) {
@@ -957,9 +996,9 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
   try {
     // Forward Api Key or Authorization header
-    const headers = {};
-    const apiKey = req.get('Api-Key') || req.query.apiKey;
-    const personalToken = req.get('Personal-Token') || req.query.personalToken;
+    const headers: Record<string, string> = {};
+    const apiKey = (req.get('Api-Key') || req.query.apiKey) as string | undefined;
+    const personalToken = (req.get('Personal-Token') || req.query.personalToken) as string | undefined;
     // Support Cookies for direct-download capability
     const authorization = req.get('Authorization') || req.cookies?.authorization;
 
@@ -1047,7 +1086,9 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         res.send(result.transactions);
         break;
     }
-  } catch (err) {
+  } catch (e) {
+    // Everything thrown by the GraphQL client is an Error
+    const err = e as RequestError;
     if (err.message.match(/No account found/)) {
       res.status(404).send('Not account found.');
     } else {

@@ -1,10 +1,11 @@
+import type { Request, Response } from 'express';
 import express from 'express';
 import { inject } from 'light-my-request';
 
 import { loadRoutes } from '../../src/server/routes';
 
 jest.mock('../../src/server/controllers', () => {
-  const handler = (controller) => (req, res) => res.json({ controller, params: req.params });
+  const handler = (controller: string) => (req: Request, res: Response) => res.json({ controller, params: req.params });
   return {
     collectives: { info: handler('collectives.info') },
     members: { list: handler('members.list') },

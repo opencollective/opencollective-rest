@@ -25,8 +25,8 @@ export interface Event {
   image: string;
   startsAt: string | null;
   endsAt: string | null;
-  timezone: string;
-  location: { name: string; address: string; lat: number; long: number };
+  timezone: string | null;
+  location: { name: string; address: string; lat: number; long: number } | null;
   currency: string;
   tiers: Array<{ id: number; name: string; description: string; amount: number }>;
   // Added by the events controller on top of the GraphQL response

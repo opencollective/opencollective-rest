@@ -11,6 +11,11 @@ interface AllTransactionsResponse {
   allTransactions: unknown[];
 }
 
+// Shape read from the errors caught below
+interface RequestError {
+  response?: { errors?: Array<{ message: string }>; error?: { message: string } };
+}
+
 // Set by the requireApiKey middleware (see routes.ts)
 type TransactionsRequest = Request<TransactionsParams, unknown, unknown, TransactionsQuery> & { apiKey?: string };
 
@@ -32,8 +37,10 @@ export const allTransactions = async (req: TransactionsRequest, res: Response): 
     });
     const result = get(response, 'allTransactions', []);
     res.send({ result });
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    console.log(err);
+    // What is thrown is not guaranteed to have this shape: the properties are only probed, as before
+    const error = err as RequestError;
     if (error.response && error.response.errors) {
       const singleError = error.response.errors[0];
       res.status(400).send({ error: singleError.message });

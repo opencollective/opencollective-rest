@@ -1,14 +1,15 @@
 import crypto from 'crypto';
 import querystring from 'querystring';
 
+import type { RequestEventData } from '@sentry/node';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { cloneDeep, compact } from 'lodash';
 
 import { logger } from '../logger';
 
-const TRACES_SAMPLE_RATE = parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE) || 0;
-const PROFILES_SAMPLE_RATE = parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE) || 0;
+const TRACES_SAMPLE_RATE = parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '') || 0;
+const PROFILES_SAMPLE_RATE = parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE ?? '') || 0;
 
 export const checkIfSentryConfigured = () => Boolean(process.env.SENTRY_DSN);
 
@@ -60,7 +61,9 @@ const redactObject = (value: unknown, depth = 0): unknown => {
   return value;
 };
 
-export const redactSensitiveDataFromRequest = (rawRequest) => {
+export const redactSensitiveDataFromRequest = (
+  rawRequest: RequestEventData | undefined,
+): RequestEventData | undefined => {
   if (!rawRequest) {
     return rawRequest;
   }
@@ -78,7 +81,7 @@ export const redactSensitiveDataFromRequest = (rawRequest) => {
   }
 
   if (request.headers) {
-    const headers: Record<string, unknown> = {};
+    const headers: Record<string, string> = {};
     for (const key of Object.keys(request.headers)) {
       headers[key] = SENSITIVE_KEY_PATTERN.test(key) ? redactValue() : request.headers[key];
     }
@@ -86,7 +89,8 @@ export const redactSensitiveDataFromRequest = (rawRequest) => {
   }
 
   if (request.cookies) {
-    request.cookies = redactObject(request.cookies);
+    // redactObject only swaps values for strings, but it is typed as unknown since it also handles nested data
+    request.cookies = redactObject(request.cookies) as RequestEventData['cookies'];
   }
 
   if (request['query_string']) {
@@ -94,7 +98,8 @@ export const redactSensitiveDataFromRequest = (rawRequest) => {
       typeof request['query_string'] === 'string'
         ? querystring.parse(request['query_string'])
         : request['query_string'];
-    request['query_string'] = redactObject(parsed);
+    // Sentry accepts any JSON-like value here at runtime, whereas its type only models flat string maps
+    request['query_string'] = redactObject(parsed) as RequestEventData['query_string'];
   }
 
   return request;

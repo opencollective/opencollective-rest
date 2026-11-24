@@ -177,7 +177,8 @@ export async function list(
   try {
     result = await graphqlRequest<MembersResponse>(query, vars, { headers });
   } catch (err) {
-    if (err.message.match(/No collective found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    if ((err as Error).message.match(/No collective found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> members.list error', err);
@@ -186,7 +187,7 @@ export async function list(
 
   const members = result.Collective.members;
 
-  const mapping = {
+  const mapping: Record<string, string | ((row: MemberRow) => unknown)> = {
     MemberId: 'id',
     createdAt: (r: MemberRow) => moment(new Date(r.createdAt)).format('YYYY-MM-DD HH:mm'),
     type: 'member.type',
@@ -222,7 +223,7 @@ export async function list(
   const fields = Object.keys(mapping);
 
   const applyMapping = (row: MemberRow) => {
-    const res = {};
+    const res: Record<string, unknown> = {};
     fields.map((key) => {
       const val = mapping[key];
       if (typeof val === 'function') {

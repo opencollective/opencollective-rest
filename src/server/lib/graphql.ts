@@ -32,9 +32,9 @@ async function fetch(url: string, options: FetchInit = {}): Promise<Response> {
 
   // Add headers to help the API identify origin of requests
   options.headers = options.headers || {};
-  options.headers['oc-env'] = process.env.OC_ENV;
-  options.headers['oc-secret'] = process.env.OC_SECRET;
-  options.headers['oc-application'] = process.env.OC_APPLICATION;
+  options.headers['oc-env'] = String(process.env.OC_ENV);
+  options.headers['oc-secret'] = String(process.env.OC_SECRET);
+  options.headers['oc-application'] = String(process.env.OC_APPLICATION);
   options.headers['user-agent'] = 'opencollective-rest/1.0 node-fetch/1.0';
 
   const result = await nodeFetch(url, options);
@@ -56,7 +56,9 @@ function getCustomAgent(): ((parsedURL: URL) => http.Agent | https.Agent) | unde
 
 function getClient({ version = 'v1', apiKey }: ClientParameters = {}): ApolloClient {
   return new ApolloClient({
-    link: new HttpLink({ uri: getGraphqlUrl({ version, apiKey }), fetch }),
+    // Apollo only ever calls this with a string URL and a plain options object (see FetchInit), but its `fetch` option
+    // is typed against the DOM signature, which also accepts URL and Request inputs.
+    link: new HttpLink({ uri: getGraphqlUrl({ version, apiKey }), fetch: fetch as typeof globalThis.fetch }),
     cache: new InMemoryCache({
       possibleTypes: {
         Transaction: ['Expense', 'Order', 'Debit', 'Credit'],

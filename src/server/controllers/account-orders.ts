@@ -108,10 +108,12 @@ const accountOrders = async (
     const result = await graphqlRequest<AccountOrdersResponse>(query, variables, { version: 'v2' });
     res.send(result.account.orders);
   } catch (err) {
-    if (err.message.match(/No collective found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    const { message } = err as Error;
+    if (message.match(/No collective found/)) {
       return res.status(404).send('Not found');
     }
-    logger.error(`Error while fetching collective orders: ${err.message}`);
+    logger.error(`Error while fetching collective orders: ${message}`);
     res.status(400).send(`Error while fetching collective orders.`);
   }
 };

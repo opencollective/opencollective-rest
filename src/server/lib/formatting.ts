@@ -8,7 +8,7 @@ export const amountAsString = (amount: { currency: string; value: number }) => {
   return `${amountAsString} ${amount.currency}`;
 };
 
-export const accountNameAndLegalName = (account: { name?: string; legalName?: string }) => {
+export const accountNameAndLegalName = (account?: { name?: string; legalName?: string } | null) => {
   const legalName = account?.legalName;
   const name = account?.name;
   if (!legalName && !name) {
@@ -20,7 +20,7 @@ export const accountNameAndLegalName = (account: { name?: string; legalName?: st
   }
 };
 
-export const shortDate = (date: string): string => {
+export const shortDate = (date?: string | null): string => {
   if (date) {
     return moment.utc(date).format('YYYY-MM-DD');
   } else {
@@ -28,5 +28,5 @@ export const shortDate = (date: string): string => {
   }
 };
 
-export const formatContact = (contact: { name?: string; email: string }) =>
+export const formatContact = (contact: { name?: string; email?: string }) =>
   `${contact.name ? `${contact.name} ` : ''}<${contact.email}>`;

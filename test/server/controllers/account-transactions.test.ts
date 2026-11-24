@@ -10,7 +10,7 @@ const mockTransactionsResult = {
   },
 };
 
-const validateTransaction = (transaction) => {
+const validateTransaction = (transaction: Record<string, unknown>) => {
   expect(transaction).toHaveProperty('id');
   expect(transaction).toHaveProperty('type');
   expect(transaction).toHaveProperty('kind');
@@ -22,7 +22,7 @@ const validateTransaction = (transaction) => {
 
 describe('account-transactions', () => {
   describe('Cache-Control', () => {
-    let graphqlSpy;
+    let graphqlSpy: jest.SpiedFunction<typeof graphqlLib.graphqlRequestWithRetry>;
 
     beforeEach(() => {
       graphqlSpy = jest.spyOn(graphqlLib, 'graphqlRequestWithRetry').mockResolvedValue(mockTransactionsResult);
@@ -58,7 +58,7 @@ describe('account-transactions', () => {
   });
 
   describe('balance accounting category columns', () => {
-    let graphqlSpy;
+    let graphqlSpy: jest.SpiedFunction<typeof graphqlLib.graphqlRequestWithRetry>;
 
     const mockResultWithNode = {
       transactions: {
@@ -95,7 +95,7 @@ describe('account-transactions', () => {
         '/v2/railsgirlsatl/transactions.csv?fields=legacyId,balanceAccountingCategoryCode,balanceAccountingCategoryName',
       );
       const [, variables] = graphqlSpy.mock.calls[0];
-      expect(variables.hasBalanceAccountingCategoryField).toBe(true);
+      expect(variables?.hasBalanceAccountingCategoryField).toBe(true);
       expect(response.payload).toContain('"balanceAccountingCategoryCode","balanceAccountingCategoryName"');
       expect(response.payload).toContain('"1051","Mercury Checking"');
     });
@@ -103,12 +103,12 @@ describe('account-transactions', () => {
     test('are not fetched when not requested', async () => {
       await fetchResponseWithCacheBurst('/v2/railsgirlsatl/transactions.csv?fields=legacyId');
       const [, variables] = graphqlSpy.mock.calls[0];
-      expect(variables.hasBalanceAccountingCategoryField).toBe(false);
+      expect(variables?.hasBalanceAccountingCategoryField).toBe(false);
     });
   });
 
   describe('reverse fields', () => {
-    let graphqlSpy;
+    let graphqlSpy: jest.SpiedFunction<typeof graphqlLib.graphqlRequestWithRetry>;
 
     const mockResultWithNode = {
       transactions: {
