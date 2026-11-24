@@ -18,7 +18,7 @@ export async function info(
   try {
     collective = await fetchCollective(req.params.collectiveSlug);
   } catch (e) {
-    if (e.message.match(/No collective found|Not Found/)) {
+    if (e.message.match(/No collective found with slug|Account Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> collectives.info error', e);

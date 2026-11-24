@@ -1,7 +1,7 @@
 import { inject } from 'light-my-request';
 
 import app from '../../../src/server/app';
-import { mapCollectiveV2, mapEventV2 } from '../../../src/server/lib/accounts';
+import { formatV1Date, mapCollectiveV2, mapEventV2 } from '../../../src/server/lib/accounts';
 import { graphqlRequest } from '../../../src/server/lib/graphql';
 
 jest.mock('../../../src/server/lib/graphql', () => ({
@@ -78,17 +78,48 @@ describe('v2 mapping', () => {
     } as never);
     expect(event).toMatchObject({ startsAt: null, endsAt: null, timezone: null, location: null, tiers: [] });
   });
+
+  test('mapEventV2 falls back to the parent image when the event has none, as v1 did', () => {
+    const base = { legacyId: 1, name: 'E', slug: 'meetup', location: null, currency: 'USD' };
+    const parent = { imageUrl: 'https://images.opencollective.com/coll/abc1234/logo.png' };
+    expect(
+      mapEventV2({ ...base, imageUrl: 'https://images.opencollective.com/meetup/logo.png', parent } as never).image,
+    ).toBe(parent.imageUrl);
+    expect(
+      mapEventV2({ ...base, imageUrl: 'https://images.opencollective.com/meetup/def5678/logo.png', parent } as never)
+        .image,
+    ).toBe('https://images.opencollective.com/meetup/def5678/logo.png');
+  });
+
+  test('formatV1Date returns null for an invalid date', () => {
+    expect(formatV1Date('not a date')).toBeNull();
+  });
 });
 
 describe('not found', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  test.each(['/unknown.json', '/unknown/events/unknown.json'])(
-    '%s returns 404 on a v2 "Not Found" error',
-    async (url) => {
-      graphqlRequestMock.mockRejectedValue(new Error('Account Not Found'));
+  // Production v2 answers "No collective found with slug <slug>" for an unknown slug
+  test.each([
+    ['/unknown.json', 'No collective found with slug unknown'],
+    ['/unknown/events/unknown.json', 'No collective found with slug unknown'],
+    ['/unknown.json', 'Account Not Found'],
+    ['/unknown/events/unknown.json', 'Account Not Found'],
+  ])(
+    '%s returns 404 on "%s"',
+    async (url, message) => {
+      graphqlRequestMock.mockRejectedValue(new Error(message));
       const response = await inject(app, { url });
       expect(response.statusCode).toBe(404);
+    },
+  );
+
+  test.each(['/coll.json', '/coll/events/meetup.json'])(
+    '%s does not turn other "Not Found" errors into a 404',
+    async (url) => {
+      graphqlRequestMock.mockRejectedValue(new Error('Host Not Found'));
+      const response = await inject(app, { url });
+      expect(response.statusCode).not.toBe(404);
     },
   );
 });

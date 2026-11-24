@@ -100,11 +100,24 @@ interface EventV2 {
   location: { name: string; address: string; lat: number; long: number } | null;
   currency: string;
   tiers?: { nodes: Array<{ legacyId: number; name: string; description: string; amount: { valueInCents: number } }> };
+  parent?: { imageUrl: string | null } | null;
+}
+
+// v2 `imageUrl` is `<images>/<slug>/<hash>/logo.png` for an uploaded image, `<images>/<slug>/logo.png` (default) otherwise
+function hasUploadedImage(imageUrl?: string | null): boolean {
+  if (!imageUrl) {
+    return false;
+  }
+  try {
+    return new URL(imageUrl).pathname.split('/').filter(Boolean).length > 2;
+  } catch {
+    return true;
+  }
 }
 
 // v1 DateString serialized dates as `Date#toString()` on a UTC server: keep that format
 export function formatV1Date(date?: string | null): string | null {
-  if (!date) {
+  if (!date || isNaN(new Date(date).getTime())) {
     return null;
   }
   const [weekday, day, month, year, time] = new Date(date).toUTCString().replace(',', '').split(' ');
@@ -119,7 +132,8 @@ export function mapEventV2(event: EventV2): Event {
     description: event.description,
     longDescription: event.longDescription,
     slug: event.slug,
-    image: event.imageUrl,
+    // As in v1, an event without its own image shows its parent's
+    image: !hasUploadedImage(event.imageUrl) && event.parent?.imageUrl ? event.parent.imageUrl : event.imageUrl,
     startsAt: formatV1Date(event.startsAt),
     endsAt: formatV1Date(event.endsAt),
     timezone: event.timezone ?? null,
@@ -168,6 +182,9 @@ export async function fetchEvent(eventSlug: string): Promise<Event> {
           startsAt
           endsAt
           timezone
+          parent {
+            imageUrl
+          }
         }
         # v1 returned every tier: v2 defaults to 100 per page, 1,000 at most
         ... on AccountWithContributions {

@@ -17,7 +17,7 @@ export async function info(req: Request<EventsParams>, res: Response, next: Next
     logger.debug('>>> events.info event: %j', event);
     res.send(event);
   } catch (e) {
-    if (e.message.match(/No collective found|Not Found/)) {
+    if (e.message.match(/No collective found with slug|Account Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> events.info error', e);
