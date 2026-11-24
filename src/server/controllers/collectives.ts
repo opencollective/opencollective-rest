@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { pick } from 'lodash';
 
-import { fetchCollective } from '../lib/graphql';
+import { fetchCollective } from '../lib/accounts';
 import { logger } from '../logger';
 
 type CollectivesParams = Record<string, string> & { collectiveSlug: string };
@@ -18,7 +18,7 @@ export async function info(
   try {
     collective = await fetchCollective(req.params.collectiveSlug);
   } catch (e) {
-    if (e.message.match(/No collective found/)) {
+    if (e.message.match(/No collective found with slug|Account Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> collectives.info error', e);
