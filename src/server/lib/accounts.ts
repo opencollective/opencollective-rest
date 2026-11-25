@@ -1,50 +1,44 @@
 import gql from 'graphql-tag';
+import { compact } from 'lodash';
+
+import type { CollectiveQuery, EventQuery } from '../../graphql/types/v2/graphql';
 
 import { graphqlRequest } from './graphql';
+import type { MergeUnion } from './types';
 
 interface CollectiveStats {
-  balance: number;
-  backers: { all: number };
-  yearlyBudget: number;
+  balance: number | null;
+  backers: { all: number | null };
+  yearlyBudget: number | null;
 }
 
 export interface Collective {
   id: number;
   slug: string;
-  image: string;
+  image: string | null;
   currency: string;
   stats: CollectiveStats;
 }
 
 export interface Event {
   id: number;
-  name: string;
-  description: string;
-  longDescription: string;
+  name: string | null;
+  description: string | null;
+  longDescription: string | null;
   slug: string;
-  image: string;
+  image: string | null;
   startsAt: string | null;
   endsAt: string | null;
   timezone: string | null;
-  location: { name: string; address: string; lat: number; long: number } | null;
+  location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
   currency: string;
-  tiers: Array<{ id: number; name: string; description: string; amount: number }>;
+  tiers: Array<{ id: number; name: string | null; description: string | null; amount: number | null }>;
   // Added by the events controller on top of the GraphQL response
   url?: string;
   attendees?: string;
 }
 
-interface CollectiveV2 {
-  legacyId: number;
-  slug: string;
-  imageUrl: string;
-  currency: string;
-  stats: {
-    balance: { valueInCents: number };
-    yearlyBudget: { valueInCents: number };
-    contributorsCount: number;
-  };
-}
+type CollectiveV2 = NonNullable<CollectiveQuery['account']>;
 
 // Maps the v2 response to the shape the v1 query used to return
 export function mapCollectiveV2(account: CollectiveV2): Collective {
@@ -54,9 +48,9 @@ export function mapCollectiveV2(account: CollectiveV2): Collective {
     image: account.imageUrl,
     currency: account.currency,
     stats: {
-      balance: account.stats.balance.valueInCents,
-      backers: { all: account.stats.contributorsCount },
-      yearlyBudget: account.stats.yearlyBudget.valueInCents,
+      balance: account.stats?.balance.valueInCents ?? null,
+      backers: { all: account.stats?.contributorsCount ?? null },
+      yearlyBudget: account.stats?.yearlyBudget.valueInCents ?? null,
     },
   };
 }
@@ -82,26 +76,16 @@ export async function fetchCollective(collectiveSlug: string): Promise<Collectiv
     }
   `;
 
-  const result = await graphqlRequest<{ account: CollectiveV2 }>(query, { collectiveSlug }, { version: 'v2' });
+  const result = await graphqlRequest<CollectiveQuery>(query, { collectiveSlug }, { version: 'v2' });
+  // Same error as the API's for unknown accounts, turned into a 404 by the controllers
+  if (!result.account) {
+    throw new Error('Account Not Found');
+  }
   return mapCollectiveV2(result.account);
 }
 
-interface EventV2 {
-  legacyId: number;
-  name: string;
-  description: string;
-  longDescription: string;
-  slug: string;
-  imageUrl: string;
-  // Only on events, and tiers only on accounts with contributions: the events route also serves other account types
-  startsAt?: string | null;
-  endsAt?: string | null;
-  timezone?: string | null;
-  location: { name: string; address: string; lat: number; long: number } | null;
-  currency: string;
-  tiers?: { nodes: Array<{ legacyId: number; name: string; description: string; amount: { valueInCents: number } }> };
-  parent?: { imageUrl: string | null } | null;
-}
+// The accounts are a union of types: the dates only exist on events, and the tiers on accounts with contributions
+type EventV2 = MergeUnion<NonNullable<EventQuery['account']>>;
 
 // v2 `imageUrl` is `<images>/<slug>/<hash>/logo.png` for an uploaded image, `<images>/<slug>/logo.png` (default) otherwise
 function hasUploadedImage(imageUrl?: string | null): boolean {
@@ -146,7 +130,7 @@ export function mapEventV2(event: EventV2): Event {
         }
       : event.location,
     currency: event.currency,
-    tiers: (event.tiers?.nodes ?? []).map((tier) => ({
+    tiers: compact(event.tiers?.nodes).map((tier) => ({
       id: tier.legacyId,
       name: tier.name,
       description: tier.description,
@@ -203,6 +187,10 @@ export async function fetchEvent(eventSlug: string): Promise<Event> {
     }
   `;
 
-  const result = await graphqlRequest<{ account: EventV2 }>(query, { slug: eventSlug }, { version: 'v2' });
+  const result = await graphqlRequest<EventQuery>(query, { slug: eventSlug }, { version: 'v2' });
+  // Same error as the API's for unknown accounts, turned into a 404 by the controllers
+  if (!result.account) {
+    throw new Error('Account Not Found');
+  }
   return mapEventV2(result.account);
 }

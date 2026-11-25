@@ -10997,6 +10997,305 @@ export type HostedCollectivesQuery = {
   } | null;
 };
 
+export type CollectiveQueryVariables = Exact<{
+  collectiveSlug?: string | null | undefined;
+}>;
+
+export type CollectiveQuery = {
+  account:
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | {
+        legacyId: number;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        stats: {
+          contributorsCount: number;
+          balance: { valueInCents: number | null };
+          yearlyBudget: { valueInCents: number | null };
+        } | null;
+      }
+    | null;
+};
+
+export type EventQueryVariables = Exact<{
+  slug?: string | null | undefined;
+}>;
+
+export type EventQuery = {
+  account:
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        startsAt: any;
+        endsAt: any;
+        timezone: string | null;
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        parent:
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | { imageUrl: string | null }
+          | null;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | {
+        legacyId: number;
+        name: string | null;
+        description: string | null;
+        longDescription: string | null;
+        slug: string;
+        imageUrl: string | null;
+        currency: Currency;
+        tiers: {
+          nodes: Array<{
+            legacyId: number;
+            name: string | null;
+            description: string | null;
+            amount: { valueInCents: number | null };
+          } | null> | null;
+        };
+        location: { name: string | null; address: string | null; lat: number | null; long: number | null } | null;
+      }
+    | null;
+};
+
 export const TransactionsFragmentFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -15469,3 +15768,194 @@ export const HostedCollectivesDocument = {
     },
   ],
 } as unknown as DocumentNode<HostedCollectivesQuery, HostedCollectivesQueryVariables>;
+export const CollectiveDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'Collective' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectiveSlug' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'account' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'slug' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectiveSlug' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'legacyId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imageUrl' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'currency' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'stats' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'balance' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'valueInCents' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'yearlyBudget' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'valueInCents' } }],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'contributorsCount' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CollectiveQuery, CollectiveQueryVariables>;
+export const EventDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'Event' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'slug' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'account' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'slug' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'slug' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'legacyId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'longDescription' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imageUrl' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'location' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'address' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'lat' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'long' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'currency' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Event' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'parent' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'imageUrl' } }],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'AccountWithContributions' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'tiers' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: { kind: 'IntValue', value: '1000' },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'nodes' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'legacyId' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [{ kind: 'Field', name: { kind: 'Name', value: 'valueInCents' } }],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EventQuery, EventQueryVariables>;

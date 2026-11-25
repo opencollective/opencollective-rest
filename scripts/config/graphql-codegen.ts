@@ -21,6 +21,7 @@ const config: CodegenConfig = {
         'src/server/controllers/account-orders.ts',
         'src/server/controllers/account-transactions.ts',
         'src/server/controllers/hosted-collectives.ts',
+        'src/server/lib/accounts.ts',
       ],
       config: sharedConfig,
     },
