@@ -1,14 +1,16 @@
 import type { Request, Response } from 'express';
 import { get, pick } from 'lodash';
 
+import type { AllTransactionsQuery } from '../../graphql/types/v1/graphql';
 import { allTransactionsQuery, graphqlRequest } from '../lib/graphql';
 
 type TransactionsParams = Record<string, string> & { collectiveSlug: string };
 
 type TransactionsQuery = Record<string, string> & { limit?: string; offset?: string; type?: string };
 
-interface AllTransactionsResponse {
-  allTransactions: unknown[];
+// Shape read from the errors caught below
+interface RequestError {
+  response?: { errors?: Array<{ message: string }>; error?: { message: string } };
 }
 
 // Set by the requireApiKey middleware (see routes.ts)
@@ -27,13 +29,15 @@ export const allTransactions = async (req: TransactionsRequest, res: Response): 
     if (args.offset) {
       args.offset = Number(args.offset);
     }
-    const response = await graphqlRequest<AllTransactionsResponse>(allTransactionsQuery, args, {
+    const response = await graphqlRequest<AllTransactionsQuery>(allTransactionsQuery, args, {
       apiKey: req.apiKey,
     });
     const result = get(response, 'allTransactions', []);
     res.send({ result });
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    console.log(err);
+    // What is thrown is not guaranteed to have this shape: the properties are only probed, as before
+    const error = err as RequestError;
     if (error.response && error.response.errors) {
       const singleError = error.response.errors[0];
       res.status(400).send({ error: singleError.message });

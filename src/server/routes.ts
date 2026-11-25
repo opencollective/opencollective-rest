@@ -1,10 +1,14 @@
 import cors from 'cors';
-import type { Express } from 'express';
+import type { Express, NextFunction, Request, RequestHandler, Response } from 'express';
 
 import controllers from './controllers';
 
-const requireApiKey = (req, res, next) => {
-  req.apiKey = req.get('Personal-Token') || req.query.personalToken || req.get('Api-Key') || req.query.apiKey;
+// Read by the transactions controller (see TransactionsRequest)
+type ApiKeyRequest = Request & { apiKey?: string };
+
+const requireApiKey = (req: ApiKeyRequest, res: Response, next: NextFunction) => {
+  req.apiKey = (req.get('Personal-Token') || req.query.personalToken || req.get('Api-Key') || req.query.apiKey) as
+    string | undefined;
   next();
 };
 
@@ -14,7 +18,7 @@ const requireApiKey = (req, res, next) => {
  */
 const DEPRECATED_SINCE = Date.UTC(2026, 10, 23) / 1000; // 2026-11-23
 
-const deprecatedMembersRoute = (req, res, next) => {
+const deprecatedMembersRoute: RequestHandler<Record<string, string>> = (req, res, next) => {
   const slug = req.params.eventSlug || req.params.collectiveSlug;
   const format = req.params.format.toLowerCase();
   res.setHeader('Deprecation', `@${DEPRECATED_SINCE}`);

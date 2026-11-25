@@ -120,3 +120,49 @@ describe('not found', () => {
     },
   );
 });
+
+describe('null values', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('mapCollectiveV2 keeps null amounts and handles missing stats', () => {
+    const account = { legacyId: 1, slug: 'coll', imageUrl: null, currency: 'USD' } as const;
+    expect(
+      mapCollectiveV2({
+        ...account,
+        stats: { balance: { valueInCents: null }, yearlyBudget: { valueInCents: null }, contributorsCount: 3 },
+      }),
+    ).toEqual({
+      id: 1,
+      slug: 'coll',
+      image: null,
+      currency: 'USD',
+      stats: { balance: null, backers: { all: 3 }, yearlyBudget: null },
+    });
+    expect(mapCollectiveV2({ ...account, stats: null }).stats).toEqual({
+      balance: null,
+      backers: { all: null },
+      yearlyBudget: null,
+    });
+  });
+
+  test('mapEventV2 drops null tiers and keeps null tier amounts', () => {
+    const base = { legacyId: 1, slug: 'meetup', imageUrl: null, location: null, currency: 'USD' };
+    const tiers = {
+      nodes: [null, { legacyId: 5, name: 'Flexible', description: null, amount: { valueInCents: null } }],
+    };
+    expect(mapEventV2({ ...base, name: 'E', description: null, longDescription: null, tiers } as never).tiers).toEqual([
+      { id: 5, name: 'Flexible', description: null, amount: null },
+    ]);
+    expect(mapEventV2({ ...base, tiers: { nodes: null } } as never).tiers).toEqual([]);
+  });
+
+  // A null account is turned into the error the controllers map to a 404
+  test.each(['/unknown.json', '/unknown/events/unknown.json'])(
+    '%s returns 404 when the account is null',
+    async (url) => {
+      graphqlRequestMock.mockResolvedValue({ account: null });
+      const response = await inject(app, { url });
+      expect(response.statusCode).toBe(404);
+    },
+  );
+});

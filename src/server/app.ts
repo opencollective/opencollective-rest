@@ -66,7 +66,7 @@ app.use((req, res) => {
 
 // Global fallback error handler. Must be last and use 4 args so Express treats it as an error handler.
 // Reporting to Sentry is done by `expressIntegration` (see ./lib/sentry), which only captures 5xx.
-app.use((err, req: express.Request, res: express.Response, next: express.NextFunction) => {
+const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
@@ -78,6 +78,7 @@ app.use((err, req: express.Request, res: express.Response, next: express.NextFun
   res.status(safeStatus).send({
     error: { message: safeStatus >= 500 ? 'Internal server error' : err?.message || 'Bad request' },
   });
-});
+};
+app.use(errorHandler);
 
 export default app;

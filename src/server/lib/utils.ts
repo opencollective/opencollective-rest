@@ -16,12 +16,12 @@ export const getGraphqlUrl = ({ apiKey, version }: { apiKey?: string; version?: 
 /**
  * Gives the number of days between two dates
  */
-export const days = (d1, d2 = new Date()) => {
+export const days = (d1: string | number | Date, d2: string | number | Date = new Date()) => {
   const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
   return Math.round(Math.abs((new Date(d1).getTime() - new Date(d2).getTime()) / oneDay));
 };
 
-export function json2csv(json) {
+export function json2csv(json: Array<Record<string, unknown>>) {
   const lines = [`"${Object.keys(json[0]).join('","')}"`];
   json.forEach((row) => {
     lines.push(
@@ -61,12 +61,18 @@ export const splitIds = (str?: string) => str?.split(',').map(trim) || [];
 
 export const splitEnums = (str?: string) => splitIds(str).map(toUpper);
 
-export const applyMapping = (mapping, row, meta?) => {
-  const res = {};
+export type FieldMapping<TRow, TMeta = undefined> = Record<string, string | ((row: TRow, meta: TMeta) => unknown)>;
+
+export const applyMapping = <TRow, TMeta = undefined>(
+  mapping: FieldMapping<TRow, TMeta>,
+  row: TRow,
+  meta?: TMeta,
+): Record<string, unknown> => {
+  const res: Record<string, unknown> = {};
   Object.keys(mapping).map((key) => {
     const val = mapping[key];
     if (typeof val === 'function') {
-      return (res[key] = val(row, meta));
+      return (res[key] = val(row, meta as TMeta));
     } else {
       return (res[key] = get(row, val));
     }

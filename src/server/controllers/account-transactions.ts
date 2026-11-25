@@ -4,10 +4,13 @@ import gql from 'graphql-tag';
 import { difference, get, head, intersection, isNil, pick, toUpper, trim } from 'lodash';
 import moment from 'moment';
 
+import type { AccountTransactionsQuery, HostTransactionsQuery } from '../../graphql/types/v2/graphql';
 import { accountNameAndLegalName, amountAsString } from '../lib/formatting';
 import { graphqlRequestWithRetry } from '../lib/graphql';
+import { getPage, hasNextPage } from '../lib/pagination';
 import {
   applyMapping,
+  type FieldMapping,
   parseToBooleanDefaultFalse,
   parseToBooleanDefaultTrue,
   setPrivateCacheHeadersIfAuthenticated,
@@ -21,14 +24,11 @@ function json2csv(data: object, opts: ParserOptions) {
   return parser.parse(data);
 }
 
-interface TransactionsResponse {
-  transactions: {
-    totalCount: number;
-    limit: number;
-    offset: number;
-    nodes: Array<Record<string, unknown>>;
-  };
-}
+type TransactionsResponse = AccountTransactionsQuery | HostTransactionsQuery;
+type Transaction = NonNullable<NonNullable<TransactionsResponse['transactions']['nodes']>[number]>;
+
+// Only some account types have a parent
+const getParent = (account: Transaction['account']) => (account && 'parent' in account ? account.parent : null);
 
 export const transactionsFragment = gql`
   fragment TransactionsFragment on TransactionCollection {
@@ -423,11 +423,11 @@ const hostTransactionsQuery = gql`
   ${transactionsFragment}
 `;
 
-const getAccountingCategory = (transaction) => {
+const getAccountingCategory = (transaction: Transaction) => {
   return get(transaction, 'expense.accountingCategory') || get(transaction, 'order.accountingCategory');
 };
 
-const columnNames = {
+const columnNames: Record<string, string> = {
   datetime: 'Date & Time',
   effectiveDate: 'Effective Date & Time',
   legacyId: 'Transaction ID',
@@ -523,7 +523,7 @@ const columnNames = {
   taxAmount: 'Tax Amount',
 };
 
-const csvMapping = {
+const csvMapping: FieldMapping<Transaction> = {
   accountingCategoryCode: (t) => getAccountingCategory(t)?.code || '',
   accountingCategoryName: (t) => getAccountingCategory(t)?.name || '',
   balanceAccountingCategoryCode: (t) => t.balanceAccountingCategory?.code || '',
@@ -572,11 +572,11 @@ const csvMapping = {
   oppositeAccountType: (t) => get(t, 'oppositeAccount.type'),
   oppositeAccountEmail: (t) => get(t, 'oppositeAccount.email'),
   parentAccountSlug: (t) => get(t, 'account.parent.slug'),
-  parentAccountName: (t) => accountNameAndLegalName(t.account?.parent),
+  parentAccountName: (t) => accountNameAndLegalName(getParent(t.account)),
   parentAccountType: (t) => get(t, 'account.parent.type'),
   parentAccountEmail: (t) => get(t, 'account.parent.email'),
   oppositeParentAccountSlug: (t) => get(t, 'oppositeAccount.parent.slug'),
-  oppositeParentAccountName: (t) => accountNameAndLegalName(t.oppositeAccount?.parent),
+  oppositeParentAccountName: (t) => accountNameAndLegalName(getParent(t.oppositeAccount)),
   oppositeParentAccountType: (t) => get(t, 'oppositeAccount.parent.type'),
   oppositeParentAccountEmail: (t) => get(t, 'oppositeAccount.parent.email'),
   hostSlug: (t) => get(t, 'host.slug'),
@@ -627,7 +627,7 @@ const csvMapping = {
   expenseSubmittedByHandle: (t) => get(t, 'expense.createdByAccount.slug'),
   expenseApprovedByHandle: (t) =>
     get(t, 'expense.approvedBy', [])
-      ?.map((a) => a.slug)
+      ?.map((a) => a?.slug)
       .join(' '),
   expensePaidByHandle: (t) => get(t, 'expense.paidBy.slug'),
   expenseReference: (t) => get(t, 'expense.reference'),
@@ -641,7 +641,7 @@ const csvMapping = {
   importSourceData: (t) => get(getTransactionImportRowFromTransaction(t), 'rawValue'),
 };
 
-const getTransactionImportRowFromTransaction = (transaction) => {
+const getTransactionImportRowFromTransaction = (transaction: Transaction) => {
   return get(transaction, 'expense.transactionImportRow') || get(transaction, 'order.transactionImportRow');
 };
 
@@ -700,6 +700,11 @@ const defaultFields = [
   'orderProcessedDate',
   'refundKind',
 ];
+
+// Shape probed on what is caught below: it is not guaranteed by the type of the thrown value
+interface RequestError extends Error {
+  networkError?: { result?: { errors?: unknown[] } };
+}
 
 type Params = {
   slug: string;
@@ -766,10 +771,10 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   variables.offset = Number(variables.offset) || 0;
 
   if (variables.account) {
-    variables.account = variables.account.split(',').map((slug) => ({ slug }));
+    variables.account = variables.account.split(',').map((slug: string) => ({ slug }));
   }
   if (variables.excludeAccount) {
-    variables.excludeAccount = variables.excludeAccount.split(',').map((slug) => ({ slug }));
+    variables.excludeAccount = variables.excludeAccount.split(',').map((slug: string) => ({ slug }));
   }
 
   if (variables.dateFrom) {
@@ -957,9 +962,9 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
   try {
     // Forward Api Key or Authorization header
-    const headers = {};
-    const apiKey = req.get('Api-Key') || req.query.apiKey;
-    const personalToken = req.get('Personal-Token') || req.query.personalToken;
+    const headers: Record<string, string> = {};
+    const apiKey = (req.get('Api-Key') || req.query.apiKey) as string | undefined;
+    const personalToken = (req.get('Personal-Token') || req.query.personalToken) as string | undefined;
     // Support Cookies for direct-download capability
     const authorization = req.get('Authorization') || req.cookies?.authorization;
 
@@ -996,7 +1001,8 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         filename += `.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', String(result.transactions.totalCount));
+        let page = getPage<Transaction>(result.transactions);
+        res.append('X-Exported-Rows', String(page.totalCount));
         if (req.method === 'HEAD') {
           res.status(200).end();
           return;
@@ -1006,7 +1012,7 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
           ? fields.map((field) => ({ label: columnNames[field] || field, value: field }))
           : fields;
 
-        if (result.transactions.totalCount === 0) {
+        if (page.totalCount === 0) {
           res.write(json2csv([], { fields: exportFields }));
           res.write(`\n`);
           res.end();
@@ -1015,28 +1021,27 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
 
         const mapping = pick(csvMapping, fields);
 
-        const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
+        const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t));
         res.write(json2csv(mappedTransactions, { fields: exportFields }));
         res.write(`\n`);
 
-        if (result.transactions.totalCount > result.transactions.limit) {
-          if (fetchAll) {
+        if (page.totalCount > page.limit) {
+          if (fetchAll && page.limit > 0) {
             do {
-              variables.offset += result.transactions.limit;
+              variables.offset += page.limit;
 
               result = await graphqlRequestWithRetry<TransactionsResponse>(query, variables, {
                 version: 'v2',
                 headers,
               });
+              page = getPage<Transaction>(result.transactions);
 
-              const mappedTransactions = result.transactions.nodes.map((t) => applyMapping(mapping, t));
+              const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t));
               res.write(json2csv(mappedTransactions, { header: false }));
               res.write(`\n`);
-            } while (result.transactions.totalCount > result.transactions.limit + result.transactions.offset);
+            } while (hasNextPage(page));
           } else {
-            res.write(
-              `Warning: totalCount is ${result.transactions.totalCount} and limit was ${result.transactions.limit}`,
-            );
+            res.write(`Warning: totalCount is ${page.totalCount} and limit was ${page.limit}`);
           }
         }
         res.end();
@@ -1047,7 +1052,9 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
         res.send(result.transactions);
         break;
     }
-  } catch (err) {
+  } catch (e) {
+    // Everything thrown by the GraphQL client is an Error
+    const err = e as RequestError;
     if (err.message.match(/No account found/)) {
       res.status(404).send('Not account found.');
     } else {

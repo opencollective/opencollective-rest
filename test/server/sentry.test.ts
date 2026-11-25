@@ -53,13 +53,10 @@ describe('sentry global error handling', () => {
       ['query_string']: 'apiKey=secret&key=secret&slug=test',
       data: JSON.stringify({ personalToken: 'secret', slug: 'test' }),
     });
-    expect(redacted.headers.Authorization).toBe('[Filtered]');
-    expect(redacted.headers['Api-Key']).toBe('[Filtered]');
-    expect(redacted.headers['content-type']).toBe('application/json');
-    expect(redacted['query_string'].apiKey).toBe('[Filtered]');
-    expect(redacted['query_string'].key).toBe('[Filtered]');
-    expect(redacted['query_string'].slug).toBe('test');
-    expect(JSON.parse(redacted.data).personalToken).toBe('[Filtered]');
-    expect(JSON.parse(redacted.data).slug).toBe('test');
+    expect(redacted?.headers?.Authorization).toBe('[Filtered]');
+    expect(redacted?.headers?.['Api-Key']).toBe('[Filtered]');
+    expect(redacted?.headers?.['content-type']).toBe('application/json');
+    expect(redacted?.['query_string']).toMatchObject({ apiKey: '[Filtered]', key: '[Filtered]', slug: 'test' });
+    expect(JSON.parse(String(redacted?.data))).toMatchObject({ personalToken: '[Filtered]', slug: 'test' });
   });
 });

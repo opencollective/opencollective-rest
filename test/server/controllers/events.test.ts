@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst } from '../../utils';
 
-const validateEvent = (event) => {
+const validateEvent = (event: Record<string, unknown>) => {
   expect(event).toHaveProperty('id');
   expect(event).toHaveProperty('name');
   expect(event).toHaveProperty('slug');
