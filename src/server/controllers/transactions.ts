@@ -1,15 +1,12 @@
 import type { Request, Response } from 'express';
 import { get, pick } from 'lodash';
 
+import type { AllTransactionsQuery } from '../../graphql/types/v1/graphql';
 import { allTransactionsQuery, graphqlRequest } from '../lib/graphql';
 
 type TransactionsParams = Record<string, string> & { collectiveSlug: string };
 
 type TransactionsQuery = Record<string, string> & { limit?: string; offset?: string; type?: string };
-
-interface AllTransactionsResponse {
-  allTransactions: unknown[];
-}
 
 // Shape read from the errors caught below
 interface RequestError {
@@ -32,7 +29,7 @@ export const allTransactions = async (req: TransactionsRequest, res: Response): 
     if (args.offset) {
       args.offset = Number(args.offset);
     }
-    const response = await graphqlRequest<AllTransactionsResponse>(allTransactionsQuery, args, {
+    const response = await graphqlRequest<AllTransactionsQuery>(allTransactionsQuery, args, {
       apiKey: req.apiKey,
     });
     const result = get(response, 'allTransactions', []);

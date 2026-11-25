@@ -1,14 +1,19 @@
 import moment from 'moment';
 
-export const amountAsString = (amount: { currency: string; value: number }) => {
+export const amountAsString = (amount: { currency?: string | null; value?: number | null }) => {
+  // The GraphQL schema allows null amounts, Intl.NumberFormat would throw without a currency
+  if (!amount.currency) {
+    return '';
+  }
+
   const amountAsString = new Intl.NumberFormat('en-US', { style: 'currency', currency: amount.currency }).format(
-    amount.value,
+    amount.value ?? 0,
   );
 
   return `${amountAsString} ${amount.currency}`;
 };
 
-export const accountNameAndLegalName = (account?: { name?: string; legalName?: string } | null) => {
+export const accountNameAndLegalName = (account?: { name?: string | null; legalName?: string | null } | null) => {
   const legalName = account?.legalName;
   const name = account?.name;
   if (!legalName && !name) {
@@ -28,5 +33,5 @@ export const shortDate = (date?: string | null): string => {
   }
 };
 
-export const formatContact = (contact: { name?: string; email?: string }) =>
+export const formatContact = (contact: { name?: string | null; email?: string | null }) =>
   `${contact.name ? `${contact.name} ` : ''}<${contact.email}>`;

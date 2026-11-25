@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import gql from 'graphql-tag';
 import { intersection, pick } from 'lodash';
 
+import type { AccountOrdersQuery as AccountOrdersResult } from '../../graphql/types/v2/graphql';
 import { graphqlRequest } from '../lib/graphql';
 import { logger } from '../logger';
 
@@ -65,10 +66,6 @@ type AccountOrdersVariables = {
   offset?: string | number;
 };
 
-interface AccountOrdersResponse {
-  account: { orders: unknown };
-}
-
 const accountOrders = async (
   req: Request<AccountOrdersParams, unknown, unknown, AccountOrdersQuery>,
   res: Response,
@@ -105,7 +102,11 @@ const accountOrders = async (
   }
 
   try {
-    const result = await graphqlRequest<AccountOrdersResponse>(query, variables, { version: 'v2' });
+    const result = await graphqlRequest<AccountOrdersResult>(query, variables, { version: 'v2' });
+    // Matches the error returned by the API for unknown accounts, handled below
+    if (!result.account) {
+      throw new Error('No collective found');
+    }
     res.send(result.account.orders);
   } catch (err) {
     // Everything thrown by the GraphQL client is an Error

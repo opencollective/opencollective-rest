@@ -4,7 +4,9 @@ import gql from 'graphql-tag';
 import { difference, get, intersection, pick, trim } from 'lodash';
 import moment from 'moment';
 
+import type { ContributorsQuery } from '../../graphql/types/v2/graphql';
 import { graphqlRequest } from '../lib/graphql';
+import { getPage, hasNextPage } from '../lib/pagination';
 import { parseToBooleanDefaultFalse, setPrivateCacheHeadersIfAuthenticated } from '../lib/utils';
 import { logger } from '../logger';
 
@@ -32,45 +34,15 @@ type AccountContributorsVariables = {
   offset?: number | string;
 };
 
-interface ContributionNode {
-  status: string;
-  frequency: string;
-  amount: { value: number; currency: string };
-  tier: { slug: string; name: string };
-  createdAt: string;
-}
+type ContributorRow = NonNullable<NonNullable<NonNullable<ContributorsQuery['account']>['members']['nodes']>[number]>;
 
-interface ContributorAccount {
-  name: string;
-  slug: string;
-  type: string;
-  website: string;
-  email?: string;
-  location?: { address?: string; country?: string };
-  activeRecurringContributions: { totalCount: number; nodes: ContributionNode[] };
-  inactiveRecurringContributions: { totalCount: number; nodes: ContributionNode[] };
-  latestContributions: { nodes: Array<{ createdAt: string }> };
-  firstContributions: { nodes: Array<{ createdAt: string }> };
-}
-
-interface ContributorRow {
-  isActive: boolean;
-  totalDonations: { value: number; currency: string };
-  account: ContributorAccount;
-}
-
-interface ContributorsResponse {
-  account: {
-    id: number;
-    slug: string;
-    members: {
-      limit: number;
-      offset: number;
-      totalCount: number;
-      nodes: ContributorRow[];
-    };
-  };
-}
+const getContributorsPage = ({ account }: ContributorsQuery) => {
+  // Matches the error returned by the API for unknown accounts, handled in the catch block
+  if (!account) {
+    throw new Error('No account found');
+  }
+  return getPage<ContributorRow>(account.members);
+};
 
 const contributorsQuery = gql`
   query Contributors($slug: String, $limit: Int, $offset: Int) {
@@ -295,10 +267,12 @@ const accountContributors = async (
 
     setPrivateCacheHeadersIfAuthenticated(req, res);
 
-    let result = await graphqlRequest<ContributorsResponse>(contributorsQuery, variables, {
+    let result = await graphqlRequest<ContributorsQuery>(contributorsQuery, variables, {
       version: 'v2',
       headers,
     });
+
+    let page = getContributorsPage(result);
 
     switch (req.params.format) {
       case 'txt':
@@ -312,12 +286,12 @@ const accountContributors = async (
         filename += `.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', String(result.account.members.totalCount));
+        res.append('X-Exported-Rows', String(page.totalCount));
         if (req.method === 'HEAD') {
           return res.status(200).end();
         }
 
-        if (result.account.members.totalCount === 0) {
+        if (page.totalCount === 0) {
           res.write(json2csv([], { fields }));
           res.write(`\n`);
           res.end();
@@ -326,28 +300,28 @@ const accountContributors = async (
 
         const mapping = pick(csvMapping, fields);
 
-        const mappedResults = result.account.members.nodes.map((t) => applyMapping(mapping, t));
+        const mappedResults = page.nodes.map((t) => applyMapping(mapping, t));
         res.write(json2csv(mappedResults));
         res.write(`\n`);
 
-        if (result.account.members.totalCount > result.account.members.limit) {
-          if (fetchAll) {
+        if (page.totalCount > page.limit) {
+          if (fetchAll && page.limit > 0) {
             do {
-              variables.offset = Number(variables.offset) + result.account.members.limit;
+              variables.offset = Number(variables.offset) + page.limit;
 
-              result = await graphqlRequest<ContributorsResponse>(contributorsQuery, variables, {
+              result = await graphqlRequest<ContributorsQuery>(contributorsQuery, variables, {
                 version: 'v2',
                 headers,
               });
 
-              const mappedResults = result.account.members.nodes.map((t) => applyMapping(mapping, t));
+              page = getContributorsPage(result);
+
+              const mappedResults = page.nodes.map((t) => applyMapping(mapping, t));
               res.write(json2csv(mappedResults, { header: false }));
               res.write(`\n`);
-            } while (result.account.members.totalCount > result.account.members.limit + result.account.members.offset);
+            } while (hasNextPage(page));
           } else {
-            res.write(
-              `Warning: totalCount is ${result.account.members.totalCount} and limit was ${result.account.members.limit}`,
-            );
+            res.write(`Warning: totalCount is ${page.totalCount} and limit was ${page.limit}`);
           }
         }
         res.end();
@@ -355,7 +329,7 @@ const accountContributors = async (
       }
 
       default:
-        res.send(result.account.members);
+        res.send(result.account?.members);
         break;
     }
   } catch (err) {

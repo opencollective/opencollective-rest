@@ -6,8 +6,11 @@ import gql from 'graphql-tag';
 import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
+import type { HostedCollectivesQuery, HostForHostedCollectivesQuery } from '../../graphql/types/v2/graphql';
 import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
+import { getPage, hasNextPage } from '../lib/pagination';
+import type { MergeUnion } from '../lib/types';
 import {
   applyMapping,
   parseToBooleanDefaultFalse,
@@ -22,75 +25,17 @@ function json2csv(data: object, opts?: ParserOptions) {
   return parser.parse(data);
 }
 
-interface HostResponse {
-  host: { currency: string };
-}
+type HostedCollectivesHost = NonNullable<HostedCollectivesQuery['host']>;
+// The nodes are a union of account types, the fields that only exist on some of them are optional
+type HostedAccount = MergeUnion<NonNullable<NonNullable<HostedCollectivesHost['hostedAccounts']['nodes']>[number]>>;
 
-interface Amount {
-  value: number;
-  currency: string;
-}
-
-interface AccountSummary {
-  expenseTotal: Amount;
-  expenseCount: number;
-  expenseMaxValue: Amount;
-  expenseDistinctPayee: number;
-  contributionCount: number;
-  contributionTotal: Amount;
-  contributionRefundedTotal: Amount;
-  hostFeeTotal: Amount;
-  spentTotal: Amount;
-  receivedTotal: Amount;
-}
-
-interface AllTimeAccountSummary extends AccountSummary {
-  expenseMonthlyAverageCount: number;
-  expenseMonthlyAverageTotal: Amount;
-  contributionMonthlyAverageCount: number;
-  contributionMonthlyAverageTotal: Amount;
-  spentTotalMonthlyAverage: Amount;
-  receivedTotalMonthlyAverage: Amount;
-  spentTotalYearlyAverage: Amount;
-  receivedTotalYearlyAverage: Amount;
-}
-
-type CreatedAtNodes = { nodes: Array<{ createdAt: string }> };
-
-// Only the fields read by the CSV mapping. The ones coming from `... on` fragments or `@include` are optional.
-interface HostedAccount {
-  tags?: string[];
-  isFrozen?: boolean;
-  approvedAt?: string;
-  unhostedAt?: string;
-  unfrozenAt?: string;
-  startsAt?: string;
-  endsAt?: string;
-  host?: { id: string };
-  hostApplication?: { createdAt: string };
-  stats: { balance: Amount };
-  admins?: { totalCount: number; nodes: Array<{ account: { name?: string; email?: string } }> };
-  firstContributionReceived?: CreatedAtNodes;
-  lastContributionReceived?: CreatedAtNodes;
-  firstExpenseReceived?: CreatedAtNodes;
-  lastExpenseReceived?: CreatedAtNodes;
-  yearSummary?: AccountSummary;
-  allTimeSummary?: AllTimeAccountSummary;
-}
-
-interface HostedCollectivesHost {
-  id: string;
-  hostedAccounts: {
-    totalCount: number;
-    limit: number;
-    offset: number;
-    nodes: HostedAccount[];
-  };
-}
-
-interface HostedCollectivesResponse {
-  host: HostedCollectivesHost;
-}
+const getHostedAccountsPage = ({ host }: HostedCollectivesQuery) => {
+  // Matches the error handling in the catch block, which returns a 404
+  if (!host) {
+    throw new Error('Host not found');
+  }
+  return { host, page: getPage<HostedAccount>(host.hostedAccounts) };
+};
 
 type Fields =
   | 'name'
@@ -146,7 +91,7 @@ type Fields =
   | 'receivedTotalYearlyAverage';
 
 const hostQuery = gql`
-  query HostedCollectives($hostSlug: String!) {
+  query HostForHostedCollectives($hostSlug: String!) {
     host(slug: $hostSlug) {
       id
       legacyId
@@ -437,13 +382,14 @@ const csvMapping: Record<Fields, string | ((account: HostedAccount, host: Hosted
   tags: (account) => account.tags?.join(', '),
   approvedAt: (account) => shortDate(account.approvedAt),
   hostFeePercent: 'hostFeePercent',
-  balance: (account) => amountAsString(account.stats.balance),
-  adminEmails: (account) => compact(account.admins?.nodes.map((member) => formatContact(member.account))).join(', '),
+  balance: (account) => (account.stats ? amountAsString(account.stats.balance) : ''),
+  adminEmails: (account) =>
+    compact(account.admins?.nodes?.map((member) => member?.account && formatContact(member.account))).join(', '),
   adminCount: (account) => account.admins?.totalCount,
-  firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes[0]?.createdAt),
-  lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes[0]?.createdAt),
-  firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes[0]?.createdAt),
-  lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes[0]?.createdAt),
+  firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes?.[0]?.createdAt),
+  lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes?.[0]?.createdAt),
+  firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes?.[0]?.createdAt),
+  lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes?.[0]?.createdAt),
   status: (account, host) => {
     if (account.host?.id !== host.id) {
       return 'UNHOSTED';
@@ -539,7 +485,11 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
-    const hostResult = await graphqlRequest<HostResponse>(hostQuery, { hostSlug }, { version: 'v2', headers });
+    const hostResult = await graphqlRequest<HostForHostedCollectivesQuery>(
+      hostQuery,
+      { hostSlug },
+      { version: 'v2', headers },
+    );
     const host = hostResult.host;
     assert(host, 'Could not find Host');
 
@@ -616,10 +566,12 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', { variables, headers });
 
-    let result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+    let result = await graphqlRequest<HostedCollectivesQuery>(hostedCollectivesQuery, variables, {
       version: 'v2',
       headers,
     });
+
+    let { host: hostedHost, page } = getHostedAccountsPage(result);
 
     switch (req.params.format) {
       case 'csv': {
@@ -631,13 +583,13 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', String(result.host.hostedAccounts.totalCount));
+        res.append('X-Exported-Rows', String(page.totalCount));
         if (req.method === 'HEAD') {
           res.status(200).end();
           return;
         }
 
-        if (result.host.hostedAccounts.totalCount === 0) {
+        if (page.totalCount === 0) {
           res.write(json2csv([], { fields }));
           res.write(`\n`);
           res.end();
@@ -645,31 +597,25 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         }
 
         const mapping = pick(csvMapping, fields);
-        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t, result.host));
+        const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t, hostedHost));
         res.write(json2csv(mappedTransactions));
         res.write(`\n`);
 
-        if (result.host.hostedAccounts.totalCount > result.host.hostedAccounts.limit) {
-          if (fetchAll) {
+        if (page.totalCount > page.limit) {
+          if (fetchAll && page.limit > 0) {
             do {
-              variables.offset += result.host.hostedAccounts.limit;
-              result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+              variables.offset += page.limit;
+              result = await graphqlRequest<HostedCollectivesQuery>(hostedCollectivesQuery, variables, {
                 version: 'v2',
                 headers,
               });
-              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) =>
-                applyMapping(mapping, t, result.host),
-              );
+              ({ host: hostedHost, page } = getHostedAccountsPage(result));
+              const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t, hostedHost));
               res.write(json2csv(mappedTransactions, { header: false }));
               res.write(`\n`);
-            } while (
-              result.host.hostedAccounts.totalCount >
-              result.host.hostedAccounts.limit + result.host.hostedAccounts.offset
-            );
+            } while (hasNextPage(page));
           } else {
-            res.write(
-              `Warning: totalCount is ${result.host.hostedAccounts.totalCount} and limit was ${result.host.hostedAccounts.limit}`,
-            );
+            res.write(`Warning: totalCount is ${page.totalCount} and limit was ${page.limit}`);
           }
         }
 
@@ -677,7 +623,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         break;
       }
       default:
-        res.send(result.host.hostedAccounts);
+        res.send(hostedHost.hostedAccounts);
         break;
     }
   } catch (err) {
