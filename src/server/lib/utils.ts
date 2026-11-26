@@ -21,11 +21,12 @@ export const days = (d1: string | number | Date, d2: string | number | Date = ne
   return Math.round(Math.abs((new Date(d1).getTime() - new Date(d2).getTime()) / oneDay));
 };
 
-export function json2csv(json: Array<Record<string, unknown>>) {
-  const lines = [`"${Object.keys(json[0]).join('","')}"`];
+export function json2csv(json: Array<Record<string, unknown>>, fields: string[] = Object.keys(json[0])) {
+  const lines = [`"${fields.join('","')}"`];
   json.forEach((row) => {
     lines.push(
-      `"${Object.values(row)
+      `"${fields
+        .map((field) => row[field])
         .map((td) => {
           if (typeof td === 'string') {
             return td.replace(/"/g, '""').replace(/\n/g, '  ');
