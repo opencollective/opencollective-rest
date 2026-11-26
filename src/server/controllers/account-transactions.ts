@@ -305,11 +305,14 @@ const transactionsQuery = gql`
     $offset: Int
     $order: OrderReferenceInput
     $manualPaymentProvider: [ManualPaymentProviderReferenceInput!]
+    $paymentMethod: [PaymentMethodReferenceInput]
     $paymentMethodService: [PaymentMethodService]
     $paymentMethodType: [PaymentMethodType]
+    $payoutMethod: PayoutMethodReferenceInput
     $searchTerm: String
     $slug: String
     $type: TransactionType
+    $virtualCard: [VirtualCardReferenceInput]
   ) {
     transactions(
       account: { slug: $slug }
@@ -337,10 +340,13 @@ const transactionsQuery = gql`
       minAmount: $minAmount
       offset: $offset
       order: $order
+      paymentMethod: $paymentMethod
       paymentMethodService: $paymentMethodService
       paymentMethodType: $paymentMethodType
+      payoutMethod: $payoutMethod
       searchTerm: $searchTerm
       type: $type
+      virtualCard: $virtualCard
     ) {
       ...TransactionsFragment
     }
@@ -380,11 +386,14 @@ const hostTransactionsQuery = gql`
     $offset: Int
     $order: OrderReferenceInput
     $manualPaymentProvider: [ManualPaymentProviderReferenceInput!]
+    $paymentMethod: [PaymentMethodReferenceInput]
     $paymentMethodService: [PaymentMethodService]
     $paymentMethodType: [PaymentMethodType]
+    $payoutMethod: PayoutMethodReferenceInput
     $searchTerm: String
     $slug: String
     $type: TransactionType
+    $virtualCard: [VirtualCardReferenceInput]
   ) {
     transactions(
       account: $account
@@ -412,10 +421,13 @@ const hostTransactionsQuery = gql`
       minAmount: $minAmount
       offset: $offset
       order: $order
+      paymentMethod: $paymentMethod
       paymentMethodService: $paymentMethodService
       paymentMethodType: $paymentMethodType
+      payoutMethod: $payoutMethod
       searchTerm: $searchTerm
       type: $type
+      virtualCard: $virtualCard
     ) {
       ...TransactionsFragment
     }
@@ -749,12 +761,15 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
     'orderId',
     'orderPublicId',
     'manualPaymentProvider',
+    'paymentMethod',
     'paymentMethodService',
     'paymentMethodType',
+    'payoutMethod',
     'searchTerm',
     'slug',
     'type',
     'useFieldNames',
+    'virtualCard',
   ]);
 
   const useFieldNames =
@@ -829,6 +844,15 @@ const accountTransactions: RequestHandler<Params> = async (req, res) => {
   }
   if (variables.manualPaymentProvider && typeof variables.manualPaymentProvider === 'string') {
     variables.manualPaymentProvider = splitIds(variables.manualPaymentProvider).map((id) => ({ id }));
+  }
+  if (variables.paymentMethod && typeof variables.paymentMethod === 'string') {
+    variables.paymentMethod = splitIds(variables.paymentMethod).map((id) => ({ id }));
+  }
+  if (variables.payoutMethod && typeof variables.payoutMethod === 'string') {
+    variables.payoutMethod = { id: variables.payoutMethod };
+  }
+  if (variables.virtualCard && typeof variables.virtualCard === 'string') {
+    variables.virtualCard = splitIds(variables.virtualCard).map((id) => ({ id }));
   }
 
   if (variables.group) {
