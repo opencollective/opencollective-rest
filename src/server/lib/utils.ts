@@ -25,7 +25,8 @@ export function json2csv(json, fields = Object.keys(json[0])) {
   const lines = [`"${fields.join('","')}"`];
   json.forEach((row) => {
     lines.push(
-      `"${Object.values(row)
+      `"${fields
+        .map((field) => row[field])
         .map((td) => {
           if (typeof td === 'string') {
             return td.replace(/"/g, '""').replace(/\n/g, '  ');
