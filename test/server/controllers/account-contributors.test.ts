@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst, generateJWT } from '../../utils';
 
-const validateContributor = (contributor) => {
+const validateContributor = (contributor: Record<string, unknown>) => {
   expect(contributor).toHaveProperty('account');
   expect(contributor).toHaveProperty('totalDonations');
   expect(contributor.account).toHaveProperty('name');

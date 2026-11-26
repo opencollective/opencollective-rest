@@ -52,6 +52,7 @@ export const generateJWT = (userId = 9474): string => {
       subject: String(userId),
       algorithm: 'HS256',
       header: {
+        alg: 'HS256',
         kid: 'HS256-2019-09-02',
       },
     },

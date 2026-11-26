@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { pick } from 'lodash';
 
-import { fetchCollective } from '../lib/graphql';
+import type { Collective } from '../lib/accounts';
+import { fetchCollective } from '../lib/accounts';
 import { logger } from '../logger';
 
 type CollectivesParams = Record<string, string> & { collectiveSlug: string };
@@ -14,11 +15,12 @@ export async function info(
   // Keeping the resulting image for 1h in the CDN cache (we purge that cache on deploy)
   res.setHeader('Cache-Control', `public, max-age=${60 * 60}`);
 
-  let collective;
+  let collective: Collective;
   try {
     collective = await fetchCollective(req.params.collectiveSlug);
   } catch (e) {
-    if (e.message.match(/No collective found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    if ((e as Error).message.match(/No collective found with slug|Account Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> collectives.info error', e);

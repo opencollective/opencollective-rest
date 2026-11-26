@@ -1,13 +1,16 @@
 import assert from 'assert';
 
-import { Parser } from '@json2csv/plainjs';
+import { Parser, type ParserOptions } from '@json2csv/plainjs';
 import type { RequestHandler } from 'express';
 import gql from 'graphql-tag';
 import { compact, get, pick, toNumber, trim } from 'lodash';
 import moment from 'moment';
 
+import type { HostedCollectivesQuery, HostForHostedCollectivesQuery } from '../../graphql/types/v2/graphql';
 import { amountAsString, formatContact, shortDate } from '../lib/formatting';
 import { graphqlRequest } from '../lib/graphql';
+import { getPage, hasNextPage } from '../lib/pagination';
+import type { MergeUnion } from '../lib/types';
 import {
   applyMapping,
   parseToBooleanDefaultFalse,
@@ -17,25 +20,22 @@ import {
 } from '../lib/utils';
 import { logger } from '../logger';
 
-function json2csv(data, opts) {
+function json2csv(data: object, opts?: ParserOptions) {
   const parser = new Parser(opts);
   return parser.parse(data);
 }
 
-interface HostResponse {
-  host: { currency: string };
-}
+type HostedCollectivesHost = NonNullable<HostedCollectivesQuery['host']>;
+// The nodes are a union of account types, the fields that only exist on some of them are optional
+type HostedAccount = MergeUnion<NonNullable<NonNullable<HostedCollectivesHost['hostedAccounts']['nodes']>[number]>>;
 
-interface HostedCollectivesResponse {
-  host: {
-    hostedAccounts: {
-      totalCount: number;
-      limit: number;
-      offset: number;
-      nodes: Array<Record<string, unknown>>;
-    };
-  };
-}
+const getHostedAccountsPage = ({ host }: HostedCollectivesQuery) => {
+  // Matches the error handling in the catch block, which returns a 404
+  if (!host) {
+    throw new Error('Host not found');
+  }
+  return { host, page: getPage<HostedAccount>(host.hostedAccounts) };
+};
 
 type Fields =
   | 'name'
@@ -91,7 +91,7 @@ type Fields =
   | 'receivedTotalYearlyAverage';
 
 const hostQuery = gql`
-  query HostedCollectives($hostSlug: String!) {
+  query HostForHostedCollectives($hostSlug: String!) {
     host(slug: $hostSlug) {
       id
       legacyId
@@ -371,7 +371,7 @@ export const hostedCollectivesQuery = gql`
   }
 `;
 
-const csvMapping: Record<Fields, string | ((account: any, host: any) => string)> = {
+const csvMapping: Record<Fields, string | ((account: HostedAccount, host: HostedCollectivesHost) => unknown)> = {
   name: 'name',
   slug: 'slug',
   type: 'type',
@@ -382,13 +382,14 @@ const csvMapping: Record<Fields, string | ((account: any, host: any) => string)>
   tags: (account) => account.tags?.join(', '),
   approvedAt: (account) => shortDate(account.approvedAt),
   hostFeePercent: 'hostFeePercent',
-  balance: (account) => amountAsString(account.stats.balance),
-  adminEmails: (account) => compact(account.admins?.nodes.map((member) => formatContact(member.account))).join(', '),
+  balance: (account) => (account.stats ? amountAsString(account.stats.balance) : ''),
+  adminEmails: (account) =>
+    compact(account.admins?.nodes?.map((member) => member?.account && formatContact(member.account))).join(', '),
   adminCount: (account) => account.admins?.totalCount,
-  firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes[0]?.createdAt),
-  lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes[0]?.createdAt),
-  firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes[0]?.createdAt),
-  lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes[0]?.createdAt),
+  firstContributionDate: (account) => shortDate(account.firstContributionReceived?.nodes?.[0]?.createdAt),
+  lastContributionDate: (account) => shortDate(account.lastContributionReceived?.nodes?.[0]?.createdAt),
+  firstExpenseDate: (account) => shortDate(account.firstExpenseReceived?.nodes?.[0]?.createdAt),
+  lastExpenseDate: (account) => shortDate(account.lastExpenseReceived?.nodes?.[0]?.createdAt),
   status: (account, host) => {
     if (account.host?.id !== host.id) {
       return 'UNHOSTED';
@@ -465,9 +466,9 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
   }
   try {
     // Forward Api Key or Authorization header
-    const headers = {};
-    const apiKey = req.get('Api-Key') || req.query.apiKey;
-    const personalToken = req.get('Personal-Token') || req.query.personalToken;
+    const headers: Record<string, string> = {};
+    const apiKey = (req.get('Api-Key') || req.query.apiKey) as string | undefined;
+    const personalToken = (req.get('Personal-Token') || req.query.personalToken) as string | undefined;
     // Support Cookies for direct-download capability
     const authorization = req.get('Authorization') || req.cookies?.authorization;
 
@@ -484,7 +485,11 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     const hostSlug = req.params.slug;
     assert(hostSlug, 'Please provide a slug');
 
-    const hostResult = await graphqlRequest<HostResponse>(hostQuery, { hostSlug }, { version: 'v2', headers });
+    const hostResult = await graphqlRequest<HostForHostedCollectivesQuery>(
+      hostQuery,
+      { hostSlug },
+      { version: 'v2', headers },
+    );
     const host = hostResult.host;
     assert(host, 'Could not find Host');
 
@@ -493,7 +498,7 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
       .map(trim)
       .filter((v) => !!v) as Fields[];
 
-    const variables = {
+    const variables: Record<string, unknown> & { offset: number } = {
       hostSlug,
       hostCurrency: host.currency,
       limit: req.method === 'HEAD' ? 0 : req.query.limit ? toNumber(req.query.limit) : 100,
@@ -550,21 +555,23 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
     if (req.query.startsAtTo) {
       // Detect short form (e.g: 2021-08-30)
       const shortDate = (req.query.startsAtTo as string).match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
-      variables['startsAtTo'] = moment.utc(req.query.startsAtTo as string);
+      const startsAtTo = moment.utc(req.query.startsAtTo as string);
       // Extend to end of the day, 1 sec before midnight
       if (shortDate) {
-        variables['startsAtTo'].set('hour', 23).set('minute', 59).set('second', 59);
+        startsAtTo.set('hour', 23).set('minute', 59).set('second', 59);
       }
-      variables['startsAtTo'] = variables['startsAtTo'].toISOString();
+      variables['startsAtTo'] = startsAtTo.toISOString();
     }
 
     const fetchAll = variables.offset ? false : parseToBooleanDefaultFalse(req.query.fetchAll as string);
     logger.debug('hostedCollectives:query', { variables, headers });
 
-    let result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+    let result = await graphqlRequest<HostedCollectivesQuery>(hostedCollectivesQuery, variables, {
       version: 'v2',
       headers,
     });
+
+    let { host: hostedHost, page } = getHostedAccountsPage(result);
 
     switch (req.params.format) {
       case 'csv': {
@@ -576,13 +583,13 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         const filename = `hosted-collectives-${hostSlug}-${moment.utc().format('YYYYMMDD')}.${req.params.format}`;
         res.append('Content-Disposition', `attachment; filename="${filename}"`);
         res.append('Access-Control-Expose-Headers', 'X-Exported-Rows');
-        res.append('X-Exported-Rows', String(result.host.hostedAccounts.totalCount));
+        res.append('X-Exported-Rows', String(page.totalCount));
         if (req.method === 'HEAD') {
           res.status(200).end();
           return;
         }
 
-        if (result.host.hostedAccounts.totalCount === 0) {
+        if (page.totalCount === 0) {
           res.write(json2csv([], { fields }));
           res.write(`\n`);
           res.end();
@@ -590,31 +597,25 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         }
 
         const mapping = pick(csvMapping, fields);
-        const mappedTransactions = result.host.hostedAccounts.nodes.map((t) => applyMapping(mapping, t, result.host));
-        res.write(json2csv(mappedTransactions, null));
+        const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t, hostedHost));
+        res.write(json2csv(mappedTransactions));
         res.write(`\n`);
 
-        if (result.host.hostedAccounts.totalCount > result.host.hostedAccounts.limit) {
-          if (fetchAll) {
+        if (page.totalCount > page.limit) {
+          if (fetchAll && page.limit > 0) {
             do {
-              variables.offset += result.host.hostedAccounts.limit;
-              result = await graphqlRequest<HostedCollectivesResponse>(hostedCollectivesQuery, variables, {
+              variables.offset += page.limit;
+              result = await graphqlRequest<HostedCollectivesQuery>(hostedCollectivesQuery, variables, {
                 version: 'v2',
                 headers,
               });
-              const mappedTransactions = result.host.hostedAccounts.nodes.map((t) =>
-                applyMapping(mapping, t, result.host),
-              );
+              ({ host: hostedHost, page } = getHostedAccountsPage(result));
+              const mappedTransactions = page.nodes.map((t) => applyMapping(mapping, t, hostedHost));
               res.write(json2csv(mappedTransactions, { header: false }));
               res.write(`\n`);
-            } while (
-              result.host.hostedAccounts.totalCount >
-              result.host.hostedAccounts.limit + result.host.hostedAccounts.offset
-            );
+            } while (hasNextPage(page));
           } else {
-            res.write(
-              `Warning: totalCount is ${result.host.hostedAccounts.totalCount} and limit was ${result.host.hostedAccounts.limit}`,
-            );
+            res.write(`Warning: totalCount is ${page.totalCount} and limit was ${page.limit}`);
           }
         }
 
@@ -622,14 +623,16 @@ const hostedCollectives: RequestHandler<{ slug: string; format: 'csv' | 'json' }
         break;
       }
       default:
-        res.send(result.host.hostedAccounts);
+        res.send(hostedHost.hostedAccounts);
         break;
     }
   } catch (err) {
-    if (err.message.match(/not found/i)) {
-      res.status(404).send(err.message);
+    // Everything thrown by the GraphQL client is an Error
+    const { message } = err as Error;
+    if (message.match(/not found/i)) {
+      res.status(404).send(message);
     } else {
-      logger.error(`Error while fetching hosted collectives: ${err.message}`);
+      logger.error(`Error while fetching hosted collectives: ${message}`);
       logger.debug(err);
       if (res.headersSent) {
         res.end(`\nError while fetching hosted collectives.`);

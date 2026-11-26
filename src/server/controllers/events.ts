@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { fetchEvent } from '../lib/graphql';
+import type { Event } from '../lib/accounts';
+import { fetchEvent } from '../lib/accounts';
 import { logger } from '../logger';
 
 type EventsParams = Record<string, string> & { collectiveSlug: string; eventSlug: string };
@@ -8,7 +9,7 @@ type EventsParams = Record<string, string> & { collectiveSlug: string; eventSlug
 export async function info(req: Request<EventsParams>, res: Response, next: NextFunction): Promise<Response | void> {
   // Keeping the resulting info for 10m in the CDN cache
   res.setHeader('Cache-Control', `public, max-age=${60 * 10}`);
-  let event;
+  let event: Event;
   try {
     logger.debug('>>> events.info fetching: %s', req.params.eventSlug);
     event = await fetchEvent(req.params.eventSlug);
@@ -17,7 +18,8 @@ export async function info(req: Request<EventsParams>, res: Response, next: Next
     logger.debug('>>> events.info event: %j', event);
     res.send(event);
   } catch (e) {
-    if (e.message.match(/No collective found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    if ((e as Error).message.match(/No collective found with slug|Account Not Found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> events.info error', e);

@@ -3,6 +3,7 @@ import gqlV1 from 'graphql-tag';
 import { get } from 'lodash';
 import moment from 'moment';
 
+import type { CollectiveMembersQuery } from '../../graphql/types/v1/graphql';
 import { graphqlRequest } from '../lib/graphql';
 import { json2csv } from '../lib/utils';
 import { logger } from '../logger';
@@ -24,33 +25,7 @@ type MembersQuery = Record<string, string> & {
   offset?: string;
 };
 
-interface MemberRow {
-  id: number;
-  createdAt: string;
-  role: string;
-  stats: { totalDonations: number };
-  transactions: Array<{ createdAt: string; amount: number; currency: string }>;
-  isActive: boolean;
-  member: {
-    type: string;
-    slug: string;
-    name: string;
-    company: string;
-    description: string;
-    image: string;
-    website: string;
-    twitterHandle: string;
-    githubHandle: string;
-    connectedAccounts: Array<{ id: number; service: string; username: string }>;
-    email?: string;
-    newsletterOptIn?: boolean;
-  };
-  tier: { interval: string; name: string };
-}
-
-interface MembersResponse {
-  Collective: { currency: string; members: MemberRow[] };
-}
+type MemberRow = NonNullable<NonNullable<NonNullable<CollectiveMembersQuery['Collective']>['members']>[number]>;
 
 type MembersVariables = {
   collectiveSlug?: string;
@@ -173,20 +148,24 @@ export async function list(
     vars.offset = Number(req.query.offset);
   }
 
-  let result: MembersResponse;
+  let result: CollectiveMembersQuery;
   try {
-    result = await graphqlRequest<MembersResponse>(query, vars, { headers });
+    result = await graphqlRequest<CollectiveMembersQuery>(query, vars, { headers });
   } catch (err) {
-    if (err.message.match(/No collective found/)) {
+    // Everything thrown by the GraphQL client is an Error
+    if ((err as Error).message.match(/No collective found/)) {
       return res.status(404).send('Not found');
     }
     logger.debug('>>> members.list error', err);
     return next(err);
   }
 
-  const members = result.Collective.members;
+  if (!result.Collective) {
+    return res.status(404).send('Not found');
+  }
+  const members = (result.Collective.members ?? []).filter((member): member is MemberRow => member !== null);
 
-  const mapping = {
+  const mapping: Record<string, string | ((row: MemberRow) => unknown)> = {
     MemberId: 'id',
     createdAt: (r: MemberRow) => moment(new Date(r.createdAt)).format('YYYY-MM-DD HH:mm'),
     type: 'member.type',
@@ -196,10 +175,11 @@ export async function list(
     totalAmountDonated: (r: MemberRow) => (get(r, 'stats.totalDonations') || 0) / 100,
     currency: 'transactions[0].currency',
     lastTransactionAt: (r: MemberRow) => {
-      return moment(r.transactions[0] && new Date(r.transactions[0].createdAt)).format('YYYY-MM-DD HH:mm');
+      const lastTransaction = r.transactions?.[0];
+      return moment(lastTransaction && new Date(lastTransaction.createdAt)).format('YYYY-MM-DD HH:mm');
     },
     lastTransactionAmount: (r: MemberRow) => (get(r, 'transactions[0].amount') || 0) / 100,
-    profile: (r: MemberRow) => `${process.env.WEBSITE_URL}/${r.member.slug}`,
+    profile: (r: MemberRow) => `${process.env.WEBSITE_URL}/${r.member?.slug}`,
     name: 'member.name',
     company: 'member.company',
     description: 'member.description',
@@ -207,13 +187,13 @@ export async function list(
     email: 'member.email',
     newsletterOptIn: 'member.newsletterOptIn',
     twitter: (r: MemberRow) => {
-      return r.member.twitterHandle ? `https://twitter.com/${r.member.twitterHandle}` : null;
+      return r.member?.twitterHandle ? `https://twitter.com/${r.member.twitterHandle}` : null;
     },
     github: (r: MemberRow) => {
-      if (r.member.githubHandle) {
+      if (r.member?.githubHandle) {
         return `https://github.com/${r.member.githubHandle}`;
       }
-      const githubAccount = (r.member.connectedAccounts || []).find((c) => c.service === 'github');
+      const githubAccount = (r.member?.connectedAccounts || []).find((c) => c?.service === 'github');
       return githubAccount ? `https://github.com/${githubAccount.username}` : null;
     },
     website: 'member.website',
@@ -222,7 +202,7 @@ export async function list(
   const fields = Object.keys(mapping);
 
   const applyMapping = (row: MemberRow) => {
-    const res = {};
+    const res: Record<string, unknown> = {};
     fields.map((key) => {
       const val = mapping[key];
       if (typeof val === 'function') {

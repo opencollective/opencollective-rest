@@ -7,7 +7,7 @@ export default [
   ...openCollectiveConfig,
   // Global ignores
   {
-    ignores: ['**/node_modules/', '**/dist/', '**/coverage/', '**/.history', 'src/graphql/*.graphql'],
+    ignores: ['**/node_modules/', '**/dist/', '**/coverage/', '**/.history', 'src/graphql/*.graphql', 'src/graphql/types/'],
   },
   {
     files: ['**/*.{js,ts}'],

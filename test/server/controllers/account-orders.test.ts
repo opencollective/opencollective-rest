@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst, generateJWT } from '../../utils';
 
-const validateOrder = (order) => {
+const validateOrder = (order: Record<string, unknown>) => {
   expect(order).toHaveProperty('fromAccount');
   expect(order).toHaveProperty('amount');
   expect(order).toHaveProperty('frequency');

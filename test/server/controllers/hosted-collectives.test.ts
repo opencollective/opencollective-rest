@@ -1,6 +1,6 @@
 import { fetchJsonWithCacheBurst, fetchResponseWithCacheBurst } from '../../utils';
 
-const validateHostedCollective = (collective) => {
+const validateHostedCollective = (collective: Record<string, unknown>) => {
   expect(collective).toHaveProperty('name');
   expect(collective).toHaveProperty('slug');
   expect(collective).toHaveProperty('type');
